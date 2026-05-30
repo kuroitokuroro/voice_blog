@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+/>
+  <title>声日記</title>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 18px 0 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .main-button {
+      width: 100%;
+      padding: 16px;
+      margin-bottom: 16px;
+      font-size: 18px;
+      background: #333;
+      color: white;
+    }
+
+    .main-button.listening {
+      background: #7a3cff;
+    }
+
+    .diary-area,
+    .past-diary-area {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .diary-item {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid #eee;
+      background: white;
+    }
+
+    .swipe-content {
+      position: relative;
+      z-index: 2;
+      background: white;
+      padding: 12px;
+      transition: transform 0.2s ease;
+      display: flex;
+      align-items: center;
+    }
+
+    .diary-item.show-delete .swipe-content {
+      transform: translateX(-64px);
+    }
+
+    .text {
+      line-height: 1.6;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .delete-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 64px;
+  height: 100%;
+  background: #d33;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.material-symbols-outlined {
+  font-size: 24px;
+}
+
+    .past-section {
+      margin-top: 24px;
+    }
+
+    .date-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .date-button {
+      padding: 7px 11px;
+      font-size: 13px;
+      background: #d0d0d0;
+      color: #222;
+    }
+
+    .date-button.active {
+      background: #999;
+      color: white;
+    }
+
+    .past-diary-area {
+      display: none;
+    }
+
+    .past-diary-area.open {
+      display: block;
+    }
+
+    .past-diary-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>声日記</h1>
+
+  <button id="voiceButton" class="main-button">
+    話して日記を書く
+  </button>
+
+  <h2>今日の日記</h2>
+
+  <div id="todayDiaryList" class="diary-area"></div>
+
+  <div class="past-section">
+    <h2>過去の日記</h2>
+
+    <div id="dateButtons" class="date-buttons"></div>
+
+    <div id="pastDiaryList" class="past-diary-area"></div>
+  </div>
+
+  <button id="downloadButton" class="main-button">
+    今月の日記をTXTで保存
+  </button>
+
+  <script>
+    const STORAGE_KEY = "voiceDiaryData";
+
+    const voiceButton = document.getElementById("voiceButton");
+    const downloadButton = document.getElementById("downloadButton");
+    const todayDiaryList = document.getElementById("todayDiaryList");
+    const dateButtons = document.getElementById("dateButtons");
+    const pastDiaryList = document.getElementById("pastDiaryList");
+
+    let selectedPastDateKey = null;
+
+    const today = new Date();
+    const todayKey = formatDateKey(today);
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      voiceButton.textContent =
+        "このブラウザは音声入力に未対応です";
+      voiceButton.disabled = true;
+    } else {
+
+      const recognition = new SpeechRecognition();
+
+      recognition.lang = "ja-JP";
+      recognition.interimResults = false;
+      recognition.continuous = false;
+
+      voiceButton.addEventListener("click", () => {
+        voiceButton.textContent = "聞いています...";
+        voiceButton.classList.add("listening");
+
+        recognition.start();
+      });
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+
+        const items = formatDiary(text);
+
+        items.forEach((item) => {
+          saveDiaryItem(todayKey, item);
+        });
+
+        renderTodayDiary();
+        renderPastDateButtons();
+      };
+
+      recognition.onend = () => {
+        voiceButton.textContent = "話して日記を書く";
+        voiceButton.classList.remove("listening");
+      };
+
+      recognition.onerror = () => {
+        voiceButton.textContent = "話して日記を書く";
+        voiceButton.classList.remove("listening");
+
+        alert("音声入力でエラーが発生しました。");
+      };
+    }
+
+    downloadButton.addEventListener("click", downloadTxt);
+
+    renderTodayDiary();
+    renderPastDateButtons();
+
+    function formatDiary(text) {
+      return text
+        .split(/[。！？]/)
+        .map((sentence) => sentence.trim())
+        .filter((sentence) => sentence.length > 0);
+    }
+
+    function renderTodayDiary() {
+
+      const data = getDiaryData();
+
+      const items = data[todayKey] || [];
+
+      todayDiaryList.innerHTML = "";
+
+      items.forEach((text) => {
+        addTodayDiaryItem(text);
+      });
+    }
+
+    function addTodayDiaryItem(text) {
+
+      const item = document.createElement("div");
+      item.className = "diary-item";
+
+      const swipeContent = document.createElement("div");
+      swipeContent.className = "swipe-content";
+
+      const content = document.createElement("div");
+      content.className = "text";
+      content.textContent = text;
+
+      swipeContent.appendChild(content);
+
+      const deleteButton = document.createElement("div");
+      deleteButton.className = "delete-button";
+      deleteButton.innerHTML = `
+  <span class="material-symbols-outlined">
+    delete
+  </span>
+`;
+
+      deleteButton.addEventListener("click", () => {
+        deleteDiaryItem(todayKey, text);
+        renderTodayDiary();
+        renderPastDateButtons();
+      });
+
+      item.appendChild(deleteButton);
+      item.appendChild(swipeContent);
+
+      todayDiaryList.appendChild(item);
+
+      let startX = 0;
+
+      item.addEventListener("touchstart", (event) => {
+        startX = event.touches[0].clientX;
+      });
+
+      item.addEventListener("touchmove", (event) => {
+
+        const currentX = event.touches[0].clientX;
+
+        const diff = startX - currentX;
+
+        if (diff > 40) {
+          item.classList.add("show-delete");
+        }
+
+        if (diff < -20) {
+          item.classList.remove("show-delete");
+        }
+      });
+    }
+
+    function renderPastDateButtons() {
+
+      const data = getDiaryData();
+
+      dateButtons.innerHTML = "";
+
+      const pastKeys = Object.keys(data)
+        .sort()
+        .filter((dateKey) => {
+          return (
+            isSameMonth(dateKey, today) &&
+            dateKey !== todayKey
+          );
+        });
+
+      pastKeys.forEach((dateKey) => {
+
+        const date = new Date(dateKey);
+
+        const button = document.createElement("button");
+
+        button.className = "date-button";
+
+        button.textContent =
+          `${date.getMonth() + 1}/${date.getDate()}`;
+
+        if (selectedPastDateKey === dateKey) {
+          button.classList.add("active");
+        }
+
+        button.addEventListener("click", () => {
+
+          if (selectedPastDateKey === dateKey) {
+
+            selectedPastDateKey = null;
+
+            pastDiaryList.classList.remove("open");
+
+            pastDiaryList.innerHTML = "";
+
+          } else {
+
+            selectedPastDateKey = dateKey;
+
+            renderPastDiary(dateKey);
+          }
+
+          renderPastDateButtons();
+        });
+
+        dateButtons.appendChild(button);
+      });
+    }
+
+    function renderPastDiary(dateKey) {
+
+      const data = getDiaryData();
+
+      const items = data[dateKey] || [];
+
+      pastDiaryList.innerHTML = "";
+
+      pastDiaryList.classList.add("open");
+
+      items.forEach((text) => {
+
+        const item = document.createElement("div");
+
+        item.className = "past-diary-item";
+
+        item.textContent = `・${text}`;
+
+        pastDiaryList.appendChild(item);
+      });
+    }
+
+    function getDiaryData() {
+
+      return JSON.parse(
+        localStorage.getItem(STORAGE_KEY)
+      ) || {};
+    }
+
+    function setDiaryData(data) {
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(data)
+      );
+    }
+
+    function saveDiaryItem(dateKey, text) {
+
+      const data = getDiaryData();
+
+      if (!data[dateKey]) {
+        data[dateKey] = [];
+      }
+
+      data[dateKey].push(text);
+
+      setDiaryData(data);
+    }
+
+    function deleteDiaryItem(dateKey, text) {
+
+      const data = getDiaryData();
+
+      if (!data[dateKey]) return;
+
+      data[dateKey] =
+        data[dateKey].filter((item) => item !== text);
+
+      if (data[dateKey].length === 0) {
+        delete data[dateKey];
+      }
+
+      setDiaryData(data);
+    }
+
+    function downloadTxt() {
+
+      const data = getDiaryData();
+
+      const year = today.getFullYear();
+
+      const month = today.getMonth() + 1;
+
+      let text =
+        `【声日記】${year}年${month}月\n\n`;
+
+      Object.keys(data)
+        .sort()
+        .filter((dateKey) => {
+          return isSameMonth(dateKey, today);
+        })
+        .forEach((dateKey) => {
+
+          const date = new Date(dateKey);
+
+          const day = date.getDate();
+
+          text += "────────────\n";
+          text += `▼${month}月${day}日\n`;
+          text += "────────────\n";
+
+          data[dateKey].forEach((item) => {
+            text += `・${item}\n`;
+          });
+
+          text += "\n";
+        });
+
+      text += "────────────\n";
+
+      const blob = new Blob(
+        [text],
+        { type: "text/plain;charset=utf-8" }
+      );
+
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+
+      a.href = url;
+
+      a.download =
+        `声日記_${year}-${String(month).padStart(2, "0")}.txt`;
+
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    function formatDateKey(date) {
+
+      const year = date.getFullYear();
+
+      const month =
+        String(date.getMonth() + 1).padStart(2, "0");
+
+      const day =
+        String(date.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    }
+
+    function isSameMonth(dateKey, baseDate) {
+
+      const date = new Date(dateKey);
+
+      return (
+        date.getFullYear() === baseDate.getFullYear() &&
+        date.getMonth() === baseDate.getMonth()
+      );
+    }
+  </script>
+
+</body>
+</html>
