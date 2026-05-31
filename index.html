@@ -334,6 +334,8 @@ renderMonthSelect();
   `;
 
   let isEditing = false;
+  let startX = 0;
+  let startState = "default";
 
   editButton.addEventListener("click", () => {
     if (!isEditing) {
@@ -367,27 +369,122 @@ renderMonthSelect();
 
   todayDiaryList.appendChild(item);
 
-  let startX = 0;
-
   item.addEventListener("touchstart", (event) => {
     startX = event.touches[0].clientX;
+
+    if (item.classList.contains("show-delete")) {
+      startState = "delete";
+    } else if (item.classList.contains("show-edit")) {
+      startState = "edit";
+    } else {
+      startState = "default";
+    }
   });
 
   item.addEventListener("touchmove", (event) => {
     const currentX = event.touches[0].clientX;
     const diff = startX - currentX;
 
+    if (startState === "default") {
+      if (diff > 40) {
+        item.classList.add("show-delete");
+        item.classList.remove("show-edit");
+      }
+
+      if (diff < -40) {
+        item.classList.add("show-edit");
+        item.classList.remove("show-delete");
+      }
+    } else if (startState === "delete") {
+      if (diff < -30) {
+        item.classList.remove("show-delete");
+      }
+    } else if (startState === "edit") {
+      if (diff > 30) {
+        item.classList.remove("show-edit");
+      }
+    }
+  });
+
+  document.addEventListener("touchstart", (event) => {
+    const touchedInside = item.contains(event.target);
+
+    if (!touchedInside) {
+      item.classList.remove("show-delete");
+      item.classList.remove("show-edit");
+    }
+  });
+}
+
+  deleteButton.addEventListener("click", () => {
+    deleteDiaryItemByIndex(todayKey, index);
+    renderTodayDiary();
+    renderPastDateButtons();
+    renderMonthSelect();
+  });
+
+  item.appendChild(editButton);
+  item.appendChild(deleteButton);
+  item.appendChild(swipeContent);
+
+  todayDiaryList.appendChild(item);
+
+  let startX = 0;
+  let startState = "default";
+
+item.addEventListener("touchstart", (event) => {
+
+  startX = event.touches[0].clientX;
+
+  if (item.classList.contains("show-delete")) {
+    startState = "delete";
+  } else if (item.classList.contains("show-edit")) {
+    startState = "edit";
+  } else {
+    startState = "default";
+  }
+});
+
+  item.addEventListener("touchmove", (event) => {
+
+  const currentX = event.touches[0].clientX;
+
+  const diff = startX - currentX;
+
+  // 通常状態
+  if (startState === "default") {
+
+    // 左スワイプ → 削除
     if (diff > 40) {
       item.classList.add("show-delete");
       item.classList.remove("show-edit");
     }
 
+    // 右スワイプ → 編集
     if (diff < -40) {
       item.classList.add("show-edit");
       item.classList.remove("show-delete");
     }
-  });
-}
+  }
+
+  // 削除表示中
+  else if (startState === "delete") {
+
+    // 右へ戻す → 通常
+    if (diff < -30) {
+      item.classList.remove("show-delete");
+    }
+  }
+
+  // 編集表示中
+  else if (startState === "edit") {
+
+    // 左へ戻す → 通常
+    if (diff > 30) {
+      item.classList.remove("show-edit");
+    }
+  }
+});
 
     function renderPastDateButtons() {
   const data = getDiaryData();
