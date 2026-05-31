@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link
-  rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
-/>
-  <title>声日記</title>
+  <title>こえログ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 
   <style>
     body {
@@ -36,6 +33,42 @@
       font-family: inherit;
     }
 
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 12px 8px;
+      border-radius: 12px;
+      background: #d0d0d0;
+      color: #222;
+      font-size: 14px;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .tab-button.active {
+      background: #333;
+      color: white;
+    }
+
+    .tab-button.dragging {
+      opacity: 0.7;
+      transform: scale(0.96);
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
     .main-button {
       width: 100%;
       padding: 16px;
@@ -49,11 +82,27 @@
       background: #7a3cff;
     }
 
+    .sub-button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 15px;
+      border-radius: 12px;
+      background: #777;
+      color: white;
+    }
+
+    .sub-button.delete-mode {
+      background: #d33;
+    }
+
     .diary-area,
-    .past-diary-area {
+    .past-diary-area,
+    .tool-area {
       background: white;
       border-radius: 12px;
       overflow: hidden;
+      margin-bottom: 16px;
     }
 
     .diary-item {
@@ -77,29 +126,51 @@
       transform: translateX(-64px);
     }
 
+    .diary-item.show-edit .swipe-content {
+      transform: translateX(64px);
+    }
+
     .text {
       line-height: 1.6;
       font-size: 14px;
       word-break: break-word;
     }
 
-    .delete-button {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 64px;
-  height: 100%;
-  background: #d33;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-}
+    .delete-button,
+    .edit-button {
+      position: absolute;
+      top: 0;
+      width: 64px;
+      height: 100%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
 
-.material-symbols-outlined {
-  font-size: 24px;
-}
+    .delete-button {
+      right: 0;
+      background: #d33;
+    }
+
+    .edit-button {
+      left: 0;
+      background: #4c956c;
+    }
+
+    .material-symbols-outlined {
+      font-size: 24px;
+    }
+
+    .text.editing {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #aaa;
+      border-radius: 6px;
+      background: #fffdf2;
+      outline: none;
+    }
 
     .past-section {
       margin-top: 24px;
@@ -139,106 +210,128 @@
       line-height: 1.5;
     }
 
-.download-area {
-  margin-top: 16px;
-}
+    .download-area {
+      margin-top: 16px;
+    }
 
-.diary-item.show-delete .swipe-content {
-  transform: translateX(-64px);
-}
+    #monthSelect {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      background: white;
+    }
 
-.diary-item.show-edit .swipe-content {
-  transform: translateX(64px);
-}
+    .goal-checkbox {
+      margin-right: 10px;
+      transform: scale(1.2);
+    }
 
-.edit-button {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 64px;
-  height: 100%;
-  background: #4c956c;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-}
-
-.text.editing {
-  width: 100%;
-  padding: 6px;
-  border: 1px solid #aaa;
-  border-radius: 6px;
-  background: #fffdf2;
-  outline: none;
-}
-
-#monthSelect {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  background: white;
-}
+    .empty-message {
+      padding: 12px;
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+    }
   </style>
 </head>
 
 <body>
+  <h1>こえログ</h1>
 
-  <h1>声日記</h1>
+  <div id="tabBar" class="tab-bar"></div>
 
-  <button id="voiceButton" class="main-button">
-    話して日記を書く
-  </button>
+  <section id="diaryPanel" class="panel">
+    <button id="voiceButton" class="main-button">話して日記を書く</button>
 
-  <h2>今日の日記</h2>
+    <h2>今日の日記</h2>
+    <div id="todayDiaryList" class="diary-area"></div>
 
-  <div id="todayDiaryList" class="diary-area"></div>
+    <div class="past-section">
+      <h2>過去の日記</h2>
+      <div id="dateButtons" class="date-buttons"></div>
+      <div id="pastDiaryList" class="past-diary-area"></div>
+    </div>
 
-  <div class="past-section">
-    <h2>過去の日記</h2>
+    <div class="download-area">
+      <select id="monthSelect"></select>
+      <button id="downloadButton" class="main-button">txtファイルでダウンロード</button>
+    </div>
+  </section>
 
-    <div id="dateButtons" class="date-buttons"></div>
+  <section id="goalPanel" class="panel">
+    <button id="goalVoiceButton" class="main-button">話して目標を追加</button>
+    <button id="goalMultiDeleteButton" class="sub-button">複数削除</button>
 
-    <div id="pastDiaryList" class="past-diary-area"></div>
-  </div>
+    <h2>こえ目標</h2>
+    <div id="goalList" class="diary-area"></div>
+  </section>
 
- <div class="download-area">
-  <select id="monthSelect"></select>
-  <button id="downloadButton" class="main-button">
-    txtファイルでダウンロード
-  </button>
-</div>
+  <section id="habitPanel" class="panel">
+    <button class="main-button">話して習慣を追加</button>
+
+    <h2>こえ習慣</h2>
+    <div class="tool-area">
+      <div class="empty-message">
+        ひらがなの習慣だけ登録。入浴・服薬などの記録を見る場所。
+      </div>
+    </div>
+  </section>
 
   <script>
-    const STORAGE_KEY = "voiceDiaryData";
+    const TAB_STORAGE_KEY = "koeTabOrder";
+    const DIARY_STORAGE_KEY = "voiceDiaryData";
+    const GOAL_STORAGE_KEY = "koeGoalData";
 
+    const DEFAULT_TABS = [
+      { id: "diary", label: "こえ日記", panelId: "diaryPanel" },
+      { id: "goal", label: "こえ目標", panelId: "goalPanel" },
+      { id: "habit", label: "こえ習慣", panelId: "habitPanel" }
+    ];
+
+    const tabBar = document.getElementById("tabBar");
     const voiceButton = document.getElementById("voiceButton");
     const downloadButton = document.getElementById("downloadButton");
     const todayDiaryList = document.getElementById("todayDiaryList");
     const dateButtons = document.getElementById("dateButtons");
     const pastDiaryList = document.getElementById("pastDiaryList");
     const monthSelect = document.getElementById("monthSelect");
+    const goalVoiceButton = document.getElementById("goalVoiceButton");
+    const goalMultiDeleteButton = document.getElementById("goalMultiDeleteButton");
+    const goalList = document.getElementById("goalList");
 
+    let tabOrder = loadTabOrder();
+    let activeTabId = tabOrder[0].id;
     let selectedPastDateKey = null;
+    let isGoalDeleteMode = false;
 
     const today = new Date();
     const todayKey = formatDateKey(today);
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    setupDiaryVoiceInput();
+    setupGoalVoiceInput();
+    downloadButton.addEventListener("click", downloadTxt);
+    goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
 
-    if (!SpeechRecognition) {
-      voiceButton.textContent =
-        "このブラウザは音声入力に未対応です";
-      voiceButton.disabled = true;
-    } else {
+    renderTabs();
+    renderPanels();
+    renderTodayDiary();
+    renderPastDateButtons();
+    renderMonthSelect();
+    renderGoalList();
+
+    function setupDiaryVoiceInput() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        voiceButton.textContent = "このブラウザは音声入力に未対応です";
+        voiceButton.disabled = true;
+        return;
+      }
 
       const recognition = new SpeechRecognition();
-
       recognition.lang = "ja-JP";
       recognition.interimResults = false;
       recognition.continuous = false;
@@ -246,22 +339,18 @@
       voiceButton.addEventListener("click", () => {
         voiceButton.textContent = "聞いています...";
         voiceButton.classList.add("listening");
-
         recognition.start();
       });
 
       recognition.onresult = (event) => {
         const text = event.results[0][0].transcript;
-
         const items = formatDiary(text);
 
-        items.forEach((item) => {
-          saveDiaryItem(todayKey, item);
-        });
+        items.forEach((item) => saveDiaryItem(todayKey, item));
 
         renderTodayDiary();
-renderPastDateButtons();
-renderMonthSelect();
+        renderPastDateButtons();
+        renderMonthSelect();
       };
 
       recognition.onend = () => {
@@ -272,459 +361,478 @@ renderMonthSelect();
       recognition.onerror = () => {
         voiceButton.textContent = "話して日記を書く";
         voiceButton.classList.remove("listening");
-
         alert("音声入力でエラーが発生しました。");
       };
     }
 
-    downloadButton.addEventListener("click", downloadTxt);
+    function setupGoalVoiceInput() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    renderTodayDiary();
-renderPastDateButtons();
-renderMonthSelect();
+      if (!SpeechRecognition) {
+        goalVoiceButton.textContent = "このブラウザは音声入力に未対応です";
+        goalVoiceButton.disabled = true;
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "ja-JP";
+      recognition.interimResults = false;
+      recognition.continuous = false;
+
+      goalVoiceButton.addEventListener("click", () => {
+        goalVoiceButton.textContent = "聞いています...";
+        goalVoiceButton.classList.add("listening");
+        recognition.start();
+      });
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        const items = formatDiary(text);
+
+        items.forEach((item) => saveGoalItem(item));
+        renderGoalList();
+      };
+
+      recognition.onend = () => {
+        goalVoiceButton.textContent = "話して目標を追加";
+        goalVoiceButton.classList.remove("listening");
+      };
+
+      recognition.onerror = () => {
+        goalVoiceButton.textContent = "話して目標を追加";
+        goalVoiceButton.classList.remove("listening");
+        alert("音声入力でエラーが発生しました。");
+      };
+    }
+
+    function loadTabOrder() {
+      const saved = JSON.parse(localStorage.getItem(TAB_STORAGE_KEY));
+      if (!saved) return DEFAULT_TABS;
+
+      const restored = saved
+        .map((savedId) => DEFAULT_TABS.find((tab) => tab.id === savedId))
+        .filter(Boolean);
+
+      return restored.length === DEFAULT_TABS.length ? restored : DEFAULT_TABS;
+    }
+
+    function saveTabOrder() {
+      const ids = tabOrder.map((tab) => tab.id);
+      localStorage.setItem(TAB_STORAGE_KEY, JSON.stringify(ids));
+    }
+
+    function renderTabs() {
+      tabBar.innerHTML = "";
+
+      tabOrder.forEach((tab, index) => {
+        const button = document.createElement("button");
+        button.className = "tab-button";
+        button.textContent = tab.label;
+
+        if (tab.id === activeTabId) button.classList.add("active");
+
+        button.addEventListener("click", () => {
+          activeTabId = tab.id;
+          renderTabs();
+          renderPanels();
+        });
+
+        setupTabDrag(button, index);
+        tabBar.appendChild(button);
+      });
+    }
+
+    function renderPanels() {
+      DEFAULT_TABS.forEach((tab) => {
+        const panel = document.getElementById(tab.panelId);
+        panel.classList.toggle("active", tab.id === activeTabId);
+      });
+    }
+
+    function setupTabDrag(button, startIndex) {
+      let startX = 0;
+      let currentIndex = startIndex;
+      let isDragging = false;
+
+      button.addEventListener("pointerdown", (event) => {
+        startX = event.clientX;
+        currentIndex = startIndex;
+        isDragging = true;
+        button.classList.add("dragging");
+        button.setPointerCapture(event.pointerId);
+      });
+
+      button.addEventListener("pointermove", (event) => {
+        if (!isDragging) return;
+        const diff = event.clientX - startX;
+
+        if (diff > 40 && currentIndex < tabOrder.length - 1) {
+          swapTabs(currentIndex, currentIndex + 1);
+          currentIndex += 1;
+          startX = event.clientX;
+        }
+
+        if (diff < -40 && currentIndex > 0) {
+          swapTabs(currentIndex, currentIndex - 1);
+          currentIndex -= 1;
+          startX = event.clientX;
+        }
+      });
+
+      button.addEventListener("pointerup", () => {
+        isDragging = false;
+        saveTabOrder();
+        renderTabs();
+      });
+
+      button.addEventListener("pointercancel", () => {
+        isDragging = false;
+        renderTabs();
+      });
+    }
+
+    function swapTabs(fromIndex, toIndex) {
+      const temp = tabOrder[fromIndex];
+      tabOrder[fromIndex] = tabOrder[toIndex];
+      tabOrder[toIndex] = temp;
+      renderTabs();
+    }
 
     function formatDiary(text) {
       return text
-        .split(/[。！？]/)
+        .split(/[。！？、,]/)
         .map((sentence) => sentence.trim())
         .filter((sentence) => sentence.length > 0);
     }
 
     function renderTodayDiary() {
-
       const data = getDiaryData();
-
       const items = data[todayKey] || [];
-
       todayDiaryList.innerHTML = "";
 
-      items.forEach((text, index) => {
-  addTodayDiaryItem(text, index);
-});
+      items.forEach((text, index) => addTodayDiaryItem(text, index));
     }
 
     function addTodayDiaryItem(text, index) {
+      const item = document.createElement("div");
+      item.className = "diary-item";
 
-  const item = document.createElement("div");
-  item.className = "diary-item";
+      const swipeContent = document.createElement("div");
+      swipeContent.className = "swipe-content";
 
-  const swipeContent = document.createElement("div");
-  swipeContent.className = "swipe-content";
+      const content = document.createElement("div");
+      content.className = "text";
+      content.textContent = text;
+      swipeContent.appendChild(content);
 
-  const content = document.createElement("div");
-  content.className = "text";
-  content.textContent = text;
+      const editButton = document.createElement("div");
+      editButton.className = "edit-button";
+      editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
 
-  swipeContent.appendChild(content);
+      const deleteButton = document.createElement("div");
+      deleteButton.className = "delete-button";
+      deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
 
-  const editButton = document.createElement("div");
-  editButton.className = "edit-button";
-  editButton.innerHTML = `
-    <span class="material-symbols-outlined">
-      edit
-    </span>
-  `;
+      let isEditing = false;
+      let startX = 0;
+      let startState = "default";
 
-  const deleteButton = document.createElement("div");
-  deleteButton.className = "delete-button";
-  deleteButton.innerHTML = `
-    <span class="material-symbols-outlined">
-      delete
-    </span>
-  `;
+      editButton.addEventListener("click", () => {
+        if (!isEditing) {
+          isEditing = true;
+          content.contentEditable = "true";
+          content.classList.add("editing");
+          content.focus();
+        } else {
+          isEditing = false;
+          content.contentEditable = "false";
+          content.classList.remove("editing");
+          updateDiaryItem(todayKey, index, content.textContent.trim());
+          item.classList.remove("show-edit");
+          renderTodayDiary();
+          renderMonthSelect();
+        }
+      });
 
-  let isEditing = false;
-  let startX = 0;
-  let startState = "default";
+      deleteButton.addEventListener("click", () => {
+        deleteDiaryItemByIndex(todayKey, index);
+        renderTodayDiary();
+        renderPastDateButtons();
+        renderMonthSelect();
+      });
 
-  editButton.addEventListener("click", () => {
-    if (!isEditing) {
-      isEditing = true;
-      content.contentEditable = "true";
-      content.classList.add("editing");
-      content.focus();
-    } else {
-      isEditing = false;
-      content.contentEditable = "false";
-      content.classList.remove("editing");
+      item.appendChild(editButton);
+      item.appendChild(deleteButton);
+      item.appendChild(swipeContent);
+      todayDiaryList.appendChild(item);
 
-      updateDiaryItem(todayKey, index, content.textContent.trim());
+      item.addEventListener("touchstart", (event) => {
+        startX = event.touches[0].clientX;
 
-      item.classList.remove("show-edit");
-      renderTodayDiary();
-      renderMonthSelect();
+        if (item.classList.contains("show-delete")) startState = "delete";
+        else if (item.classList.contains("show-edit")) startState = "edit";
+        else startState = "default";
+      });
+
+      item.addEventListener("touchmove", (event) => {
+        const currentX = event.touches[0].clientX;
+        const diff = startX - currentX;
+
+        if (startState === "default") {
+          if (diff > 40) {
+            item.classList.add("show-delete");
+            item.classList.remove("show-edit");
+          }
+
+          if (diff < -40) {
+            item.classList.add("show-edit");
+            item.classList.remove("show-delete");
+          }
+        } else if (startState === "delete") {
+          if (diff < -30) item.classList.remove("show-delete");
+        } else if (startState === "edit") {
+          if (diff > 30) item.classList.remove("show-edit");
+        }
+      });
+
+      document.addEventListener("touchstart", (event) => {
+        if (!item.contains(event.target)) {
+          item.classList.remove("show-delete");
+          item.classList.remove("show-edit");
+        }
+      });
     }
-  });
-
-  deleteButton.addEventListener("click", () => {
-    deleteDiaryItemByIndex(todayKey, index);
-    renderTodayDiary();
-    renderPastDateButtons();
-    renderMonthSelect();
-  });
-
-  item.appendChild(editButton);
-  item.appendChild(deleteButton);
-  item.appendChild(swipeContent);
-
-  todayDiaryList.appendChild(item);
-
-  item.addEventListener("touchstart", (event) => {
-    startX = event.touches[0].clientX;
-
-    if (item.classList.contains("show-delete")) {
-      startState = "delete";
-    } else if (item.classList.contains("show-edit")) {
-      startState = "edit";
-    } else {
-      startState = "default";
-    }
-  });
-
-  item.addEventListener("touchmove", (event) => {
-    const currentX = event.touches[0].clientX;
-    const diff = startX - currentX;
-
-    if (startState === "default") {
-      if (diff > 40) {
-        item.classList.add("show-delete");
-        item.classList.remove("show-edit");
-      }
-
-      if (diff < -40) {
-        item.classList.add("show-edit");
-        item.classList.remove("show-delete");
-      }
-    } else if (startState === "delete") {
-      if (diff < -30) {
-        item.classList.remove("show-delete");
-      }
-    } else if (startState === "edit") {
-      if (diff > 30) {
-        item.classList.remove("show-edit");
-      }
-    }
-  });
-
-  document.addEventListener("touchstart", (event) => {
-    const touchedInside = item.contains(event.target);
-
-    if (!touchedInside) {
-      item.classList.remove("show-delete");
-      item.classList.remove("show-edit");
-    }
-  });
-}
-
-  deleteButton.addEventListener("click", () => {
-    deleteDiaryItemByIndex(todayKey, index);
-    renderTodayDiary();
-    renderPastDateButtons();
-    renderMonthSelect();
-  });
-
-  item.appendChild(editButton);
-  item.appendChild(deleteButton);
-  item.appendChild(swipeContent);
-
-  todayDiaryList.appendChild(item);
-
-  let startX = 0;
-  let startState = "default";
-
-item.addEventListener("touchstart", (event) => {
-
-  startX = event.touches[0].clientX;
-
-  if (item.classList.contains("show-delete")) {
-    startState = "delete";
-  } else if (item.classList.contains("show-edit")) {
-    startState = "edit";
-  } else {
-    startState = "default";
-  }
-});
-
-  item.addEventListener("touchmove", (event) => {
-
-  const currentX = event.touches[0].clientX;
-
-  const diff = startX - currentX;
-
-  // 通常状態
-  if (startState === "default") {
-
-    // 左スワイプ → 削除
-    if (diff > 40) {
-      item.classList.add("show-delete");
-      item.classList.remove("show-edit");
-    }
-
-    // 右スワイプ → 編集
-    if (diff < -40) {
-      item.classList.add("show-edit");
-      item.classList.remove("show-delete");
-    }
-  }
-
-  // 削除表示中
-  else if (startState === "delete") {
-
-    // 右へ戻す → 通常
-    if (diff < -30) {
-      item.classList.remove("show-delete");
-    }
-  }
-
-  // 編集表示中
-  else if (startState === "edit") {
-
-    // 左へ戻す → 通常
-    if (diff > 30) {
-      item.classList.remove("show-edit");
-    }
-  }
-});
 
     function renderPastDateButtons() {
-  const data = getDiaryData();
+      const data = getDiaryData();
+      dateButtons.innerHTML = "";
 
-  dateButtons.innerHTML = "";
+      const pastKeys = Object.keys(data)
+        .sort()
+        .reverse()
+        .filter((dateKey) => dateKey !== todayKey)
+        .slice(0, 20);
 
-  const pastKeys = Object.keys(data)
-    .sort()
-    .reverse()
-    .filter((dateKey) => dateKey !== todayKey)
-    .slice(0, 20);
+      pastKeys.forEach((dateKey) => {
+        const date = new Date(dateKey);
+        const button = document.createElement("button");
+        button.className = "date-button";
+        button.textContent = `${date.getMonth() + 1}/${date.getDate()}`;
 
-  pastKeys.forEach((dateKey) => {
-    const date = new Date(dateKey);
+        if (selectedPastDateKey === dateKey) button.classList.add("active");
 
-    const button = document.createElement("button");
-    button.className = "date-button";
-    button.textContent = `${date.getMonth() + 1}/${date.getDate()}`;
+        button.addEventListener("click", () => {
+          if (selectedPastDateKey === dateKey) {
+            selectedPastDateKey = null;
+            pastDiaryList.classList.remove("open");
+            pastDiaryList.innerHTML = "";
+          } else {
+            selectedPastDateKey = dateKey;
+            renderPastDiary(dateKey);
+          }
 
-    if (selectedPastDateKey === dateKey) {
-      button.classList.add("active");
+          renderPastDateButtons();
+        });
+
+        dateButtons.appendChild(button);
+      });
     }
 
-    button.addEventListener("click", () => {
-      if (selectedPastDateKey === dateKey) {
-        selectedPastDateKey = null;
-        pastDiaryList.classList.remove("open");
-        pastDiaryList.innerHTML = "";
-      } else {
-        selectedPastDateKey = dateKey;
-        renderPastDiary(dateKey);
-      }
-
-      renderPastDateButtons();
-    });
-
-    dateButtons.appendChild(button);
-  });
-}
-
     function renderPastDiary(dateKey) {
-
       const data = getDiaryData();
-
       const items = data[dateKey] || [];
-
       pastDiaryList.innerHTML = "";
-
       pastDiaryList.classList.add("open");
 
       items.forEach((text) => {
-
         const item = document.createElement("div");
-
         item.className = "past-diary-item";
-
         item.textContent = `・${text}`;
-
         pastDiaryList.appendChild(item);
       });
     }
 
     function getDiaryData() {
-
-      return JSON.parse(
-        localStorage.getItem(STORAGE_KEY)
-      ) || {};
+      return JSON.parse(localStorage.getItem(DIARY_STORAGE_KEY)) || {};
     }
 
     function setDiaryData(data) {
-
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(data)
-      );
+      localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(data));
     }
 
     function saveDiaryItem(dateKey, text) {
-
       const data = getDiaryData();
-
-      if (!data[dateKey]) {
-        data[dateKey] = [];
-      }
-
+      if (!data[dateKey]) data[dateKey] = [];
       data[dateKey].push(text);
-
       setDiaryData(data);
     }
 
-    function deleteDiaryItem(dateKey, text) {
+    function updateDiaryItem(dateKey, index, newText) {
+      const data = getDiaryData();
+      if (!data[dateKey]) return;
+      if (!newText) return;
+      data[dateKey][index] = newText;
+      setDiaryData(data);
+    }
 
+    function deleteDiaryItemByIndex(dateKey, index) {
+      const data = getDiaryData();
+      if (!data[dateKey]) return;
+      data[dateKey].splice(index, 1);
+      if (data[dateKey].length === 0) delete data[dateKey];
+      setDiaryData(data);
+    }
+
+    function renderMonthSelect() {
       const data = getDiaryData();
 
-      if (!data[dateKey]) return;
+      const months = [...new Set(
+        Object.keys(data)
+          .sort()
+          .map((dateKey) => {
+            const date = new Date(dateKey);
+            return `${date.getFullYear()}/${date.getMonth() + 1}`;
+          })
+      )];
 
-      data[dateKey] =
-        data[dateKey].filter((item) => item !== text);
+      monthSelect.innerHTML = "";
 
-      if (data[dateKey].length === 0) {
-        delete data[dateKey];
-      }
-
-      setDiaryData(data);
+      months.forEach((monthKey) => {
+        const option = document.createElement("option");
+        option.value = monthKey;
+        option.textContent = monthKey;
+        monthSelect.appendChild(option);
+      });
     }
 
     function downloadTxt() {
-  const data = getDiaryData();
+      const data = getDiaryData();
+      const selectedMonth = monthSelect.value;
 
-  const selectedMonth = monthSelect.value;
+      if (!selectedMonth) {
+        alert("ダウンロードする月の日記がありません。");
+        return;
+      }
 
-  if (!selectedMonth) {
-    alert("ダウンロードする月の日記がありません。");
-    return;
-  }
+      const [yearText, monthText] = selectedMonth.split("/");
+      const year = Number(yearText);
+      const month = Number(monthText);
 
-  const [yearText, monthText] = selectedMonth.split("/");
-  const year = Number(yearText);
-  const month = Number(monthText);
+      const targetKeys = Object.keys(data)
+        .sort()
+        .filter((dateKey) => {
+          const date = new Date(dateKey);
+          return date.getFullYear() === year && date.getMonth() + 1 === month;
+        });
 
-  const targetKeys = Object.keys(data)
-    .sort()
-    .filter((dateKey) => {
-      const date = new Date(dateKey);
+      let text = `【こえ日記】${year}年${month}月\n\n`;
 
-      return (
-        date.getFullYear() === year &&
-        date.getMonth() + 1 === month
-      );
-    });
+      targetKeys.forEach((dateKey) => {
+        const date = new Date(dateKey);
+        const day = date.getDate();
+        text += "────────────\n";
+        text += `▼${month}月${day}日\n`;
+        text += "────────────\n";
+        data[dateKey].forEach((item) => {
+          text += `・${item}\n`;
+        });
+        text += "\n";
+      });
 
-  if (targetKeys.length === 0) {
-    alert("この月の日記がありません。");
-    return;
-  }
+      text += "────────────\n";
 
-  let text = `【声日記】${year}年${month}月\n\n`;
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `こえ日記_${year}-${String(month).padStart(2, "0")}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
-  targetKeys.forEach((dateKey) => {
-    const date = new Date(dateKey);
-    const day = date.getDate();
+    function getGoalData() {
+      return JSON.parse(localStorage.getItem(GOAL_STORAGE_KEY)) || [];
+    }
 
-    text += "────────────\n";
-    text += `▼${month}月${day}日\n`;
-    text += "────────────\n";
+    function setGoalData(data) {
+      localStorage.setItem(GOAL_STORAGE_KEY, JSON.stringify(data));
+    }
 
-    data[dateKey].forEach((item) => {
-      text += `・${item}\n`;
-    });
+    function saveGoalItem(text) {
+      const data = getGoalData();
+      data.push({ text, createdAt: formatDateKey(new Date()) });
+      setGoalData(data);
+    }
 
-    text += "\n";
-  });
+    function renderGoalList() {
+      const goals = getGoalData();
+      goalList.innerHTML = "";
 
-  text += "────────────\n";
+      goals.forEach((goal, index) => {
+        const item = document.createElement("div");
+        item.className = "diary-item goal-item";
 
-  const blob = new Blob([text], {
-    type: "text/plain;charset=utf-8"
-  });
+        const swipeContent = document.createElement("div");
+        swipeContent.className = "swipe-content";
 
-  const url = URL.createObjectURL(blob);
+        if (isGoalDeleteMode) {
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.className = "goal-checkbox";
+          checkbox.dataset.index = index;
+          swipeContent.appendChild(checkbox);
+        }
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `声日記_${year}-${String(month).padStart(2, "0")}.txt`;
-  a.click();
+        const content = document.createElement("div");
+        content.className = "text";
+        content.textContent = goal.text;
 
-  URL.revokeObjectURL(url);
-}
+        swipeContent.appendChild(content);
+        item.appendChild(swipeContent);
+        goalList.appendChild(item);
+      });
+    }
+
+    function toggleGoalMultiDelete() {
+      if (!isGoalDeleteMode) {
+        isGoalDeleteMode = true;
+        goalMultiDeleteButton.textContent = "選択した目標を削除";
+        goalMultiDeleteButton.classList.add("delete-mode");
+        renderGoalList();
+        return;
+      }
+
+      const checkedBoxes = goalList.querySelectorAll(".goal-checkbox:checked");
+
+      if (checkedBoxes.length === 0) {
+        isGoalDeleteMode = false;
+        goalMultiDeleteButton.textContent = "複数削除";
+        goalMultiDeleteButton.classList.remove("delete-mode");
+        renderGoalList();
+        return;
+      }
+
+      const deleteIndexes = Array.from(checkedBoxes).map((checkbox) => Number(checkbox.dataset.index));
+      deleteGoalItems(deleteIndexes);
+
+      isGoalDeleteMode = false;
+      goalMultiDeleteButton.textContent = "複数削除";
+      goalMultiDeleteButton.classList.remove("delete-mode");
+      renderGoalList();
+    }
+
+    function deleteGoalItems(indexes) {
+      const data = getGoalData();
+      const filtered = data.filter((_, index) => !indexes.includes(index));
+      setGoalData(filtered);
+    }
 
     function formatDateKey(date) {
-
       const year = date.getFullYear();
-
-      const month =
-        String(date.getMonth() + 1).padStart(2, "0");
-
-      const day =
-        String(date.getDate()).padStart(2, "0");
-
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     }
-
-    function isSameMonth(dateKey, baseDate) {
-
-      const date = new Date(dateKey);
-
-      return (
-        date.getFullYear() === baseDate.getFullYear() &&
-        date.getMonth() === baseDate.getMonth()
-      );
-    }
-
-function renderMonthSelect() {
-  const data = getDiaryData();
-
-  const months = [...new Set(
-    Object.keys(data)
-      .sort()
-      .map((dateKey) => {
-        const date = new Date(dateKey);
-        return `${date.getFullYear()}/${date.getMonth() + 1}`;
-      })
-  )];
-
-  monthSelect.innerHTML = "";
-
-  months.forEach((monthKey) => {
-    const option = document.createElement("option");
-    option.value = monthKey;
-    option.textContent = monthKey;
-    monthSelect.appendChild(option);
-  });
-}
-
-function updateDiaryItem(dateKey, index, newText) {
-  const data = getDiaryData();
-
-  if (!data[dateKey]) return;
-  if (!newText) return;
-
-  data[dateKey][index] = newText;
-
-  setDiaryData(data);
-}
-
-function deleteDiaryItemByIndex(dateKey, index) {
-  const data = getDiaryData();
-
-  if (!data[dateKey]) return;
-
-  data[dateKey].splice(index, 1);
-
-  if (data[dateKey].length === 0) {
-    delete data[dateKey];
-  }
-
-  setDiaryData(data);
-}
-
   </script>
-
 </body>
 </html>
