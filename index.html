@@ -143,6 +143,37 @@
   margin-top: 16px;
 }
 
+.diary-item.show-delete .swipe-content {
+  transform: translateX(-64px);
+}
+
+.diary-item.show-edit .swipe-content {
+  transform: translateX(64px);
+}
+
+.edit-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 64px;
+  height: 100%;
+  background: #4c956c;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.text.editing {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  background: #fffdf2;
+  outline: none;
+}
+
 #monthSelect {
   width: 100%;
   padding: 12px;
@@ -267,66 +298,96 @@ renderMonthSelect();
 
       todayDiaryList.innerHTML = "";
 
-      items.forEach((text) => {
-        addTodayDiaryItem(text);
-      });
+      items.forEach((text, index) => {
+  addTodayDiaryItem(text, index);
+});
     }
 
-    function addTodayDiaryItem(text) {
+    function addTodayDiaryItem(text, index) {
 
-      const item = document.createElement("div");
-      item.className = "diary-item";
+  const item = document.createElement("div");
+  item.className = "diary-item";
 
-      const swipeContent = document.createElement("div");
-      swipeContent.className = "swipe-content";
+  const swipeContent = document.createElement("div");
+  swipeContent.className = "swipe-content";
 
-      const content = document.createElement("div");
-      content.className = "text";
-      content.textContent = text;
+  const content = document.createElement("div");
+  content.className = "text";
+  content.textContent = text;
 
-      swipeContent.appendChild(content);
+  swipeContent.appendChild(content);
 
-      const deleteButton = document.createElement("div");
-      deleteButton.className = "delete-button";
-      deleteButton.innerHTML = `
-  <span class="material-symbols-outlined">
-    delete
-  </span>
-`;
+  const editButton = document.createElement("div");
+  editButton.className = "edit-button";
+  editButton.innerHTML = `
+    <span class="material-symbols-outlined">
+      edit
+    </span>
+  `;
 
-      deleteButton.addEventListener("click", () => {
-        deleteDiaryItem(todayKey, text);
-        renderTodayDiary();
-  renderPastDateButtons();
-  renderMonthSelect();
-      });
+  const deleteButton = document.createElement("div");
+  deleteButton.className = "delete-button";
+  deleteButton.innerHTML = `
+    <span class="material-symbols-outlined">
+      delete
+    </span>
+  `;
 
-      item.appendChild(deleteButton);
-      item.appendChild(swipeContent);
+  let isEditing = false;
 
-      todayDiaryList.appendChild(item);
+  editButton.addEventListener("click", () => {
+    if (!isEditing) {
+      isEditing = true;
+      content.contentEditable = "true";
+      content.classList.add("editing");
+      content.focus();
+    } else {
+      isEditing = false;
+      content.contentEditable = "false";
+      content.classList.remove("editing");
 
-      let startX = 0;
+      updateDiaryItem(todayKey, index, content.textContent.trim());
 
-      item.addEventListener("touchstart", (event) => {
-        startX = event.touches[0].clientX;
-      });
-
-      item.addEventListener("touchmove", (event) => {
-
-        const currentX = event.touches[0].clientX;
-
-        const diff = startX - currentX;
-
-        if (diff > 40) {
-          item.classList.add("show-delete");
-        }
-
-        if (diff < -20) {
-          item.classList.remove("show-delete");
-        }
-      });
+      item.classList.remove("show-edit");
+      renderTodayDiary();
+      renderMonthSelect();
     }
+  });
+
+  deleteButton.addEventListener("click", () => {
+    deleteDiaryItemByIndex(todayKey, index);
+    renderTodayDiary();
+    renderPastDateButtons();
+    renderMonthSelect();
+  });
+
+  item.appendChild(editButton);
+  item.appendChild(deleteButton);
+  item.appendChild(swipeContent);
+
+  todayDiaryList.appendChild(item);
+
+  let startX = 0;
+
+  item.addEventListener("touchstart", (event) => {
+    startX = event.touches[0].clientX;
+  });
+
+  item.addEventListener("touchmove", (event) => {
+    const currentX = event.touches[0].clientX;
+    const diff = startX - currentX;
+
+    if (diff > 40) {
+      item.classList.add("show-delete");
+      item.classList.remove("show-edit");
+    }
+
+    if (diff < -40) {
+      item.classList.add("show-edit");
+      item.classList.remove("show-delete");
+    }
+  });
+}
 
     function renderPastDateButtons() {
   const data = getDiaryData();
@@ -540,6 +601,32 @@ function renderMonthSelect() {
     monthSelect.appendChild(option);
   });
 }
+
+function updateDiaryItem(dateKey, index, newText) {
+  const data = getDiaryData();
+
+  if (!data[dateKey]) return;
+  if (!newText) return;
+
+  data[dateKey][index] = newText;
+
+  setDiaryData(data);
+}
+
+function deleteDiaryItemByIndex(dateKey, index) {
+  const data = getDiaryData();
+
+  if (!data[dateKey]) return;
+
+  data[dateKey].splice(index, 1);
+
+  if (data[dateKey].length === 0) {
+    delete data[dateKey];
+  }
+
+  setDiaryData(data);
+}
+
   </script>
 
 </body>
