@@ -765,33 +765,143 @@
     }
 
     function renderGoalList() {
-      const goals = getGoalData();
-      goalList.innerHTML = "";
+  const goals = getGoalData();
+  goalList.innerHTML = "";
 
-      goals.forEach((goal, index) => {
-        const item = document.createElement("div");
-        item.className = "diary-item goal-item";
+  goals.forEach((goal, index) => {
+    addGoalItem(goal.text, index);
+  });
+}
 
-        const swipeContent = document.createElement("div");
-        swipeContent.className = "swipe-content";
+function addGoalItem(text, index) {
+  const item = document.createElement("div");
+  item.className = "diary-item goal-item";
 
-        if (isGoalDeleteMode) {
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.className = "goal-checkbox";
-          checkbox.dataset.index = index;
-          swipeContent.appendChild(checkbox);
-        }
+  const swipeContent = document.createElement("div");
+  swipeContent.className = "swipe-content";
 
-        const content = document.createElement("div");
-        content.className = "text";
-        content.textContent = goal.text;
+  if (isGoalDeleteMode) {
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "goal-checkbox";
+    checkbox.dataset.index = index;
+    swipeContent.appendChild(checkbox);
+  }
 
-        swipeContent.appendChild(content);
-        item.appendChild(swipeContent);
-        goalList.appendChild(item);
-      });
+  const content = document.createElement("div");
+  content.className = "text";
+  content.textContent = text;
+  swipeContent.appendChild(content);
+
+  const editButton = document.createElement("div");
+  editButton.className = "edit-button";
+  editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
+
+  const deleteButton = document.createElement("div");
+  deleteButton.className = "delete-button";
+  deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
+
+  let isEditing = false;
+  let startX = 0;
+  let startState = "default";
+
+  editButton.addEventListener("click", () => {
+    if (!isEditing) {
+      isEditing = true;
+      content.contentEditable = "true";
+      content.classList.add("editing");
+      content.focus();
+    } else {
+      isEditing = false;
+      content.contentEditable = "false";
+      content.classList.remove("editing");
+
+      updateGoalItem(index, content.textContent.trim());
+
+      item.classList.remove("show-edit");
+      renderGoalList();
     }
+  });
+
+  deleteButton.addEventListener("click", () => {
+    deleteGoalItemByIndex(index);
+    renderGoalList();
+  });
+
+  item.appendChild(editButton);
+  item.appendChild(deleteButton);
+  item.appendChild(swipeContent);
+  goalList.appendChild(item);
+
+  item.addEventListener("touchstart", (event) => {
+    if (isGoalDeleteMode) return;
+
+    startX = event.touches[0].clientX;
+
+    if (item.classList.contains("show-delete")) {
+      startState = "delete";
+    } else if (item.classList.contains("show-edit")) {
+      startState = "edit";
+    } else {
+      startState = "default";
+    }
+  });
+
+  item.addEventListener("touchmove", (event) => {
+    if (isGoalDeleteMode) return;
+
+    const currentX = event.touches[0].clientX;
+    const diff = startX - currentX;
+
+    if (startState === "default") {
+      if (diff > 40) {
+        item.classList.add("show-delete");
+        item.classList.remove("show-edit");
+      }
+
+      if (diff < -40) {
+        item.classList.add("show-edit");
+        item.classList.remove("show-delete");
+      }
+    } else if (startState === "delete") {
+      if (diff < -30) {
+        item.classList.remove("show-delete");
+      }
+    } else if (startState === "edit") {
+      if (diff > 30) {
+        item.classList.remove("show-edit");
+      }
+    }
+  });
+
+  document.addEventListener("touchstart", (event) => {
+    if (!item.contains(event.target)) {
+      item.classList.remove("show-delete");
+      item.classList.remove("show-edit");
+    }
+  });
+}
+
+function updateGoalItem(index, newText) {
+  const data = getGoalData();
+
+  if (!newText) return;
+  if (!data[index]) return;
+
+  data[index].text = newText;
+
+  setGoalData(data);
+}
+
+function deleteGoalItemByIndex(index) {
+  const data = getGoalData();
+
+  if (!data[index]) return;
+
+  data.splice(index, 1);
+
+  setGoalData(data);
+}
 
     function toggleGoalMultiDelete() {
       if (!isGoalDeleteMode) {
