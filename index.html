@@ -307,7 +307,7 @@
     let selectedPastDateKey = null;
     let isGoalDeleteMode = false;
 
-    const today = new Date();
+    const today = getLogicalToday();
     const todayKey = formatDateKey(today);
 
     setupDiaryVoiceInput();
@@ -833,6 +833,17 @@
       const day = String(date.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     }
+    
+    function getLogicalToday() {
+
+  const now = new Date();
+
+  const logicalDate = new Date(now);
+
+  logicalDate.setHours(logicalDate.getHours() - 4);
+
+  return logicalDate;
+}
   </script>
 </body>
 </html>
