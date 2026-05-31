@@ -138,6 +138,20 @@
       font-size: 13px;
       line-height: 1.5;
     }
+
+.download-area {
+  margin-top: 16px;
+}
+
+#monthSelect {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  background: white;
+}
   </style>
 </head>
 
@@ -161,9 +175,12 @@
     <div id="pastDiaryList" class="past-diary-area"></div>
   </div>
 
+ <div class="download-area">
+  <select id="monthSelect"></select>
   <button id="downloadButton" class="main-button">
-    今月の日記をTXTで保存
+    txtファイルでダウンロード
   </button>
+</div>
 
   <script>
     const STORAGE_KEY = "voiceDiaryData";
@@ -173,6 +190,7 @@
     const todayDiaryList = document.getElementById("todayDiaryList");
     const dateButtons = document.getElementById("dateButtons");
     const pastDiaryList = document.getElementById("pastDiaryList");
+    const monthSelect = document.getElementById("monthSelect");
 
     let selectedPastDateKey = null;
 
@@ -211,7 +229,8 @@
         });
 
         renderTodayDiary();
-        renderPastDateButtons();
+renderPastDateButtons();
+renderMonthSelect();
       };
 
       recognition.onend = () => {
@@ -230,7 +249,8 @@
     downloadButton.addEventListener("click", downloadTxt);
 
     renderTodayDiary();
-    renderPastDateButtons();
+renderPastDateButtons();
+renderMonthSelect();
 
     function formatDiary(text) {
       return text
@@ -277,7 +297,8 @@
       deleteButton.addEventListener("click", () => {
         deleteDiaryItem(todayKey, text);
         renderTodayDiary();
-        renderPastDateButtons();
+  renderPastDateButtons();
+  renderMonthSelect();
       });
 
       item.appendChild(deleteButton);
@@ -308,58 +329,43 @@
     }
 
     function renderPastDateButtons() {
+  const data = getDiaryData();
 
-      const data = getDiaryData();
+  dateButtons.innerHTML = "";
 
-      dateButtons.innerHTML = "";
+  const pastKeys = Object.keys(data)
+    .sort()
+    .reverse()
+    .filter((dateKey) => dateKey !== todayKey)
+    .slice(0, 20);
 
-      const pastKeys = Object.keys(data)
-        .sort()
-        .filter((dateKey) => {
-          return (
-            isSameMonth(dateKey, today) &&
-            dateKey !== todayKey
-          );
-        });
+  pastKeys.forEach((dateKey) => {
+    const date = new Date(dateKey);
 
-      pastKeys.forEach((dateKey) => {
+    const button = document.createElement("button");
+    button.className = "date-button";
+    button.textContent = `${date.getMonth() + 1}/${date.getDate()}`;
 
-        const date = new Date(dateKey);
-
-        const button = document.createElement("button");
-
-        button.className = "date-button";
-
-        button.textContent =
-          `${date.getMonth() + 1}/${date.getDate()}`;
-
-        if (selectedPastDateKey === dateKey) {
-          button.classList.add("active");
-        }
-
-        button.addEventListener("click", () => {
-
-          if (selectedPastDateKey === dateKey) {
-
-            selectedPastDateKey = null;
-
-            pastDiaryList.classList.remove("open");
-
-            pastDiaryList.innerHTML = "";
-
-          } else {
-
-            selectedPastDateKey = dateKey;
-
-            renderPastDiary(dateKey);
-          }
-
-          renderPastDateButtons();
-        });
-
-        dateButtons.appendChild(button);
-      });
+    if (selectedPastDateKey === dateKey) {
+      button.classList.add("active");
     }
+
+    button.addEventListener("click", () => {
+      if (selectedPastDateKey === dateKey) {
+        selectedPastDateKey = null;
+        pastDiaryList.classList.remove("open");
+        pastDiaryList.innerHTML = "";
+      } else {
+        selectedPastDateKey = dateKey;
+        renderPastDiary(dateKey);
+      }
+
+      renderPastDateButtons();
+    });
+
+    dateButtons.appendChild(button);
+  });
+}
 
     function renderPastDiary(dateKey) {
 
@@ -428,58 +434,67 @@
     }
 
     function downloadTxt() {
+  const data = getDiaryData();
 
-      const data = getDiaryData();
+  const selectedMonth = monthSelect.value;
 
-      const year = today.getFullYear();
+  if (!selectedMonth) {
+    alert("ダウンロードする月の日記がありません。");
+    return;
+  }
 
-      const month = today.getMonth() + 1;
+  const [yearText, monthText] = selectedMonth.split("/");
+  const year = Number(yearText);
+  const month = Number(monthText);
 
-      let text =
-        `【声日記】${year}年${month}月\n\n`;
+  const targetKeys = Object.keys(data)
+    .sort()
+    .filter((dateKey) => {
+      const date = new Date(dateKey);
 
-      Object.keys(data)
-        .sort()
-        .filter((dateKey) => {
-          return isSameMonth(dateKey, today);
-        })
-        .forEach((dateKey) => {
-
-          const date = new Date(dateKey);
-
-          const day = date.getDate();
-
-          text += "────────────\n";
-          text += `▼${month}月${day}日\n`;
-          text += "────────────\n";
-
-          data[dateKey].forEach((item) => {
-            text += `・${item}\n`;
-          });
-
-          text += "\n";
-        });
-
-      text += "────────────\n";
-
-      const blob = new Blob(
-        [text],
-        { type: "text/plain;charset=utf-8" }
+      return (
+        date.getFullYear() === year &&
+        date.getMonth() + 1 === month
       );
+    });
 
-      const url = URL.createObjectURL(blob);
+  if (targetKeys.length === 0) {
+    alert("この月の日記がありません。");
+    return;
+  }
 
-      const a = document.createElement("a");
+  let text = `【声日記】${year}年${month}月\n\n`;
 
-      a.href = url;
+  targetKeys.forEach((dateKey) => {
+    const date = new Date(dateKey);
+    const day = date.getDate();
 
-      a.download =
-        `声日記_${year}-${String(month).padStart(2, "0")}.txt`;
+    text += "────────────\n";
+    text += `▼${month}月${day}日\n`;
+    text += "────────────\n";
 
-      a.click();
+    data[dateKey].forEach((item) => {
+      text += `・${item}\n`;
+    });
 
-      URL.revokeObjectURL(url);
-    }
+    text += "\n";
+  });
+
+  text += "────────────\n";
+
+  const blob = new Blob([text], {
+    type: "text/plain;charset=utf-8"
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `声日記_${year}-${String(month).padStart(2, "0")}.txt`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
 
     function formatDateKey(date) {
 
@@ -503,6 +518,28 @@
         date.getMonth() === baseDate.getMonth()
       );
     }
+
+function renderMonthSelect() {
+  const data = getDiaryData();
+
+  const months = [...new Set(
+    Object.keys(data)
+      .sort()
+      .map((dateKey) => {
+        const date = new Date(dateKey);
+        return `${date.getFullYear()}/${date.getMonth() + 1}`;
+      })
+  )];
+
+  monthSelect.innerHTML = "";
+
+  months.forEach((monthKey) => {
+    const option = document.createElement("option");
+    option.value = monthKey;
+    option.textContent = monthKey;
+    monthSelect.appendChild(option);
+  });
+}
   </script>
 
 </body>
