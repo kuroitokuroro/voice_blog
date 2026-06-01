@@ -237,6 +237,129 @@
       line-height: 1.6;
     }
     
+
+    .habit-add-area {
+      display: none;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .habit-add-area.open {
+      display: flex;
+    }
+
+    .habit-input {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      background: white;
+    }
+
+    .habit-add-submit-button {
+      width: 72px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #333;
+      color: white;
+      font-size: 15px;
+    }
+
+    .habit-button-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px;
+      background: white;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .habit-task-button {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #eeeeee;
+      color: #333;
+      font-size: 15px;
+      line-height: 1.2;
+      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .habit-task-button.done-today {
+      background: #748a74;
+      color: #ffffff;
+    }
+
+    .habit-task-button.selected {
+      box-shadow: 0 0 0 2px #748a74 inset;
+    }
+
+    .habit-task-button.long-pressing {
+      transform: scale(0.96);
+      background: #748a74;
+    }
+
+    .habit-calendar {
+      display: none;
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .habit-calendar.open {
+      display: block;
+    }
+
+    .habit-calendar-title {
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .habit-calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .habit-calendar-weekday,
+    .habit-calendar-day {
+      min-height: 34px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .habit-calendar-weekday {
+      min-height: 22px;
+      color: #888;
+      font-size: 12px;
+    }
+
+    .habit-calendar-day {
+      background: #f1f1f1;
+      color: #777;
+    }
+
+    .habit-calendar-day.done {
+      background: #748a74;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .habit-calendar-day.empty {
+      background: transparent;
+    }
+
     .danger-button {
   width: 100%;
   padding: 14px;
@@ -303,20 +426,32 @@
   </section>
 
   <section id="habitPanel" class="panel">
-    <button class="main-button">話して習慣を追加</button>
+    <button id="habitAddOpenButton" class="main-button">＋ 習慣を追加</button>
+
+    <div id="habitAddArea" class="habit-add-area">
+      <input
+        id="habitInput"
+        class="habit-input"
+        type="text"
+        inputmode="latin"
+        autocomplete="off"
+        autocapitalize="none"
+        spellcheck="false"
+        placeholder="例：gohan / furo / kusuri"
+      >
+      <button id="habitAddSubmitButton" class="habit-add-submit-button">追加</button>
+    </div>
 
     <h2>こえ習慣</h2>
-    <div class="tool-area">
-      <div class="empty-message">
-        ひらがなの習慣だけ登録。入浴・服薬などの記録を見る場所。
-      </div>
-    </div>
+    <div id="habitList" class="habit-button-list"></div>
+    <div id="habitCalendar" class="habit-calendar"></div>
   </section>
 
   <script>
     const TAB_STORAGE_KEY = "koeTabOrder";
     const DIARY_STORAGE_KEY = "voiceDiaryData";
     const GOAL_STORAGE_KEY = "koeGoalData";
+    const HABIT_STORAGE_KEY = "koeHabitData";
 
     const DEFAULT_TABS = [
       { id: "diary", label: "こえ日記", panelId: "diaryPanel" },
@@ -335,10 +470,17 @@
     const goalMultiDeleteButton = document.getElementById("goalMultiDeleteButton");
     const goalList = document.getElementById("goalList");
     const deleteOldestMonthButton = document.getElementById("deleteOldestMonthButton");
+    const habitAddOpenButton = document.getElementById("habitAddOpenButton");
+    const habitAddArea = document.getElementById("habitAddArea");
+    const habitInput = document.getElementById("habitInput");
+    const habitAddSubmitButton = document.getElementById("habitAddSubmitButton");
+    const habitList = document.getElementById("habitList");
+    const habitCalendar = document.getElementById("habitCalendar");
 
     let tabOrder = loadTabOrder();
     let activeTabId = tabOrder[0].id;
     let selectedPastDateKey = null;
+    let selectedHabitIndex = null;
     let isGoalDeleteMode = false;
 
     const today = getLogicalToday();
@@ -349,6 +491,12 @@
     downloadButton.addEventListener("click", downloadTxt);
     deleteOldestMonthButton.addEventListener("click", deleteOldestMonthDiary);
     goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
+    habitAddOpenButton.addEventListener("click", openHabitAddArea);
+    habitAddSubmitButton.addEventListener("click", addHabitFromInput);
+    habitInput.addEventListener("input", keepHabitInputRomajiOnly);
+    habitInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") addHabitFromInput();
+    });
 
     renderTabs();
     renderPanels();
@@ -356,6 +504,7 @@
     renderPastDateButtons();
     renderMonthSelect();
     renderGoalList();
+    renderHabitList();
 
     function setupDiaryVoiceInput() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1070,6 +1219,287 @@ function deleteGoalItemByIndex(index) {
       const data = getGoalData();
       const filtered = data.filter((_, index) => !indexes.includes(index));
       setGoalData(filtered);
+    }
+
+
+
+    function openHabitAddArea() {
+      habitAddArea.classList.toggle("open");
+
+      if (habitAddArea.classList.contains("open")) {
+        habitInput.focus();
+      }
+    }
+
+    function keepHabitInputRomajiOnly() {
+      habitInput.value = normalizeRomajiInput(habitInput.value);
+    }
+
+    function normalizeRomajiInput(text) {
+      return text
+        .normalize("NFKC")
+        .toLowerCase()
+        .replace(/[^a-z\s-]/g, "")
+        .replace(/[\s-]+/g, "");
+    }
+
+    function addHabitFromInput() {
+      const romajiText = normalizeRomajiInput(habitInput.value);
+
+      if (!romajiText) {
+        habitInput.focus();
+        return;
+      }
+
+      const hiraganaText = romajiToHiragana(romajiText);
+
+      saveHabitItem(hiraganaText);
+      selectedHabitIndex = getHabitData().length - 1;
+      habitInput.value = "";
+      habitAddArea.classList.remove("open");
+      renderHabitList();
+    }
+
+    function getHabitData() {
+      return JSON.parse(localStorage.getItem(HABIT_STORAGE_KEY)) || [];
+    }
+
+    function setHabitData(data) {
+      localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function saveHabitItem(text) {
+      const data = getHabitData();
+      data.push({ text, doneDates: [] });
+      setHabitData(data);
+    }
+
+    function toggleHabitDone(index) {
+      const data = getHabitData();
+      if (!data[index]) return;
+
+      if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
+
+      const doneIndex = data[index].doneDates.indexOf(todayKey);
+
+      if (doneIndex >= 0) {
+        data[index].doneDates.splice(doneIndex, 1);
+      } else {
+        data[index].doneDates.push(todayKey);
+      }
+
+      setHabitData(data);
+      selectedHabitIndex = index;
+      renderHabitList();
+      renderHabitCalendar();
+    }
+
+    function renderHabitList() {
+      const habits = getHabitData();
+      habitList.innerHTML = "";
+
+      if (habits.length === 0) {
+        selectedHabitIndex = null;
+        habitCalendar.classList.remove("open");
+        habitCalendar.innerHTML = "";
+
+        const empty = document.createElement("div");
+        empty.className = "empty-message";
+        empty.textContent = "＋ボタンからローマ字で習慣を追加できます。例：furo → ふろ";
+        habitList.appendChild(empty);
+        return;
+      }
+
+      if (selectedHabitIndex !== null && !habits[selectedHabitIndex]) {
+        selectedHabitIndex = null;
+      }
+
+      habits.forEach((habit, index) => {
+        const button = document.createElement("button");
+        button.className = "habit-task-button";
+        button.textContent = habit.text;
+        button.type = "button";
+
+        const isDoneToday = Array.isArray(habit.doneDates) && habit.doneDates.includes(todayKey);
+        if (isDoneToday) button.classList.add("done-today");
+        if (selectedHabitIndex === index) button.classList.add("selected");
+
+        setupHabitButtonPress(button, index);
+        habitList.appendChild(button);
+      });
+
+      renderHabitCalendar();
+    }
+
+    function setupHabitButtonPress(button, index) {
+      let longPressTimer = null;
+      let didLongPress = false;
+      const longPressDuration = 550;
+
+      button.addEventListener("pointerdown", (event) => {
+        didLongPress = false;
+        button.classList.add("long-pressing");
+        button.setPointerCapture(event.pointerId);
+
+        longPressTimer = setTimeout(() => {
+          didLongPress = true;
+          button.classList.remove("long-pressing");
+          toggleHabitDone(index);
+        }, longPressDuration);
+      });
+
+      button.addEventListener("pointerup", () => {
+        clearTimeout(longPressTimer);
+        button.classList.remove("long-pressing");
+
+        if (didLongPress) return;
+
+        selectedHabitIndex = index;
+        renderHabitList();
+      });
+
+      button.addEventListener("pointercancel", () => {
+        clearTimeout(longPressTimer);
+        button.classList.remove("long-pressing");
+      });
+
+      button.addEventListener("pointerleave", () => {
+        clearTimeout(longPressTimer);
+        button.classList.remove("long-pressing");
+      });
+    }
+
+    function renderHabitCalendar() {
+      const habits = getHabitData();
+
+      if (selectedHabitIndex === null || !habits[selectedHabitIndex]) {
+        habitCalendar.classList.remove("open");
+        habitCalendar.innerHTML = "";
+        return;
+      }
+
+      const habit = habits[selectedHabitIndex];
+      const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      const year = baseDate.getFullYear();
+      const month = baseDate.getMonth();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+      const firstWeekday = baseDate.getDay();
+      const doneDates = Array.isArray(habit.doneDates) ? habit.doneDates : [];
+
+      habitCalendar.innerHTML = "";
+      habitCalendar.classList.add("open");
+
+      const title = document.createElement("div");
+      title.className = "habit-calendar-title";
+      title.textContent = `${habit.text}｜${year}年${month + 1}月の達成日`;
+      habitCalendar.appendChild(title);
+
+      const grid = document.createElement("div");
+      grid.className = "habit-calendar-grid";
+
+      ["日", "月", "火", "水", "木", "金", "土"].forEach((weekday) => {
+        const cell = document.createElement("div");
+        cell.className = "habit-calendar-weekday";
+        cell.textContent = weekday;
+        grid.appendChild(cell);
+      });
+
+      for (let i = 0; i < firstWeekday; i++) {
+        const empty = document.createElement("div");
+        empty.className = "habit-calendar-day empty";
+        grid.appendChild(empty);
+      }
+
+      for (let day = 1; day <= lastDate; day++) {
+        const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const cell = document.createElement("div");
+        cell.className = "habit-calendar-day";
+        cell.textContent = day;
+
+        if (doneDates.includes(dateKey)) cell.classList.add("done");
+
+        grid.appendChild(cell);
+      }
+
+      habitCalendar.appendChild(grid);
+    }
+
+    const ROMAJI_TO_HIRAGANA = {
+      kya: "きゃ", kyu: "きゅ", kyo: "きょ",
+      gya: "ぎゃ", gyu: "ぎゅ", gyo: "ぎょ",
+      sya: "しゃ", syu: "しゅ", syo: "しょ",
+      sha: "しゃ", shu: "しゅ", sho: "しょ",
+      zya: "じゃ", zyu: "じゅ", zyo: "じょ",
+      jya: "じゃ", jyu: "じゅ", jyo: "じょ",
+      ja: "じゃ", ju: "じゅ", jo: "じょ",
+      tya: "ちゃ", tyu: "ちゅ", tyo: "ちょ",
+      cya: "ちゃ", cyu: "ちゅ", cyo: "ちょ",
+      cha: "ちゃ", chu: "ちゅ", cho: "ちょ",
+      dya: "ぢゃ", dyu: "ぢゅ", dyo: "ぢょ",
+      nya: "にゃ", nyu: "にゅ", nyo: "にょ",
+      hya: "ひゃ", hyu: "ひゅ", hyo: "ひょ",
+      bya: "びゃ", byu: "びゅ", byo: "びょ",
+      pya: "ぴゃ", pyu: "ぴゅ", pyo: "ぴょ",
+      mya: "みゃ", myu: "みゅ", myo: "みょ",
+      rya: "りゃ", ryu: "りゅ", ryo: "りょ",
+
+      a: "あ", i: "い", u: "う", e: "え", o: "お",
+      ka: "か", ki: "き", ku: "く", ke: "け", ko: "こ",
+      ca: "か", ci: "し", cu: "く", ce: "せ", co: "こ",
+      ga: "が", gi: "ぎ", gu: "ぐ", ge: "げ", go: "ご",
+      sa: "さ", si: "し", shi: "し", su: "す", se: "せ", so: "そ",
+      za: "ざ", zi: "じ", ji: "じ", zu: "ず", ze: "ぜ", zo: "ぞ",
+      ta: "た", ti: "ち", chi: "ち", tu: "つ", tsu: "つ", te: "て", to: "と",
+      da: "だ", di: "ぢ", du: "づ", de: "で", do: "ど",
+      na: "な", ni: "に", nu: "ぬ", ne: "ね", no: "の",
+      ha: "は", hi: "ひ", hu: "ふ", fu: "ふ", he: "へ", ho: "ほ",
+      ba: "ば", bi: "び", bu: "ぶ", be: "べ", bo: "ぼ",
+      pa: "ぱ", pi: "ぴ", pu: "ぷ", pe: "ぺ", po: "ぽ",
+      ma: "ま", mi: "み", mu: "む", me: "め", mo: "も",
+      ya: "や", yu: "ゆ", yo: "よ",
+      ra: "ら", ri: "り", ru: "る", re: "れ", ro: "ろ",
+      la: "ら", li: "り", lu: "る", le: "れ", lo: "ろ",
+      wa: "わ", wi: "うぃ", we: "うぇ", wo: "を",
+      nn: "ん", xn: "ん", n: "ん"
+    };
+
+    function romajiToHiragana(input) {
+      let text = normalizeRomajiInput(input);
+      let result = "";
+
+      while (text.length > 0) {
+        if (text.length >= 2 && isSmallTsuTarget(text)) {
+          result += "っ";
+          text = text.slice(1);
+          continue;
+        }
+
+        let matched = false;
+
+        for (let length = 3; length > 0; length--) {
+          const part = text.slice(0, length);
+
+          if (ROMAJI_TO_HIRAGANA[part]) {
+            result += ROMAJI_TO_HIRAGANA[part];
+            text = text.slice(length);
+            matched = true;
+            break;
+          }
+        }
+
+        if (!matched) {
+          result += text[0];
+          text = text.slice(1);
+        }
+      }
+
+      return result;
+    }
+
+    function isSmallTsuTarget(text) {
+      const first = text[0];
+      const second = text[1];
+      return first === second && !["a", "i", "u", "e", "o", "n"].includes(first);
     }
 
     function formatDateKey(date) {
