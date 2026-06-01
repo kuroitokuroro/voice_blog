@@ -235,6 +235,18 @@
       color: #666;
       line-height: 1.6;
     }
+    
+    .danger-button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 4px;
+  font-size: 15px;
+  border: none;
+  border-radius: 12px;
+  background: #b94a48;
+  color: white;
+  cursor: pointer;
+}
   </style>
 </head>
 
@@ -258,6 +270,9 @@
     <div class="download-area">
       <select id="monthSelect"></select>
       <button id="downloadButton" class="main-button">txtファイルでダウンロード</button>
+      <button id="deleteOldestMonthButton" class="danger-button">
+  一番古い月の日記を消す
+</button>
     </div>
   </section>
 
@@ -301,6 +316,7 @@
     const goalVoiceButton = document.getElementById("goalVoiceButton");
     const goalMultiDeleteButton = document.getElementById("goalMultiDeleteButton");
     const goalList = document.getElementById("goalList");
+    const deleteOldestMonthButton = document.getElementById("deleteOldestMonthButton");
 
     let tabOrder = loadTabOrder();
     let activeTabId = tabOrder[0].id;
@@ -313,6 +329,7 @@
     setupDiaryVoiceInput();
     setupGoalVoiceInput();
     downloadButton.addEventListener("click", downloadTxt);
+    deleteOldestMonthButton.addEventListener("click", deleteOldestMonthDiary);
     goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
 
     renderTabs();
@@ -1053,6 +1070,63 @@ function deleteGoalItemByIndex(index) {
   logicalDate.setHours(logicalDate.getHours() - 4);
 
   return logicalDate;
+}
+
+function deleteOldestMonthDiary() {
+  const data = getDiaryData();
+  const dateKeys = Object.keys(data).sort();
+
+  if (dateKeys.length === 0) {
+    alert("削除できる日記がありません。");
+    return;
+  }
+
+  const oldestDate = new Date(dateKeys[0]);
+  const year = oldestDate.getFullYear();
+  const month = oldestDate.getMonth() + 1;
+  const targetMonth = `${year}/${month}`;
+
+  const firstConfirm = confirm(
+    `${targetMonth} の日記を削除します。\n\n` +
+    "この操作は元に戻せません。\n" +
+    "先にtxtファイルで保存しているか確認してください。\n\n" +
+    "削除しますか？"
+  );
+
+  if (!firstConfirm) return;
+
+  const typed = prompt(
+    `本当に ${targetMonth} の日記を削除する場合は、\n` +
+    "「削除」と入力してください。"
+  );
+
+  if (typed !== "削除") {
+    alert("削除をキャンセルしました。");
+    return;
+  }
+
+  Object.keys(data).forEach((dateKey) => {
+    const date = new Date(dateKey);
+
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() + 1 === month
+    ) {
+      delete data[dateKey];
+    }
+  });
+
+  setDiaryData(data);
+
+  selectedPastDateKey = null;
+  pastDiaryList.classList.remove("open");
+  pastDiaryList.innerHTML = "";
+
+  renderTodayDiary();
+  renderPastDateButtons();
+  renderMonthSelect();
+
+  alert(`${targetMonth} の日記を削除しました。`);
 }
   </script>
 </body>
