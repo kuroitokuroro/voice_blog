@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>こえログ</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-
+<link rel="icon" type="image/jpeg" href="favicon.jpg">
+<link rel="apple-touch-icon" href="favicon.jpg">
   <style>
     body {
       font-family: sans-serif;
@@ -247,11 +248,28 @@
   color: white;
   cursor: pointer;
 }
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.title-icon {
+  width: 46px;
+  height: 46px;
+}
   </style>
 </head>
 
 <body>
-  <h1>こえログ</h1>
+  <h1 class="title">
+  こえログ
+  <img src="icon.png" alt="アイコン" class="title-icon">
+</h1>
 
   <div id="tabBar" class="tab-bar"></div>
 
