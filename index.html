@@ -12,7 +12,7 @@
       font-family: sans-serif;
       max-width: 640px;
       margin: 0 auto;
-      padding: 5px 24px;
+      padding: 24px;
       background: #f7f7f7;
       color: #222;
     }
@@ -239,13 +239,9 @@
     
 
     .habit-add-area {
-      display: none;
+      display: flex;
       gap: 8px;
       margin-bottom: 12px;
-    }
-
-    .habit-add-area.open {
-      display: flex;
     }
 
     .habit-input {
@@ -387,8 +383,10 @@
 }
   </style>
 </head>
+
 <body>
-  <h1 class="title">こえログ
+  <h1 class="title">
+  こえログ
   <img src="icon.png" alt="アイコン" class="title-icon">
 </h1>
 
@@ -419,28 +417,23 @@
     <button id="goalVoiceButton" class="main-button">話して目標を追加</button>
     <button id="goalMultiDeleteButton" class="sub-button">複数削除</button>
 
-    <h2>こえ目標</h2>
+    <h2>目標</h2>
     <div id="goalList" class="diary-area"></div>
   </section>
 
   <section id="habitPanel" class="panel">
-    <button id="habitAddOpenButton" class="main-button">＋ 習慣を追加</button>
-
     <div id="habitAddArea" class="habit-add-area">
       <input
         id="habitInput"
         class="habit-input"
         type="text"
-        inputmode="latin"
         autocomplete="off"
-        autocapitalize="none"
-        spellcheck="false"
-        placeholder="例：gohan / furo / kusuri"
+        placeholder="例：水を飲む / 薬 / 風呂"
       >
       <button id="habitAddSubmitButton" class="habit-add-submit-button">追加</button>
     </div>
 
-    <h2>こえ習慣</h2>
+    <h2>習慣</h2>
     <div id="habitList" class="habit-button-list"></div>
     <div id="habitCalendar" class="habit-calendar"></div>
   </section>
@@ -452,9 +445,9 @@
     const HABIT_STORAGE_KEY = "koeHabitData";
 
     const DEFAULT_TABS = [
-      { id: "diary", label: "こえ日記", panelId: "diaryPanel" },
-      { id: "goal", label: "こえ目標", panelId: "goalPanel" },
-      { id: "habit", label: "こえ習慣", panelId: "habitPanel" }
+      { id: "diary", label: "日記", panelId: "diaryPanel" },
+      { id: "goal", label: "目標", panelId: "goalPanel" },
+      { id: "habit", label: "習慣", panelId: "habitPanel" }
     ];
 
     const tabBar = document.getElementById("tabBar");
@@ -468,7 +461,6 @@
     const goalMultiDeleteButton = document.getElementById("goalMultiDeleteButton");
     const goalList = document.getElementById("goalList");
     const deleteOldestMonthButton = document.getElementById("deleteOldestMonthButton");
-    const habitAddOpenButton = document.getElementById("habitAddOpenButton");
     const habitAddArea = document.getElementById("habitAddArea");
     const habitInput = document.getElementById("habitInput");
     const habitAddSubmitButton = document.getElementById("habitAddSubmitButton");
@@ -489,9 +481,7 @@
     downloadButton.addEventListener("click", downloadTxt);
     deleteOldestMonthButton.addEventListener("click", deleteOldestMonthDiary);
     goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
-    habitAddOpenButton.addEventListener("click", openHabitAddArea);
     habitAddSubmitButton.addEventListener("click", addHabitFromInput);
-    habitInput.addEventListener("input", keepHabitInputRomajiOnly);
     habitInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") addHabitFromInput();
     });
@@ -1007,7 +997,7 @@
           return date.getFullYear() === year && date.getMonth() + 1 === month;
         });
 
-      let text = `【こえ日記】${year}年${month}月\n\n`;
+      let text = `【日記】${year}年${month}月\n\n`;
 
       targetKeys.forEach((dateKey) => {
         const date = new Date(dateKey);
@@ -1027,7 +1017,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `こえ日記_${year}-${String(month).padStart(2, "0")}.txt`;
+      a.download = `日記_${year}-${String(month).padStart(2, "0")}.txt`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -1221,40 +1211,18 @@ function deleteGoalItemByIndex(index) {
 
 
 
-    function openHabitAddArea() {
-      habitAddArea.classList.toggle("open");
-
-      if (habitAddArea.classList.contains("open")) {
-        habitInput.focus();
-      }
-    }
-
-    function keepHabitInputRomajiOnly() {
-      habitInput.value = normalizeRomajiInput(habitInput.value);
-    }
-
-    function normalizeRomajiInput(text) {
-      return text
-        .normalize("NFKC")
-        .toLowerCase()
-        .replace(/[^a-z\s-]/g, "")
-        .replace(/[\s-]+/g, "");
-    }
-
     function addHabitFromInput() {
-      const romajiText = normalizeRomajiInput(habitInput.value);
+      const taskText = habitInput.value.trim();
 
-      if (!romajiText) {
+      if (!taskText) {
         habitInput.focus();
         return;
       }
 
-      const hiraganaText = romajiToHiragana(romajiText);
-
-      saveHabitItem(hiraganaText);
+      saveHabitItem(taskText);
       selectedHabitIndex = getHabitData().length - 1;
       habitInput.value = "";
-      habitAddArea.classList.remove("open");
+      habitInput.focus();
       renderHabitList();
     }
 
@@ -1420,84 +1388,6 @@ function deleteGoalItemByIndex(index) {
       }
 
       habitCalendar.appendChild(grid);
-    }
-
-    const ROMAJI_TO_HIRAGANA = {
-      kya: "きゃ", kyu: "きゅ", kyo: "きょ",
-      gya: "ぎゃ", gyu: "ぎゅ", gyo: "ぎょ",
-      sya: "しゃ", syu: "しゅ", syo: "しょ",
-      sha: "しゃ", shu: "しゅ", sho: "しょ",
-      zya: "じゃ", zyu: "じゅ", zyo: "じょ",
-      jya: "じゃ", jyu: "じゅ", jyo: "じょ",
-      ja: "じゃ", ju: "じゅ", jo: "じょ",
-      tya: "ちゃ", tyu: "ちゅ", tyo: "ちょ",
-      cya: "ちゃ", cyu: "ちゅ", cyo: "ちょ",
-      cha: "ちゃ", chu: "ちゅ", cho: "ちょ",
-      dya: "ぢゃ", dyu: "ぢゅ", dyo: "ぢょ",
-      nya: "にゃ", nyu: "にゅ", nyo: "にょ",
-      hya: "ひゃ", hyu: "ひゅ", hyo: "ひょ",
-      bya: "びゃ", byu: "びゅ", byo: "びょ",
-      pya: "ぴゃ", pyu: "ぴゅ", pyo: "ぴょ",
-      mya: "みゃ", myu: "みゅ", myo: "みょ",
-      rya: "りゃ", ryu: "りゅ", ryo: "りょ",
-
-      a: "あ", i: "い", u: "う", e: "え", o: "お",
-      ka: "か", ki: "き", ku: "く", ke: "け", ko: "こ",
-      ca: "か", ci: "し", cu: "く", ce: "せ", co: "こ",
-      ga: "が", gi: "ぎ", gu: "ぐ", ge: "げ", go: "ご",
-      sa: "さ", si: "し", shi: "し", su: "す", se: "せ", so: "そ",
-      za: "ざ", zi: "じ", ji: "じ", zu: "ず", ze: "ぜ", zo: "ぞ",
-      ta: "た", ti: "ち", chi: "ち", tu: "つ", tsu: "つ", te: "て", to: "と",
-      da: "だ", di: "ぢ", du: "づ", de: "で", do: "ど",
-      na: "な", ni: "に", nu: "ぬ", ne: "ね", no: "の",
-      ha: "は", hi: "ひ", hu: "ふ", fu: "ふ", he: "へ", ho: "ほ",
-      ba: "ば", bi: "び", bu: "ぶ", be: "べ", bo: "ぼ",
-      pa: "ぱ", pi: "ぴ", pu: "ぷ", pe: "ぺ", po: "ぽ",
-      ma: "ま", mi: "み", mu: "む", me: "め", mo: "も",
-      ya: "や", yu: "ゆ", yo: "よ",
-      ra: "ら", ri: "り", ru: "る", re: "れ", ro: "ろ",
-      la: "ら", li: "り", lu: "る", le: "れ", lo: "ろ",
-      wa: "わ", wi: "うぃ", we: "うぇ", wo: "を",
-      nn: "ん", xn: "ん", n: "ん"
-    };
-
-    function romajiToHiragana(input) {
-      let text = normalizeRomajiInput(input);
-      let result = "";
-
-      while (text.length > 0) {
-        if (text.length >= 2 && isSmallTsuTarget(text)) {
-          result += "っ";
-          text = text.slice(1);
-          continue;
-        }
-
-        let matched = false;
-
-        for (let length = 3; length > 0; length--) {
-          const part = text.slice(0, length);
-
-          if (ROMAJI_TO_HIRAGANA[part]) {
-            result += ROMAJI_TO_HIRAGANA[part];
-            text = text.slice(length);
-            matched = true;
-            break;
-          }
-        }
-
-        if (!matched) {
-          result += text[0];
-          text = text.slice(1);
-        }
-      }
-
-      return result;
-    }
-
-    function isSmallTsuTarget(text) {
-      const first = text[0];
-      const second = text[1];
-      return first === second && !["a", "i", "u", "e", "o", "n"].includes(first);
     }
 
     function formatDateKey(date) {
