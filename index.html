@@ -382,14 +382,46 @@
   width: 46px;
   height: 46px;
 }
+
+.update-history-list {
+  margin: 0;
+  padding-left: 1.2em;
+  line-height: 1.8;
+  font-size: 15px;
+}
+
+.update-history-list li {
+  margin-bottom: 6px;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.update-history-button {
+  border: none;
+  background: transparent;
+  color: #777777;
+  font-size: 13px;
+  padding: 4px 6px;
+}
+
+.update-history-button:active {
+  opacity: 0.6;
+}
   </style>
 </head>
 
 <body>
-  <h1 class="title">
-  こえログ
-  <img src="icon.png" alt="アイコン" class="title-icon">
-</h1>
+  <div class="title-row">
+  <h1>こえログ🎤</h1>
+
+  <button id="updateHistoryButton" class="update-history-button">
+    更新履歴
+  </button>
+</div>
 
   <div id="tabBar" class="tab-bar"></div>
 
@@ -438,6 +470,18 @@
     <div id="habitList" class="habit-button-list"></div>
     <div id="habitCalendar" class="habit-calendar"></div>
   </section>
+  
+  <section id="updatePanel" class="panel">
+  <h2>更新履歴</h2>
+  <ul class="update-history-list">
+
+<li>【考え中】予定が日付順に並ぶ、予定タブを作りたいね</li>
+<li>【考え中】習慣タブのタスク名、変更できるようにしたいね</li>
+<li>更新履歴タブを新設</li>
+<li>Safari / Chrome で動作確認。タブ切替が動くように修正</li>
+<li>習慣タブの入力欄を常時表示に変更</li>
+  </ul>
+</section>
 
   <script>
     const TAB_STORAGE_KEY = "koeTabOrder";
@@ -446,10 +490,10 @@
     const HABIT_STORAGE_KEY = "koeHabitData";
 
     const DEFAULT_TABS = [
-      { id: "diary", label: "日記", panelId: "diaryPanel" },
-      { id: "goal", label: "目標", panelId: "goalPanel" },
-      { id: "habit", label: "習慣", panelId: "habitPanel" }
-    ];
+  { id: "diary", label: "日記", panelId: "diaryPanel" },
+  { id: "goal", label: "目標", panelId: "goalPanel" },
+  { id: "habit", label: "習慣", panelId: "habitPanel" },
+];
 
     const tabBar = document.getElementById("tabBar");
     const voiceButton = document.getElementById("voiceButton");
@@ -467,6 +511,7 @@
     const habitAddSubmitButton = document.getElementById("habitAddSubmitButton");
     const habitList = document.getElementById("habitList");
     const habitCalendar = document.getElementById("habitCalendar");
+    const updateHistoryButton = document.getElementById("updateHistoryButton");
 
     let tabOrder = loadTabOrder();
     let activeTabId = tabOrder[0].id;
@@ -486,6 +531,7 @@
     habitInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") addHabitFromInput();
     });
+    updateHistoryButton.addEventListener("click", openUpdateHistory);
 
     renderTabs();
     renderPanels();
@@ -610,11 +656,21 @@
     }
 
     function renderPanels() {
-      DEFAULT_TABS.forEach((tab) => {
-        const panel = document.getElementById(tab.panelId);
-        panel.classList.toggle("active", tab.id === activeTabId);
-      });
-    }
+  document.querySelectorAll(".panel").forEach((panel) => {
+    panel.classList.remove("active");
+  });
+
+  const activeTab = DEFAULT_TABS.find((tab) => tab.id === activeTabId);
+
+  if (activeTab) {
+    document.getElementById(activeTab.panelId).classList.add("active");
+    return;
+  }
+
+  if (activeTabId === "update") {
+    document.getElementById("updatePanel").classList.add("active");
+  }
+}
 
     function setupTabDrag(button, startIndex) {
   let startX = 0;
@@ -1475,6 +1531,12 @@ function deleteOldestMonthDiary() {
   renderMonthSelect();
 
   alert(`${targetMonth} の日記を削除しました。`);
+}
+
+function openUpdateHistory() {
+  activeTabId = "update";
+  renderTabs();
+  renderPanels();
 }
   </script>
 </body>
