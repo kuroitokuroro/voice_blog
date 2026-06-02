@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 <link rel="icon" type="image/jpeg" href="favicon.jpg">
 <link rel="apple-touch-icon" href="favicon.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&family=Noto+Sans+JP:wght@100..900&family=WDXL+Lubrifont+JP+N&family=Zen+Maru+Gothic:wght@500&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: sans-serif;
@@ -378,6 +381,8 @@
 
   font-size: 32px;
   font-weight: bold;
+  font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 300;
 }
 
 .title-icon {
@@ -449,6 +454,17 @@
   margin-top: 8px;
   margin-bottom: 10px;
 }
+
+.bottomIconArea{
+  display:flex;
+  justify-content:center;
+  padding:24px 0 32px;
+}
+
+.bottomIcon{
+  width:48px;
+  height:48px;
+}
   </style>
 </head>
 
@@ -456,8 +472,6 @@
 <div class="title-row">
   <div class="title-group">
     <h1 class="title">こえログ</h1>
-
-    <img src="icon.png" alt="" class="title-icon">
   </div>
 
   <button id="updateHistoryButton" class="update-history-button">
@@ -518,6 +532,8 @@
   <h2>更新履歴</h2>
   <ul class="update-history-list">
 
+<li>一番下のボタンが押しやすいように、アイコンをつけた</li>
+<li>タイトルのフォント変えた</li>
 <li>【考え中】予定が日付順に並ぶ、予定タブを作りたいね</li>
 <li>💮習慣タブのタスク名、変更できるようにしたいね</li>
 <li>更新履歴タブを新設</li>
@@ -1434,6 +1450,8 @@ function toggleHabitDoneByDate(index, dateKey) {
         habitDangerArea.innerHTML = "";
 return;
 
+const habitDangerArea = document.getElementById("habitDangerArea");
+
         const empty = document.createElement("div");
         empty.className = "empty-message";
         empty.textContent = "＋ボタンからローマ字で習慣を追加できます。例：furo → ふろ";
@@ -1757,5 +1775,8 @@ function openUpdateHistory() {
   renderPanels();
 }
   </script>
+    <div class="bottomIconArea">
+  <img src="icon.png" class="bottomIcon">
+</div>
 </body>
 </html>
