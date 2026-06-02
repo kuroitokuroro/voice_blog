@@ -603,12 +603,6 @@
 
         if (tab.id === activeTabId) button.classList.add("active");
 
-        button.addEventListener("click", () => {
-          activeTabId = tab.id;
-          renderTabs();
-          renderPanels();
-        });
-
         setupTabDrag(button, index);
         tabBar.appendChild(button);
       });
@@ -622,46 +616,63 @@
     }
 
     function setupTabDrag(button, startIndex) {
-      let startX = 0;
-      let currentIndex = startIndex;
-      let isDragging = false;
+  let startX = 0;
+  let currentIndex = startIndex;
+  let isDragging = false;
+  let hasMoved = false;
 
-      button.addEventListener("pointerdown", (event) => {
-        startX = event.clientX;
-        currentIndex = startIndex;
-        isDragging = true;
-        button.classList.add("dragging");
-        button.setPointerCapture(event.pointerId);
-      });
+  button.addEventListener("pointerdown", (event) => {
+    startX = event.clientX;
+    currentIndex = startIndex;
+    isDragging = true;
+    hasMoved = false;
+    button.classList.add("dragging");
+    button.setPointerCapture(event.pointerId);
+  });
 
-      button.addEventListener("pointermove", (event) => {
-        if (!isDragging) return;
-        const diff = event.clientX - startX;
+  button.addEventListener("pointermove", (event) => {
+    if (!isDragging) return;
 
-        if (diff > 40 && currentIndex < tabOrder.length - 1) {
-          swapTabs(currentIndex, currentIndex + 1);
-          currentIndex += 1;
-          startX = event.clientX;
-        }
+    const diff = event.clientX - startX;
 
-        if (diff < -40 && currentIndex > 0) {
-          swapTabs(currentIndex, currentIndex - 1);
-          currentIndex -= 1;
-          startX = event.clientX;
-        }
-      });
-
-      button.addEventListener("pointerup", () => {
-        isDragging = false;
-        saveTabOrder();
-        renderTabs();
-      });
-
-      button.addEventListener("pointercancel", () => {
-        isDragging = false;
-        renderTabs();
-      });
+    if (Math.abs(diff) > 10) {
+      hasMoved = true;
     }
+
+    if (diff > 40 && currentIndex < tabOrder.length - 1) {
+      swapTabs(currentIndex, currentIndex + 1);
+      currentIndex += 1;
+      startX = event.clientX;
+    }
+
+    if (diff < -40 && currentIndex > 0) {
+      swapTabs(currentIndex, currentIndex - 1);
+      currentIndex -= 1;
+      startX = event.clientX;
+    }
+  });
+
+  button.addEventListener("pointerup", () => {
+    isDragging = false;
+    button.classList.remove("dragging");
+
+    if (!hasMoved) {
+      activeTabId = tabOrder[currentIndex].id;
+      renderTabs();
+      renderPanels();
+      return;
+    }
+
+    saveTabOrder();
+    renderTabs();
+  });
+
+  button.addEventListener("pointercancel", () => {
+    isDragging = false;
+    button.classList.remove("dragging");
+    renderTabs();
+  });
+}
 
     function swapTabs(fromIndex, toIndex) {
       const temp = tabOrder[fromIndex];
