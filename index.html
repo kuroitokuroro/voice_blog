@@ -355,6 +355,8 @@
 
     .habit-calendar-day.empty {
       background: transparent;
+      border: none;
+      font: inherit;
     }
 
     .danger-button {
@@ -412,6 +414,40 @@
 .update-history-button:active {
   margin-left: auto;
   opacity: 0.6;
+}
+
+.habit-calendar-day {
+  border: none;
+  font: inherit;
+}
+
+.habit-calendar-day.long-pressing {
+  transform: scale(0.96);
+}
+
+.habit-calendar-title-button {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: bold;
+  color: inherit;
+  padding: 4px;
+}
+
+.habit-title-edit-input {
+  width: 70%;
+  padding: 6px;
+  font: inherit;
+}
+
+.habit-title-edit-button {
+  margin-left: 6px;
+  padding: 6px 10px;
+}
+
+.habit-delete-button {
+  margin-top: 8px;
+  margin-bottom: 10px;
 }
   </style>
 </head>
@@ -475,6 +511,7 @@
     <h2>習慣</h2>
     <div id="habitList" class="habit-button-list"></div>
     <div id="habitCalendar" class="habit-calendar"></div>
+<div id="habitDangerArea" class="habit-danger-area"></div>
   </section>
   
   <section id="updatePanel" class="panel">
@@ -524,6 +561,7 @@
     let selectedPastDateKey = null;
     let selectedHabitIndex = null;
     let isGoalDeleteMode = false;
+    let editingHabitIndex = null;
 
     const today = getLogicalToday();
     const todayKey = formatDateKey(today);
@@ -1286,19 +1324,33 @@ function deleteGoalItemByIndex(index) {
 
 
     function addHabitFromInput() {
-      const taskText = habitInput.value.trim();
+  const taskText = habitInput.value.trim();
 
-      if (!taskText) {
-        habitInput.focus();
-        return;
-      }
+  if (!taskText) {
+    habitInput.focus();
+    return;
+  }
 
-      saveHabitItem(taskText);
-      selectedHabitIndex = getHabitData().length - 1;
-      habitInput.value = "";
-      habitInput.focus();
-      renderHabitList();
+  if (editingHabitIndex !== null) {
+    const data = getHabitData();
+
+    if (data[editingHabitIndex]) {
+      data[editingHabitIndex].text = taskText;
+      setHabitData(data);
+      selectedHabitIndex = editingHabitIndex;
     }
+
+    editingHabitIndex = null;
+    habitAddSubmitButton.textContent = "追加";
+  } else {
+    saveHabitItem(taskText);
+    selectedHabitIndex = getHabitData().length - 1;
+  }
+
+  habitInput.value = "";
+  habitInput.focus();
+  renderHabitList();
+}
 
     function getHabitData() {
       return JSON.parse(localStorage.getItem(HABIT_STORAGE_KEY)) || [];
@@ -1313,6 +1365,22 @@ function deleteGoalItemByIndex(index) {
       data.push({ text, doneDates: [] });
       setHabitData(data);
     }
+    
+    function renameHabitItem(index) {
+  const data = getHabitData();
+  if (!data[index]) return;
+
+  editingHabitIndex = index;
+  selectedHabitIndex = index;
+
+  habitInput.value = data[index].text;
+  habitInput.focus();
+  habitInput.select();
+
+  habitAddSubmitButton.textContent = "変更";
+
+  renderHabitList();
+}
 
     function toggleHabitDone(index) {
       const data = getHabitData();
@@ -1334,14 +1402,37 @@ function deleteGoalItemByIndex(index) {
       renderHabitCalendar();
     }
 
+function toggleHabitDoneByDate(index, dateKey) {
+  const data = getHabitData();
+  if (!data[index]) return;
+
+  if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
+
+  const doneIndex = data[index].doneDates.indexOf(dateKey);
+
+  if (doneIndex >= 0) {
+    data[index].doneDates.splice(doneIndex, 1);
+  } else {
+    data[index].doneDates.push(dateKey);
+  }
+
+  setHabitData(data);
+  selectedHabitIndex = index;
+  renderHabitList();
+  renderHabitCalendar();
+}
+
     function renderHabitList() {
       const habits = getHabitData();
       habitList.innerHTML = "";
 
       if (habits.length === 0) {
         selectedHabitIndex = null;
+        
         habitCalendar.classList.remove("open");
         habitCalendar.innerHTML = "";
+        habitDangerArea.innerHTML = "";
+return;
 
         const empty = document.createElement("div");
         empty.className = "empty-message";
@@ -1372,67 +1463,98 @@ function deleteGoalItemByIndex(index) {
     }
 
     function setupHabitButtonPress(button, index) {
-      let longPressTimer = null;
-      let didLongPress = false;
-      const longPressDuration = 550;
+  button.addEventListener("click", () => {
+    toggleHabitDone(index);
 
-      button.addEventListener("pointerdown", (event) => {
-        didLongPress = false;
-        button.classList.add("long-pressing");
-        button.setPointerCapture(event.pointerId);
+    selectedHabitIndex = index;
+    renderHabitList();
+    renderHabitCalendar();
+  });
+}
 
-        longPressTimer = setTimeout(() => {
-          didLongPress = true;
-          button.classList.remove("long-pressing");
-          toggleHabitDone(index);
-        }, longPressDuration);
-      });
+function setupHabitCalendarDayPress(cell, dateKey) {
+  let longPressTimer = null;
+  let didLongPress = false;
+  const longPressDuration = 550;
 
-      button.addEventListener("pointerup", () => {
-        clearTimeout(longPressTimer);
-        button.classList.remove("long-pressing");
+  cell.addEventListener("pointerdown", (event) => {
+    didLongPress = false;
+    cell.classList.add("long-pressing");
+    cell.setPointerCapture(event.pointerId);
 
-        if (didLongPress) return;
+    longPressTimer = setTimeout(() => {
+      didLongPress = true;
+      cell.classList.remove("long-pressing");
 
-        selectedHabitIndex = index;
-        renderHabitList();
-      });
+      toggleHabitDoneByDate(selectedHabitIndex, dateKey);
+    }, longPressDuration);
+  });
 
-      button.addEventListener("pointercancel", () => {
-        clearTimeout(longPressTimer);
-        button.classList.remove("long-pressing");
-      });
+  cell.addEventListener("pointerup", () => {
+    clearTimeout(longPressTimer);
+    cell.classList.remove("long-pressing");
+  });
 
-      button.addEventListener("pointerleave", () => {
-        clearTimeout(longPressTimer);
-        button.classList.remove("long-pressing");
-      });
-    }
+  cell.addEventListener("pointercancel", () => {
+    clearTimeout(longPressTimer);
+    cell.classList.remove("long-pressing");
+  });
+
+  cell.addEventListener("pointerleave", () => {
+    clearTimeout(longPressTimer);
+    cell.classList.remove("long-pressing");
+  });
+}
 
     function renderHabitCalendar() {
-      const habits = getHabitData();
+  const habits = getHabitData();
+  const habitDangerArea = document.getElementById("habitDangerArea");
 
-      if (selectedHabitIndex === null || !habits[selectedHabitIndex]) {
-        habitCalendar.classList.remove("open");
-        habitCalendar.innerHTML = "";
-        return;
-      }
+  if (selectedHabitIndex === null || !habits[selectedHabitIndex]) {
+    habitCalendar.classList.remove("open");
+    habitCalendar.innerHTML = "";
+    habitDangerArea.innerHTML = "";
+    return;
+  }
 
-      const habit = habits[selectedHabitIndex];
-      const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
-      const year = baseDate.getFullYear();
-      const month = baseDate.getMonth();
-      const lastDate = new Date(year, month + 1, 0).getDate();
-      const firstWeekday = baseDate.getDay();
-      const doneDates = Array.isArray(habit.doneDates) ? habit.doneDates : [];
+  const habit = habits[selectedHabitIndex];
+  const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  const year = baseDate.getFullYear();
+const month = baseDate.getMonth();
+const lastDate = new Date(year, month + 1, 0).getDate();
+const firstWeekday = baseDate.getDay();
+const doneDates = Array.isArray(habit.doneDates) ? habit.doneDates : [];
 
+      habitDangerArea.innerHTML = "";
       habitCalendar.innerHTML = "";
       habitCalendar.classList.add("open");
 
       const title = document.createElement("div");
-      title.className = "habit-calendar-title";
-      title.textContent = `${habit.text}｜${year}年${month + 1}月の達成日`;
-      habitCalendar.appendChild(title);
+title.className = "habit-calendar-title";
+
+const titleButton = document.createElement("button");
+titleButton.type = "button";
+titleButton.className = "habit-calendar-title-button";
+titleButton.textContent = `${habit.text}｜${year}年${month + 1}月の達成日`;
+
+titleButton.addEventListener("click", () => {
+  showHabitTitleEdit(selectedHabitIndex, title);
+
+});
+
+title.appendChild(titleButton);
+habitCalendar.appendChild(title);
+
+const deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.className = "danger-button habit-delete-button";
+deleteButton.textContent = "この習慣を削除";
+
+deleteButton.addEventListener("click", () => {
+  deleteSelectedHabit();
+});
+
+habitDangerArea.appendChild(deleteButton);
 
       const grid = document.createElement("div");
       grid.className = "habit-calendar-grid";
@@ -1451,18 +1573,108 @@ function deleteGoalItemByIndex(index) {
       }
 
       for (let day = 1; day <= lastDate; day++) {
-        const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        const cell = document.createElement("div");
-        cell.className = "habit-calendar-day";
-        cell.textContent = day;
+  const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const cell = document.createElement("button");
+  cell.type = "button";
+  cell.className = "habit-calendar-day";
+  cell.textContent = day;
 
-        if (doneDates.includes(dateKey)) cell.classList.add("done");
+  if (doneDates.includes(dateKey)) cell.classList.add("done");
 
-        grid.appendChild(cell);
-      }
+  setupHabitCalendarDayPress(cell, dateKey);
+
+  grid.appendChild(cell);
+}
 
       habitCalendar.appendChild(grid);
     }
+    
+    function showHabitTitleEdit(index, titleElement) {
+  const data = getHabitData();
+  if (!data[index]) return;
+
+  titleElement.innerHTML = "";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = data[index].text;
+  input.className = "habit-title-edit-input";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "変更";
+  button.className = "habit-title-edit-button";
+
+  button.addEventListener("click", () => {
+    const newName = input.value.trim();
+    if (!newName) return;
+
+    const latestData = getHabitData();
+    if (!latestData[index]) return;
+
+    latestData[index].text = newName;
+    setHabitData(latestData);
+
+    selectedHabitIndex = index;
+    renderHabitList();
+    renderHabitCalendar();
+  });
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      button.click();
+    }
+  });
+
+  titleElement.appendChild(input);
+  titleElement.appendChild(button);
+
+  input.focus();
+  input.select();
+}
+
+function deleteSelectedHabit() {
+  const data = getHabitData();
+
+  if (selectedHabitIndex === null || !data[selectedHabitIndex]) {
+    alert("削除できる習慣がありません。");
+    return;
+  }
+
+  const targetName = data[selectedHabitIndex].text;
+
+  const firstConfirm = confirm(
+    `「${targetName}」を削除します。\n\n` +
+    "この操作は元に戻せません。\n\n" +
+    "削除しますか？"
+  );
+
+  if (!firstConfirm) return;
+
+  const typed = prompt(
+    `本当に「${targetName}」を削除する場合は、\n` +
+    "「削除」と入力してください。"
+  );
+
+  if (typed !== "削除") {
+    alert("削除をキャンセルしました。");
+    return;
+  }
+
+  data.splice(selectedHabitIndex, 1);
+  setHabitData(data);
+
+  if (data.length === 0) {
+    selectedHabitIndex = null;
+  } else if (selectedHabitIndex >= data.length) {
+    selectedHabitIndex = data.length - 1;
+  }
+
+  renderHabitList();
+  renderHabitCalendar();
+
+  alert(`「${targetName}」を削除しました。`);
+}
 
     function formatDateKey(date) {
       const year = date.getFullYear();
