@@ -583,6 +583,14 @@
 .goal-drag-ghost .delete-button {
   display: none;
 }
+
+.goal-item.drop-preview-before {
+  margin-top: 28px;
+}
+
+.goal-item.drop-preview-after {
+  margin-bottom: 28px;
+}
   </style>
 </head>
 
@@ -1446,6 +1454,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
     if (!isDragging || !ghost) return;
 
     ghost.style.top = `${event.clientY - offsetY}px`;
+    updateGoalDropPreview(event.clientY);
   }
 
   function onPointerUp(event) {
@@ -1459,6 +1468,8 @@ function setupGoalSortHandle(handle, item, startIndex) {
 
     const toIndex = getGoalDropIndex(event.clientY);
 
+    clearGoalDropPreview();
+
     if (ghost) {
       ghost.remove();
       ghost = null;
@@ -1466,9 +1477,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
 
     item.classList.remove("drag-placeholder");
 
-    if (toIndex !== startIndex) {
-      moveGoalItem(startIndex, toIndex);
-    } else {
+    if (!moveGoalItem(startIndex, toIndex)) {
       renderGoalList();
     }
   }
@@ -1493,6 +1502,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
     item.classList.add("drag-placeholder");
 
     isDragging = true;
+    updateGoalDropPreview(event.clientY);
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
@@ -1512,17 +1522,26 @@ function getGoalDropIndex(pointerY) {
     }
   }
 
-  return items.length - 1;
+  return items.length;
 }
 
 function moveGoalItem(fromIndex, toIndex) {
   const data = getGoalData();
 
   if (!data[fromIndex]) return false;
-  if (!data[toIndex]) return false;
+
+  let insertIndex = toIndex;
+
+  if (insertIndex > fromIndex) {
+    insertIndex -= 1;
+  }
+
+  if (insertIndex === fromIndex) return false;
+  if (insertIndex < 0) return false;
+  if (insertIndex > data.length) return false;
 
   const movedGoal = data.splice(fromIndex, 1)[0];
-  data.splice(toIndex, 0, movedGoal);
+  data.splice(insertIndex, 0, movedGoal);
 
   setGoalData(data);
   renderGoalList();
@@ -1552,6 +1571,13 @@ function deleteGoalItemByIndex(index) {
 }
 
     function toggleGoalMultiDelete() {
+  if (isGoalSortMode) {
+    isGoalSortMode = false;
+    goalSortButton.textContent = "並び替え";
+    goalSortButton.classList.remove("sort-mode");
+    goalList.classList.remove("sort-mode");
+  }
+  
       if (!isGoalDeleteMode) {
         isGoalDeleteMode = true;
         goalMultiDeleteButton.textContent = "削除する";
@@ -1580,10 +1606,15 @@ function deleteGoalItemByIndex(index) {
     }
     
     function toggleGoalSortMode() {
+  if (isGoalDeleteMode) {
+    isGoalDeleteMode = false;
+    goalMultiDeleteButton.textContent = "複数削除";
+    goalMultiDeleteButton.classList.remove("delete-mode");
+  }
+
   isGoalSortMode = !isGoalSortMode;
 
   goalSortButton.textContent = isGoalSortMode ? "並び替え完了" : "並び替え";
-  
   goalSortButton.classList.toggle("sort-mode", isGoalSortMode);
   goalList.classList.toggle("sort-mode", isGoalSortMode);
 
@@ -2032,6 +2063,31 @@ function openUpdateHistory() {
   activeTabId = "update";
   renderTabs();
   renderPanels();
+}
+
+function clearGoalDropPreview() {
+  const items = goalList.querySelectorAll(".goal-item");
+
+  items.forEach((item) => {
+    item.classList.remove("drop-preview-before");
+    item.classList.remove("drop-preview-after");
+  });
+}
+
+function updateGoalDropPreview(pointerY) {
+  const items = Array.from(goalList.querySelectorAll(".goal-item"));
+  const dropIndex = getGoalDropIndex(pointerY);
+
+  clearGoalDropPreview();
+
+  if (items.length === 0) return;
+
+  if (dropIndex >= items.length) {
+    items[items.length - 1].classList.add("drop-preview-after");
+    return;
+  }
+
+  items[dropIndex].classList.add("drop-preview-before");
 }
   </script>
     <div class="bottomIconArea">
