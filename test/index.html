@@ -568,7 +568,11 @@
 }
 
 .goal-drag-ghost {
-  clip-path: inset(2px 0 2px 0);
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  background: #ddd;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
 }
 
 .goal-item.drag-placeholder .swipe-content {
