@@ -664,6 +664,7 @@
     let editingHabitIndex = null;
     let draggingTabId = null;
     let isGoalSortMode = false;
+    let draggingGoalIndex = null;
 
     const today = getLogicalToday();
     const todayKey = formatDateKey(today);
@@ -1268,6 +1269,9 @@
 
 function addGoalItem(text, index) {
   const item = document.createElement("div");
+  if (draggingGoalIndex === index) {
+  item.classList.add("dragging");
+}
   item.className = "diary-item goal-item";
 
   const swipeContent = document.createElement("div");
@@ -1404,6 +1408,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
     if (diffY > 32) {
       if (moveGoalItem(currentIndex, currentIndex + 1)) {
         currentIndex += 1;
+        draggingGoalIndex = currentIndex;
         startY = event.clientY;
       }
       return;
@@ -1424,6 +1429,8 @@ function setupGoalSortHandle(handle, item, startIndex) {
     document.removeEventListener("pointercancel", onPointerUp);
     item.classList.remove("dragging");
     handle.classList.remove("dragging");
+    draggingGoalIndex = null;
+renderGoalList();
   }
 
   handle.addEventListener("pointerdown", (event) => {
@@ -1434,6 +1441,8 @@ function setupGoalSortHandle(handle, item, startIndex) {
     startY = event.clientY;
     currentIndex = startIndex;
     isDragging = true;
+    draggingGoalIndex = currentIndex;
+renderGoalList();
     item.classList.add("dragging");
     handle.classList.add("dragging");
 
