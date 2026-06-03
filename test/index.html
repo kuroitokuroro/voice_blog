@@ -471,6 +471,32 @@
   transform: translateY(-3px) scale(1.04);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
 }
+
+.goal-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.goal-title-row h2 {
+  margin: 0;
+}
+
+.goal-sort-button {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: none;
+  background: #d0d0d0;
+  color: #333;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.goal-sort-button.sort-mode {
+  background: #999;
+  color: white;
+}
   </style>
 </head>
 
@@ -512,7 +538,10 @@
     <button id="goalVoiceButton" class="main-button">話して目標を追加</button>
     <button id="goalMultiDeleteButton" class="sub-button">複数削除</button>
 
-    <h2>目標</h2>
+    <div class="goal-title-row">
+  <h2>目標</h2>
+  <button id="goalSortButton" class="goal-sort-button">並び替え</button>
+</div>
     <div id="goalList" class="diary-area"></div>
   </section>
 
@@ -570,6 +599,7 @@
     const goalVoiceButton = document.getElementById("goalVoiceButton");
     const goalMultiDeleteButton = document.getElementById("goalMultiDeleteButton");
     const goalList = document.getElementById("goalList");
+    const goalSortButton = document.getElementById("goalSortButton");
     const deleteOldestMonthButton = document.getElementById("deleteOldestMonthButton");
     const habitAddArea = document.getElementById("habitAddArea");
     const habitInput = document.getElementById("habitInput");
@@ -585,6 +615,7 @@
     let isGoalDeleteMode = false;
     let editingHabitIndex = null;
     let draggingTabId = null;
+    let isGoalSortMode = false;
 
     const today = getLogicalToday();
     const todayKey = formatDateKey(today);
@@ -594,6 +625,7 @@
     downloadButton.addEventListener("click", downloadTxt);
     deleteOldestMonthButton.addEventListener("click", deleteOldestMonthDiary);
     goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
+    goalSortButton.addEventListener("click", toggleGoalSortMode);
     habitAddSubmitButton.addEventListener("click", addHabitFromInput);
     habitInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") addHabitFromInput();
@@ -1356,6 +1388,17 @@ function deleteGoalItemByIndex(index) {
       goalMultiDeleteButton.classList.remove("delete-mode");
       renderGoalList();
     }
+    
+    function toggleGoalSortMode() {
+  isGoalSortMode = !isGoalSortMode;
+
+  goalSortButton.textContent = isGoalSortMode ? "並び替え完了" : "並び替え";
+  goalSortButton.classList.toggle("sort-mode", isGoalSortMode);
+
+  goalList.classList.toggle("sort-mode", isGoalSortMode);
+
+  renderGoalList();
+}
 
     function deleteGoalItems(indexes) {
       const data = getGoalData();
