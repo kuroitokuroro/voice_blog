@@ -533,6 +533,10 @@
 .goal-item .text {
   flex: 1;
 }
+
+.goal-sort-handle.dragging {
+  background: #999;
+}
   </style>
 </head>
 
@@ -1275,6 +1279,7 @@ function addGoalItem(text, index) {
   if (isGoalSortMode) {
   const leftHandle = document.createElement("div");
   leftHandle.className = "goal-sort-handle";
+  setupGoalSortHandle(leftHandle, index);
   swipeContent.appendChild(leftHandle);
 }
 
@@ -1286,6 +1291,7 @@ function addGoalItem(text, index) {
   if (isGoalSortMode) {
   const rightHandle = document.createElement("div");
   rightHandle.className = "goal-sort-handle";
+  setupGoalSortHandle(rightHandle, index);
   swipeContent.appendChild(rightHandle);
 }
 
@@ -1376,6 +1382,65 @@ function addGoalItem(text, index) {
       item.classList.remove("show-edit");
     }
   });
+}
+
+function setupGoalSortHandle(handle, startIndex) {
+  let startY = 0;
+  let currentIndex = startIndex;
+  let isDragging = false;
+
+  handle.addEventListener("pointerdown", (event) => {
+    if (!isGoalSortMode) return;
+
+    startY = event.clientY;
+    currentIndex = startIndex;
+    isDragging = true;
+
+    handle.classList.add("dragging");
+    handle.setPointerCapture(event.pointerId);
+  });
+
+  handle.addEventListener("pointermove", (event) => {
+    if (!isDragging) return;
+
+    const diffY = event.clientY - startY;
+
+    if (diffY > 32) {
+      moveGoalItem(currentIndex, currentIndex + 1);
+      currentIndex += 1;
+      startY = event.clientY;
+      return;
+    }
+
+    if (diffY < -32) {
+      moveGoalItem(currentIndex, currentIndex - 1);
+      currentIndex -= 1;
+      startY = event.clientY;
+    }
+  });
+
+  handle.addEventListener("pointerup", () => {
+    isDragging = false;
+    handle.classList.remove("dragging");
+  });
+
+  handle.addEventListener("pointercancel", () => {
+    isDragging = false;
+    handle.classList.remove("dragging");
+  });
+}
+
+function moveGoalItem(fromIndex, toIndex) {
+  const data = getGoalData();
+
+  if (!data[fromIndex]) return;
+  if (!data[toIndex]) return;
+
+  const movedGoal = data.splice(fromIndex, 1)[0];
+  data.splice(toIndex, 0, movedGoal);
+
+  setGoalData(data);
+  renderGoalList();
 }
 
 function moveGoalItemToTop(index) {
