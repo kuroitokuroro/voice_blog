@@ -1289,17 +1289,28 @@ function setupGoalLongPressToTop(item, index, content) {
   let startY = 0;
 
   item.addEventListener("touchstart", (event) => {
-    if (isGoalDeleteMode) return;
     if (index === 0) return;
+
+    // 複数削除モード中は発動しない
+    if (isGoalDeleteMode) return;
+
+    // チェックボックスが出ている状態では発動しない
+    if (goalList.querySelector(".goal-checkbox")) return;
+
+    // どれか1つでも編集/削除スワイプが開いていたら発動しない
+    if (goalList.querySelector(".show-edit, .show-delete")) return;
+
+    // 文字編集中は発動しない
     if (content.isContentEditable) return;
-    if (item.classList.contains("show-delete")) return;
-    if (item.classList.contains("show-edit")) return;
-    if (event.target.closest(".edit-button, .delete-button, .goal-checkbox")) return;
+
+    // 編集・削除ボタン上では発動しない
+    if (event.target.closest(".edit-button, .delete-button")) return;
 
     startX = event.touches[0].clientX;
     startY = event.touches[0].clientY;
 
     longPressTimer = setTimeout(() => {
+      longPressTimer = null;
       moveGoalItemToTop(index);
     }, 600);
   });
@@ -1312,6 +1323,7 @@ function setupGoalLongPressToTop(item, index, content) {
     const diffX = Math.abs(currentX - startX);
     const diffY = Math.abs(currentY - startY);
 
+    // 少しでもスクロール・横スワイプっぽい動きが出たらキャンセル
     if (diffX > 10 || diffY > 10) {
       clearTimeout(longPressTimer);
       longPressTimer = null;
