@@ -585,11 +585,11 @@
 }
 
 .goal-item.drop-preview-before {
-  margin-top: 28px;
+  margin-top: var(--goal-drop-space, 28px);
 }
 
 .goal-item.drop-preview-after {
-  margin-bottom: 28px;
+  margin-bottom: var(--goal-drop-space, 28px);
 }
   </style>
 </head>
@@ -1449,6 +1449,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
   let ghost = null;
   let offsetY = 0;
   let isDragging = false;
+  let ghostHeight = 0;
 
   function onPointerMove(event) {
     if (!isDragging || !ghost) return;
@@ -1469,6 +1470,8 @@ function setupGoalSortHandle(handle, item, startIndex) {
     const toIndex = getGoalDropIndex(event.clientY);
 
     clearGoalDropPreview();
+    
+    goalList.style.removeProperty("--goal-drop-space");
 
     if (ghost) {
       ghost.remove();
@@ -1488,6 +1491,8 @@ function setupGoalSortHandle(handle, item, startIndex) {
     event.preventDefault();
 
     const rect = item.getBoundingClientRect();
+    ghostHeight = rect.height;
+goalList.style.setProperty("--goal-drop-space", `${ghostHeight}px`);
     offsetY = event.clientY - rect.top;
 
     ghost = item.cloneNode(true);
