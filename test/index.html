@@ -545,7 +545,6 @@
 
 .goal-item.dragging .swipe-content {
   background: #ddd;
-  transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
   </style>
@@ -1452,9 +1451,9 @@ renderGoalList();
     currentIndex = startIndex;
     isDragging = true;
     draggingGoalIndex = currentIndex;
-renderGoalList();
     item.classList.add("dragging");
     handle.classList.add("dragging");
+    renderGoalList();
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
