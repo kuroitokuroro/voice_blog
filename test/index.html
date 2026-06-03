@@ -516,6 +516,11 @@
   -webkit-user-select: none;
 }
 
+#goalList.sort-mode .edit-button,
+#goalList.sort-mode .delete-button {
+  display: none;
+}
+
 .goal-sort-handle {
   width: 0.5em;
   background: #cfcfcf;
@@ -558,7 +563,7 @@
 }
 
 .goal-item.drag-placeholder .swipe-content {
-  opacity: 0.35;
+  visibility: hidden;
 }
   </style>
 </head>
