@@ -465,6 +465,12 @@
   width:48px;
   height:48px;
 }
+
+.tab-button.dragging {
+  opacity: 0.85;
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+}
   </style>
 </head>
 
@@ -578,6 +584,7 @@
     let selectedHabitIndex = null;
     let isGoalDeleteMode = false;
     let editingHabitIndex = null;
+    let draggingTabId = null;
 
     const today = getLogicalToday();
     const todayKey = formatDateKey(today);
@@ -710,6 +717,8 @@
 
         if (tab.id === activeTabId) button.classList.add("active");
 
+        if (tab.id === draggingTabId) button.classList.add("dragging");
+        
         setupTabDrag(button, index);
         tabBar.appendChild(button);
       });
@@ -745,6 +754,7 @@
     hasMoved = false;
     button.classList.add("dragging");
     button.setPointerCapture(event.pointerId);
+    draggingTabId = tabOrder[startIndex].id;
   });
 
   button.addEventListener("pointermove", (event) => {
@@ -775,12 +785,13 @@
 
     if (!hasMoved) {
       activeTabId = tabOrder[currentIndex].id;
+      draggingTabId = null;
       renderTabs();
       renderPanels();
       return;
     }
 
-    saveTabOrder();
+    draggingTabId = null;
     renderTabs();
   });
 
@@ -792,11 +803,13 @@
 }
 
     function swapTabs(fromIndex, toIndex) {
-      const temp = tabOrder[fromIndex];
-      tabOrder[fromIndex] = tabOrder[toIndex];
-      tabOrder[toIndex] = temp;
-      renderTabs();
-    }
+  const temp = tabOrder[fromIndex];
+  tabOrder[fromIndex] = tabOrder[toIndex];
+  tabOrder[toIndex] = temp;
+
+  saveTabOrder();
+  renderTabs();
+}
 
     function formatDiary(text) {
       return text
