@@ -528,6 +528,16 @@
   flex-shrink: 0;
   align-self: stretch;
   touch-action: none;
+  position: relative;
+}
+
+.goal-sort-handle::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -2em;
+  right: -2em;
 }
 
 .goal-item .swipe-content {
