@@ -538,6 +538,10 @@
 .goal-sort-handle.dragging {
   background: #999;
 }
+
+.goal-item.dragging {
+  background: #ddd;
+}
   </style>
 </head>
 
@@ -1280,7 +1284,7 @@ function addGoalItem(text, index) {
   if (isGoalSortMode) {
   const leftHandle = document.createElement("div");
   leftHandle.className = "goal-sort-handle";
-  setupGoalSortHandle(leftHandle, index);
+  setupGoalSortHandle(leftHandle, item, index);
   swipeContent.appendChild(leftHandle);
 }
 
@@ -1292,7 +1296,7 @@ function addGoalItem(text, index) {
   if (isGoalSortMode) {
   const rightHandle = document.createElement("div");
   rightHandle.className = "goal-sort-handle";
-  setupGoalSortHandle(rightHandle, index);
+  setupGoalSortHandle(rightHandle, item, index);
   swipeContent.appendChild(rightHandle);
 }
 
@@ -1387,7 +1391,7 @@ function addGoalItem(text, index) {
   });
 }
 
-function setupGoalSortHandle(handle, startIndex) {
+function setupGoalSortHandle(handle, item, startIndex) {
   let startY = 0;
   let currentIndex = startIndex;
   let isDragging = false;
@@ -1429,6 +1433,7 @@ function setupGoalSortHandle(handle, startIndex) {
     startY = event.clientY;
     currentIndex = startIndex;
     isDragging = true;
+    item.classList.add("dragging");
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
