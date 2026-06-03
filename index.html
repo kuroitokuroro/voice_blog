@@ -1552,6 +1552,13 @@ function deleteGoalItemByIndex(index) {
 }
 
     function toggleGoalMultiDelete() {
+  if (isGoalSortMode) {
+    isGoalSortMode = false;
+    goalSortButton.textContent = "並び替え";
+    goalSortButton.classList.remove("sort-mode");
+    goalList.classList.remove("sort-mode");
+  }
+  
       if (!isGoalDeleteMode) {
         isGoalDeleteMode = true;
         goalMultiDeleteButton.textContent = "削除する";
@@ -1580,10 +1587,15 @@ function deleteGoalItemByIndex(index) {
     }
     
     function toggleGoalSortMode() {
+  if (isGoalDeleteMode) {
+    isGoalDeleteMode = false;
+    goalMultiDeleteButton.textContent = "複数削除";
+    goalMultiDeleteButton.classList.remove("delete-mode");
+  }
+
   isGoalSortMode = !isGoalSortMode;
 
   goalSortButton.textContent = isGoalSortMode ? "並び替え完了" : "並び替え";
-  
   goalSortButton.classList.toggle("sort-mode", isGoalSortMode);
   goalList.classList.toggle("sort-mode", isGoalSortMode);
 
