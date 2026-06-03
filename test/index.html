@@ -828,17 +828,7 @@
   let isDragging = false;
   let hasMoved = false;
 
-  button.addEventListener("pointerdown", (event) => {
-    startX = event.clientX;
-    currentIndex = startIndex;
-    isDragging = true;
-    hasMoved = false;
-    button.classList.add("dragging");
-    button.setPointerCapture(event.pointerId);
-    draggingTabId = tabOrder[startIndex].id;
-  });
-
-  button.addEventListener("pointermove", (event) => {
+  function onPointerMove(event) {
     if (!isDragging) return;
 
     const diff = event.clientX - startX;
@@ -851,18 +841,24 @@
       swapTabs(currentIndex, currentIndex + 1);
       currentIndex += 1;
       startX = event.clientX;
+      draggingTabId = tabOrder[currentIndex].id;
+      return;
     }
 
     if (diff < -40 && currentIndex > 0) {
       swapTabs(currentIndex, currentIndex - 1);
       currentIndex -= 1;
       startX = event.clientX;
+      draggingTabId = tabOrder[currentIndex].id;
     }
-  });
+  }
 
-  button.addEventListener("pointerup", () => {
+  function onPointerUp() {
     isDragging = false;
-    button.classList.remove("dragging");
+
+    document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("pointerup", onPointerUp);
+    document.removeEventListener("pointercancel", onPointerUp);
 
     if (!hasMoved) {
       activeTabId = tabOrder[currentIndex].id;
@@ -874,12 +870,20 @@
 
     draggingTabId = null;
     renderTabs();
-  });
+  }
 
-  button.addEventListener("pointercancel", () => {
-    isDragging = false;
-    button.classList.remove("dragging");
+  button.addEventListener("pointerdown", (event) => {
+    startX = event.clientX;
+    currentIndex = startIndex;
+    isDragging = true;
+    hasMoved = false;
+
+    draggingTabId = tabOrder[startIndex].id;
     renderTabs();
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerUp);
   });
 }
 
