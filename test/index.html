@@ -539,8 +539,10 @@
   background: #999;
 }
 
-.goal-item.dragging {
+.goal-item.dragging .swipe-content {
   background: #ddd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
   </style>
 </head>
@@ -1273,10 +1275,10 @@
 
 function addGoalItem(text, index) {
   const item = document.createElement("div");
+  item.className = "diary-item goal-item";
   if (draggingGoalIndex === index) {
   item.classList.add("dragging");
 }
-  item.className = "diary-item goal-item";
 
   const swipeContent = document.createElement("div");
   swipeContent.className = "swipe-content";
