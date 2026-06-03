@@ -1418,6 +1418,7 @@ function setupGoalSortHandle(handle, startIndex) {
     document.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("pointerup", onPointerUp);
     document.removeEventListener("pointercancel", onPointerUp);
+    handle.classList.remove("dragging");
   }
 
   handle.addEventListener("pointerdown", (event) => {
