@@ -547,6 +547,19 @@
   background: #ddd;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
+
+.goal-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  background: #ddd;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  transform: scale(1.02);
+}
+
+.goal-item.drag-placeholder .swipe-content {
+  opacity: 0.35;
+}
   </style>
 </head>
 
@@ -669,7 +682,6 @@
     let editingHabitIndex = null;
     let draggingTabId = null;
     let isGoalSortMode = false;
-    let draggingGoalIndex = null;
 
     const today = getLogicalToday();
     const todayKey = formatDateKey(today);
@@ -1405,41 +1417,39 @@ function addGoalItem(text, index) {
 }
 
 function setupGoalSortHandle(handle, item, startIndex) {
-  let startY = 0;
-  let currentIndex = startIndex;
+  let ghost = null;
+  let offsetY = 0;
   let isDragging = false;
 
   function onPointerMove(event) {
-    if (!isDragging) return;
+    if (!isDragging || !ghost) return;
 
-    const diffY = event.clientY - startY;
-
-    if (diffY > 32) {
-      if (moveGoalItem(currentIndex, currentIndex + 1)) {
-        currentIndex += 1;
-        draggingGoalIndex = currentIndex;
-        startY = event.clientY;
-      }
-      return;
-    }
-
-    if (diffY < -32) {
-      if (moveGoalItem(currentIndex, currentIndex - 1)) {
-        currentIndex -= 1;
-        startY = event.clientY;
-      }
-    }
+    ghost.style.top = `${event.clientY - offsetY}px`;
   }
 
-  function onPointerUp() {
+  function onPointerUp(event) {
+    if (!isDragging) return;
+
     isDragging = false;
+
     document.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("pointerup", onPointerUp);
     document.removeEventListener("pointercancel", onPointerUp);
-    item.classList.remove("dragging");
-    handle.classList.remove("dragging");
-    draggingGoalIndex = null;
-renderGoalList();
+
+    const toIndex = getGoalDropIndex(event.clientY);
+
+    if (ghost) {
+      ghost.remove();
+      ghost = null;
+    }
+
+    item.classList.remove("drag-placeholder");
+
+    if (toIndex !== startIndex) {
+      moveGoalItem(startIndex, toIndex);
+    } else {
+      renderGoalList();
+    }
   }
 
   handle.addEventListener("pointerdown", (event) => {
@@ -1447,18 +1457,41 @@ renderGoalList();
 
     event.preventDefault();
 
-    startY = event.clientY;
-    currentIndex = startIndex;
+    const rect = item.getBoundingClientRect();
+    offsetY = event.clientY - rect.top;
+
+    ghost = item.cloneNode(true);
+    ghost.classList.add("goal-drag-ghost");
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+
+    document.body.appendChild(ghost);
+
+    item.classList.add("drag-placeholder");
+
     isDragging = true;
-    draggingGoalIndex = currentIndex;
-    item.classList.add("dragging");
-    handle.classList.add("dragging");
-    renderGoalList();
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
     document.addEventListener("pointercancel", onPointerUp);
   });
+}
+
+function getGoalDropIndex(pointerY) {
+  const items = Array.from(goalList.querySelectorAll(".goal-item"));
+
+  for (let i = 0; i < items.length; i++) {
+    const rect = items[i].getBoundingClientRect();
+    const centerY = rect.top + rect.height / 2;
+
+    if (pointerY < centerY) {
+      return i;
+    }
+  }
+
+  return items.length - 1;
 }
 
 function moveGoalItem(fromIndex, toIndex) {
