@@ -522,6 +522,7 @@
   border-radius: 2px;
   flex-shrink: 0;
   align-self: stretch;
+  touch-action: none;
 }
 
 .goal-item .swipe-content {
@@ -1337,6 +1338,7 @@ function addGoalItem(text, index) {
 
   item.addEventListener("touchstart", (event) => {
     if (isGoalDeleteMode) return;
+    if (isGoalSortMode) return;
 
     startX = event.touches[0].clientX;
 
@@ -1351,6 +1353,7 @@ function addGoalItem(text, index) {
 
   item.addEventListener("touchmove", (event) => {
     if (isGoalDeleteMode) return;
+    if (isGoalSortMode) return;
 
     const currentX = event.touches[0].clientX;
     const diff = startX - currentX;
