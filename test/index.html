@@ -1273,16 +1273,17 @@ function addGoalItem(text, index) {
   leftHandle.className = "goal-sort-handle";
   swipeContent.appendChild(leftHandle);
 }
-  if (isGoalSortMode) {
-  const rightHandle = document.createElement("div");
-  rightHandle.className = "goal-sort-handle";
-  swipeContent.appendChild(rightHandle);
-}
 
   const content = document.createElement("div");
   content.className = "text";
   content.textContent = text;
   swipeContent.appendChild(content);
+  
+  if (isGoalSortMode) {
+  const rightHandle = document.createElement("div");
+  rightHandle.className = "goal-sort-handle";
+  swipeContent.appendChild(rightHandle);
+}
 
   const editButton = document.createElement("div");
   editButton.className = "edit-button";
