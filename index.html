@@ -583,6 +583,14 @@
 .goal-drag-ghost .delete-button {
   display: none;
 }
+
+.goal-item.drop-preview-before {
+  margin-top: var(--goal-drop-space, 28px);
+}
+
+.goal-item.drop-preview-after {
+  margin-bottom: var(--goal-drop-space, 28px);
+}
   </style>
 </head>
 
@@ -1320,12 +1328,17 @@ function addGoalItem(text, index) {
   swipeContent.className = "swipe-content";
 
   if (isGoalDeleteMode) {
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "goal-checkbox";
-    checkbox.dataset.index = index;
-    swipeContent.appendChild(checkbox);
-  }
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.className = "goal-checkbox";
+  checkbox.dataset.index = index;
+
+  checkbox.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
+  swipeContent.appendChild(checkbox);
+}
   
   if (isGoalSortMode) {
   const leftHandle = document.createElement("div");
@@ -1385,6 +1398,15 @@ function addGoalItem(text, index) {
   item.appendChild(deleteButton);
   item.appendChild(swipeContent);
   goalList.appendChild(item);
+  
+  item.addEventListener("click", () => {
+  if (!isGoalDeleteMode) return;
+
+  const checkbox = item.querySelector(".goal-checkbox");
+  if (!checkbox) return;
+
+  checkbox.checked = !checkbox.checked;
+});
 
   item.addEventListener("touchstart", (event) => {
     if (isGoalDeleteMode) return;
@@ -1441,11 +1463,13 @@ function setupGoalSortHandle(handle, item, startIndex) {
   let ghost = null;
   let offsetY = 0;
   let isDragging = false;
+  let ghostHeight = 0;
 
   function onPointerMove(event) {
     if (!isDragging || !ghost) return;
 
     ghost.style.top = `${event.clientY - offsetY}px`;
+    updateGoalDropPreview(event.clientY);
   }
 
   function onPointerUp(event) {
@@ -1459,6 +1483,10 @@ function setupGoalSortHandle(handle, item, startIndex) {
 
     const toIndex = getGoalDropIndex(event.clientY);
 
+    clearGoalDropPreview();
+    
+    goalList.style.removeProperty("--goal-drop-space");
+
     if (ghost) {
       ghost.remove();
       ghost = null;
@@ -1466,9 +1494,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
 
     item.classList.remove("drag-placeholder");
 
-    if (toIndex !== startIndex) {
-      moveGoalItem(startIndex, toIndex);
-    } else {
+    if (!moveGoalItem(startIndex, toIndex)) {
       renderGoalList();
     }
   }
@@ -1479,6 +1505,8 @@ function setupGoalSortHandle(handle, item, startIndex) {
     event.preventDefault();
 
     const rect = item.getBoundingClientRect();
+    ghostHeight = rect.height;
+goalList.style.setProperty("--goal-drop-space", `${ghostHeight}px`);
     offsetY = event.clientY - rect.top;
 
     ghost = item.cloneNode(true);
@@ -1493,6 +1521,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
     item.classList.add("drag-placeholder");
 
     isDragging = true;
+    updateGoalDropPreview(event.clientY);
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
@@ -1512,17 +1541,26 @@ function getGoalDropIndex(pointerY) {
     }
   }
 
-  return items.length - 1;
+  return items.length;
 }
 
 function moveGoalItem(fromIndex, toIndex) {
   const data = getGoalData();
 
   if (!data[fromIndex]) return false;
-  if (!data[toIndex]) return false;
+
+  let insertIndex = toIndex;
+
+  if (insertIndex > fromIndex) {
+    insertIndex -= 1;
+  }
+
+  if (insertIndex === fromIndex) return false;
+  if (insertIndex < 0) return false;
+  if (insertIndex > data.length) return false;
 
   const movedGoal = data.splice(fromIndex, 1)[0];
-  data.splice(toIndex, 0, movedGoal);
+  data.splice(insertIndex, 0, movedGoal);
 
   setGoalData(data);
   renderGoalList();
@@ -2044,6 +2082,31 @@ function openUpdateHistory() {
   activeTabId = "update";
   renderTabs();
   renderPanels();
+}
+
+function clearGoalDropPreview() {
+  const items = goalList.querySelectorAll(".goal-item");
+
+  items.forEach((item) => {
+    item.classList.remove("drop-preview-before");
+    item.classList.remove("drop-preview-after");
+  });
+}
+
+function updateGoalDropPreview(pointerY) {
+  const items = Array.from(goalList.querySelectorAll(".goal-item"));
+  const dropIndex = getGoalDropIndex(pointerY);
+
+  clearGoalDropPreview();
+
+  if (items.length === 0) return;
+
+  if (dropIndex >= items.length) {
+    items[items.length - 1].classList.add("drop-preview-after");
+    return;
+  }
+
+  items[dropIndex].classList.add("drop-preview-before");
 }
   </script>
     <div class="bottomIconArea">
