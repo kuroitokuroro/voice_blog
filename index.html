@@ -471,6 +471,118 @@
   transform: translateY(-3px) scale(1.04);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
 }
+
+.goal-title-row {
+  display: flex;
+  align-items: center;
+  margin: 10px 0px;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.goal-title-row h2 {
+  margin: 0;
+}
+
+.goal-sort-button {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: none;
+  background: #d0d0d0;
+  color: #333;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.goal-sort-button.sort-mode {
+  background: #999;
+  color: white;
+}
+
+.goal-title-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.goal-sort-button.delete-mode {
+  background: #c05050;
+  color: white;
+}
+
+#goalList.sort-mode,
+#goalList.sort-mode * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#goalList.sort-mode .edit-button,
+#goalList.sort-mode .delete-button {
+  display: none;
+}
+
+.goal-sort-handle {
+  width: 0.5em;
+  background: #cfcfcf;
+  border-radius: 2px;
+  flex-shrink: 0;
+  align-self: stretch;
+  touch-action: none;
+  position: relative;
+}
+
+.goal-sort-handle::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -2em;
+  right: -2em;
+}
+
+#goalList.sort-mode .swipe-actions {
+  display: none;
+}
+
+.goal-item .swipe-content {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.goal-item .text {
+  flex: 1;
+}
+
+.goal-sort-handle.dragging {
+  background: #999;
+}
+
+.goal-item.dragging {
+  background: #ddd;
+}
+
+.goal-item.dragging .swipe-content {
+  background: #ddd;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.goal-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  background: #ddd;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.goal-item.drag-placeholder .swipe-content {
+  visibility: hidden;
+}
+
+.goal-drag-ghost .edit-button,
+.goal-drag-ghost .delete-button {
+  display: none;
+}
   </style>
 </head>
 
@@ -510,9 +622,15 @@
 
   <section id="goalPanel" class="panel">
     <button id="goalVoiceButton" class="main-button">話して目標を追加</button>
-    <button id="goalMultiDeleteButton" class="sub-button">複数削除</button>
 
-    <h2>目標</h2>
+   <div class="goal-title-row">
+  <h2>目標</h2>
+
+  <div class="goal-title-actions">
+    <button id="goalSortButton" class="goal-sort-button">並び替え</button>
+    <button id="goalMultiDeleteButton" class="goal-sort-button">複数削除</button>
+  </div>
+</div>
     <div id="goalList" class="diary-area"></div>
   </section>
 
@@ -570,6 +688,7 @@
     const goalVoiceButton = document.getElementById("goalVoiceButton");
     const goalMultiDeleteButton = document.getElementById("goalMultiDeleteButton");
     const goalList = document.getElementById("goalList");
+    const goalSortButton = document.getElementById("goalSortButton");
     const deleteOldestMonthButton = document.getElementById("deleteOldestMonthButton");
     const habitAddArea = document.getElementById("habitAddArea");
     const habitInput = document.getElementById("habitInput");
@@ -585,6 +704,7 @@
     let isGoalDeleteMode = false;
     let editingHabitIndex = null;
     let draggingTabId = null;
+    let isGoalSortMode = false;
 
     const today = getLogicalToday();
     const todayKey = formatDateKey(today);
@@ -594,6 +714,7 @@
     downloadButton.addEventListener("click", downloadTxt);
     deleteOldestMonthButton.addEventListener("click", deleteOldestMonthDiary);
     goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
+    goalSortButton.addEventListener("click", toggleGoalSortMode);
     habitAddSubmitButton.addEventListener("click", addHabitFromInput);
     habitInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") addHabitFromInput();
@@ -747,17 +868,7 @@
   let isDragging = false;
   let hasMoved = false;
 
-  button.addEventListener("pointerdown", (event) => {
-    startX = event.clientX;
-    currentIndex = startIndex;
-    isDragging = true;
-    hasMoved = false;
-    button.classList.add("dragging");
-    button.setPointerCapture(event.pointerId);
-    draggingTabId = tabOrder[startIndex].id;
-  });
-
-  button.addEventListener("pointermove", (event) => {
+  function onPointerMove(event) {
     if (!isDragging) return;
 
     const diff = event.clientX - startX;
@@ -770,18 +881,24 @@
       swapTabs(currentIndex, currentIndex + 1);
       currentIndex += 1;
       startX = event.clientX;
+      draggingTabId = tabOrder[currentIndex].id;
+      return;
     }
 
     if (diff < -40 && currentIndex > 0) {
       swapTabs(currentIndex, currentIndex - 1);
       currentIndex -= 1;
       startX = event.clientX;
+      draggingTabId = tabOrder[currentIndex].id;
     }
-  });
+  }
 
-  button.addEventListener("pointerup", () => {
+  function onPointerUp() {
     isDragging = false;
-    button.classList.remove("dragging");
+
+    document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("pointerup", onPointerUp);
+    document.removeEventListener("pointercancel", onPointerUp);
 
     if (!hasMoved) {
       activeTabId = tabOrder[currentIndex].id;
@@ -793,12 +910,20 @@
 
     draggingTabId = null;
     renderTabs();
-  });
+  }
 
-  button.addEventListener("pointercancel", () => {
-    isDragging = false;
-    button.classList.remove("dragging");
+  button.addEventListener("pointerdown", (event) => {
+    startX = event.clientX;
+    currentIndex = startIndex;
+    isDragging = true;
+    hasMoved = false;
+
+    draggingTabId = tabOrder[startIndex].id;
     renderTabs();
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerUp);
   });
 }
 
@@ -1182,7 +1307,8 @@
   goalList.innerHTML = "";
 
   goals.forEach((goal, index) => {
-    addGoalItem(goal.text, index);
+    const text = typeof goal === "string" ? goal : goal.text;
+    addGoalItem(text, index);
   });
 }
 
@@ -1200,11 +1326,25 @@ function addGoalItem(text, index) {
     checkbox.dataset.index = index;
     swipeContent.appendChild(checkbox);
   }
+  
+  if (isGoalSortMode) {
+  const leftHandle = document.createElement("div");
+  leftHandle.className = "goal-sort-handle";
+  setupGoalSortHandle(leftHandle, item, index);
+  swipeContent.appendChild(leftHandle);
+}
 
   const content = document.createElement("div");
   content.className = "text";
   content.textContent = text;
   swipeContent.appendChild(content);
+  
+  if (isGoalSortMode) {
+  const rightHandle = document.createElement("div");
+  rightHandle.className = "goal-sort-handle";
+  setupGoalSortHandle(rightHandle, item, index);
+  swipeContent.appendChild(rightHandle);
+}
 
   const editButton = document.createElement("div");
   editButton.className = "edit-button";
@@ -1245,10 +1385,10 @@ function addGoalItem(text, index) {
   item.appendChild(deleteButton);
   item.appendChild(swipeContent);
   goalList.appendChild(item);
-  setupGoalLongPressToTop(item, index, content);
 
   item.addEventListener("touchstart", (event) => {
     if (isGoalDeleteMode) return;
+    if (isGoalSortMode) return;
 
     startX = event.touches[0].clientX;
 
@@ -1263,6 +1403,7 @@ function addGoalItem(text, index) {
 
   item.addEventListener("touchmove", (event) => {
     if (isGoalDeleteMode) return;
+    if (isGoalSortMode) return;
 
     const currentX = event.touches[0].clientX;
     const diff = startX - currentX;
@@ -1296,79 +1437,97 @@ function addGoalItem(text, index) {
   });
 }
 
-function setupGoalLongPressToTop(item, index, content) {
-  let longPressTimer = null;
-  let startX = 0;
-  let startY = 0;
+function setupGoalSortHandle(handle, item, startIndex) {
+  let ghost = null;
+  let offsetY = 0;
+  let isDragging = false;
 
-  item.addEventListener("touchstart", (event) => {
-    if (index === 0) return;
+  function onPointerMove(event) {
+    if (!isDragging || !ghost) return;
 
-    // 複数削除モード中は発動しない
-    if (isGoalDeleteMode) return;
+    ghost.style.top = `${event.clientY - offsetY}px`;
+  }
 
-    // チェックボックスが出ている状態では発動しない
-    if (goalList.querySelector(".goal-checkbox")) return;
+  function onPointerUp(event) {
+    if (!isDragging) return;
 
-    // どれか1つでも編集/削除スワイプが開いていたら発動しない
-    if (goalList.querySelector(".show-edit, .show-delete")) return;
+    isDragging = false;
 
-    // 文字編集中は発動しない
-    if (content.isContentEditable) return;
+    document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("pointerup", onPointerUp);
+    document.removeEventListener("pointercancel", onPointerUp);
 
-    // 編集・削除ボタン上では発動しない
-    if (event.target.closest(".edit-button, .delete-button")) return;
+    const toIndex = getGoalDropIndex(event.clientY);
 
-    startX = event.touches[0].clientX;
-    startY = event.touches[0].clientY;
-
-    longPressTimer = setTimeout(() => {
-      longPressTimer = null;
-      moveGoalItemToTop(index);
-    }, 600);
-  });
-
-  item.addEventListener("touchmove", (event) => {
-    if (!longPressTimer) return;
-
-    const currentX = event.touches[0].clientX;
-    const currentY = event.touches[0].clientY;
-    const diffX = Math.abs(currentX - startX);
-    const diffY = Math.abs(currentY - startY);
-
-    // 少しでもスクロール・横スワイプっぽい動きが出たらキャンセル
-    if (diffX > 10 || diffY > 10) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
+    if (ghost) {
+      ghost.remove();
+      ghost = null;
     }
-  });
 
-  item.addEventListener("touchend", () => {
-    if (!longPressTimer) return;
+    item.classList.remove("drag-placeholder");
 
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  });
+    if (toIndex !== startIndex) {
+      moveGoalItem(startIndex, toIndex);
+    } else {
+      renderGoalList();
+    }
+  }
 
-  item.addEventListener("touchcancel", () => {
-    if (!longPressTimer) return;
+  handle.addEventListener("pointerdown", (event) => {
+    if (!isGoalSortMode) return;
 
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
+    event.preventDefault();
+
+    const rect = item.getBoundingClientRect();
+    offsetY = event.clientY - rect.top;
+
+    ghost = item.cloneNode(true);
+    ghost.classList.add("goal-drag-ghost");
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+
+    document.body.appendChild(ghost);
+
+    item.classList.add("drag-placeholder");
+
+    isDragging = true;
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerUp);
   });
 }
 
-function moveGoalItemToTop(index) {
+function getGoalDropIndex(pointerY) {
+  const items = Array.from(goalList.querySelectorAll(".goal-item"));
+
+  for (let i = 0; i < items.length; i++) {
+    const rect = items[i].getBoundingClientRect();
+    const centerY = rect.top + rect.height / 2;
+
+    if (pointerY < centerY) {
+      return i;
+    }
+  }
+
+  return items.length - 1;
+}
+
+function moveGoalItem(fromIndex, toIndex) {
   const data = getGoalData();
 
-  if (index === 0) return;
-  if (!data[index]) return;
+  if (!data[fromIndex]) return false;
+  if (!data[toIndex]) return false;
 
-  const movedGoal = data.splice(index, 1)[0];
-  data.unshift(movedGoal);
+  const movedGoal = data.splice(fromIndex, 1)[0];
+  data.splice(toIndex, 0, movedGoal);
 
   setGoalData(data);
   renderGoalList();
+
+  return true;
 }
 
 function updateGoalItem(index, newText) {
@@ -1395,7 +1554,7 @@ function deleteGoalItemByIndex(index) {
     function toggleGoalMultiDelete() {
       if (!isGoalDeleteMode) {
         isGoalDeleteMode = true;
-        goalMultiDeleteButton.textContent = "選択した目標を削除";
+        goalMultiDeleteButton.textContent = "削除する";
         goalMultiDeleteButton.classList.add("delete-mode");
         renderGoalList();
         return;
@@ -1419,6 +1578,17 @@ function deleteGoalItemByIndex(index) {
       goalMultiDeleteButton.classList.remove("delete-mode");
       renderGoalList();
     }
+    
+    function toggleGoalSortMode() {
+  isGoalSortMode = !isGoalSortMode;
+
+  goalSortButton.textContent = isGoalSortMode ? "並び替え完了" : "並び替え";
+  
+  goalSortButton.classList.toggle("sort-mode", isGoalSortMode);
+  goalList.classList.toggle("sort-mode", isGoalSortMode);
+
+  renderGoalList();
+}
 
     function deleteGoalItems(indexes) {
       const data = getGoalData();
