@@ -1245,7 +1245,6 @@ function addGoalItem(text, index) {
   item.appendChild(deleteButton);
   item.appendChild(swipeContent);
   goalList.appendChild(item);
-  setupGoalLongPressToTop(item, index, content);
 
   item.addEventListener("touchstart", (event) => {
     if (isGoalDeleteMode) return;
@@ -1293,68 +1292,6 @@ function addGoalItem(text, index) {
       item.classList.remove("show-delete");
       item.classList.remove("show-edit");
     }
-  });
-}
-
-function setupGoalLongPressToTop(item, index, content) {
-  let longPressTimer = null;
-  let startX = 0;
-  let startY = 0;
-
-  item.addEventListener("touchstart", (event) => {
-    if (index === 0) return;
-
-    // 複数削除モード中は発動しない
-    if (isGoalDeleteMode) return;
-
-    // チェックボックスが出ている状態では発動しない
-    if (goalList.querySelector(".goal-checkbox")) return;
-
-    // どれか1つでも編集/削除スワイプが開いていたら発動しない
-    if (goalList.querySelector(".show-edit, .show-delete")) return;
-
-    // 文字編集中は発動しない
-    if (content.isContentEditable) return;
-
-    // 編集・削除ボタン上では発動しない
-    if (event.target.closest(".edit-button, .delete-button")) return;
-
-    startX = event.touches[0].clientX;
-    startY = event.touches[0].clientY;
-
-    longPressTimer = setTimeout(() => {
-      longPressTimer = null;
-      moveGoalItemToTop(index);
-    }, 600);
-  });
-
-  item.addEventListener("touchmove", (event) => {
-    if (!longPressTimer) return;
-
-    const currentX = event.touches[0].clientX;
-    const currentY = event.touches[0].clientY;
-    const diffX = Math.abs(currentX - startX);
-    const diffY = Math.abs(currentY - startY);
-
-    // 少しでもスクロール・横スワイプっぽい動きが出たらキャンセル
-    if (diffX > 10 || diffY > 10) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-    }
-  });
-
-  item.addEventListener("touchend", () => {
-    if (!longPressTimer) return;
-
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  });
-
-  item.addEventListener("touchcancel", () => {
-    if (!longPressTimer) return;
-
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
   });
 }
 
