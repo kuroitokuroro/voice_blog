@@ -1435,6 +1435,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
     currentIndex = startIndex;
     isDragging = true;
     item.classList.add("dragging");
+    handle.classList.add("dragging");
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
