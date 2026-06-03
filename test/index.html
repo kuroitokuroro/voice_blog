@@ -1392,58 +1392,62 @@ function setupGoalSortHandle(handle, startIndex) {
   let currentIndex = startIndex;
   let isDragging = false;
 
-  handle.addEventListener("pointerdown", (event) => {
-    if (!isGoalSortMode) return;
-
-    startY = event.clientY;
-    currentIndex = startIndex;
-    isDragging = true;
-
-    handle.classList.add("dragging");
-    handle.setPointerCapture(event.pointerId);
-  });
-
-  handle.addEventListener("pointermove", (event) => {
+  function onPointerMove(event) {
     if (!isDragging) return;
 
     const diffY = event.clientY - startY;
 
     if (diffY > 32) {
-      moveGoalItem(currentIndex, currentIndex + 1);
-      currentIndex += 1;
-      startY = event.clientY;
+      if (moveGoalItem(currentIndex, currentIndex + 1)) {
+        currentIndex += 1;
+        startY = event.clientY;
+      }
       return;
     }
 
     if (diffY < -32) {
-      moveGoalItem(currentIndex, currentIndex - 1);
-      currentIndex -= 1;
-      startY = event.clientY;
+      if (moveGoalItem(currentIndex, currentIndex - 1)) {
+        currentIndex -= 1;
+        startY = event.clientY;
+      }
     }
-  });
+  }
 
-  handle.addEventListener("pointerup", () => {
+  function onPointerUp() {
     isDragging = false;
-    handle.classList.remove("dragging");
-  });
+    document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("pointerup", onPointerUp);
+    document.removeEventListener("pointercancel", onPointerUp);
+  }
 
-  handle.addEventListener("pointercancel", () => {
-    isDragging = false;
-    handle.classList.remove("dragging");
+  handle.addEventListener("pointerdown", (event) => {
+    if (!isGoalSortMode) return;
+
+    event.preventDefault();
+
+    startY = event.clientY;
+    currentIndex = startIndex;
+    isDragging = true;
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerUp);
   });
 }
 
 function moveGoalItem(fromIndex, toIndex) {
   const data = getGoalData();
 
-  if (!data[fromIndex]) return;
-  if (!data[toIndex]) return;
+  if (!data[fromIndex]) return false;
+  if (!data[toIndex]) return false;
 
   const movedGoal = data.splice(fromIndex, 1)[0];
   data.splice(toIndex, 0, movedGoal);
 
   setGoalData(data);
   renderGoalList();
+
+  return true;
 }
 
 function moveGoalItemToTop(index) {
