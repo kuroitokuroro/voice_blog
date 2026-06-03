@@ -475,6 +475,7 @@
 .goal-title-row {
   display: flex;
   align-items: center;
+  margin: 10px 0px;
   justify-content: space-between;
   gap: 12px;
 }
@@ -496,6 +497,37 @@
 .goal-sort-button.sort-mode {
   background: #999;
   color: white;
+}
+
+.goal-title-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.goal-sort-button.delete-mode {
+  background: #c05050;
+  color: white;
+}
+
+.goal-list.sort-mode,
+.goal-list.sort-mode * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.goal-sort-handle {
+  width: 0.5em;
+  height: 1em;
+  background: #cfcfcf;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.goal-item .swipe-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
   </style>
 </head>
@@ -536,11 +568,14 @@
 
   <section id="goalPanel" class="panel">
     <button id="goalVoiceButton" class="main-button">話して目標を追加</button>
-    <button id="goalMultiDeleteButton" class="sub-button">複数削除</button>
 
-    <div class="goal-title-row">
+   <div class="goal-title-row">
   <h2>目標</h2>
-  <button id="goalSortButton" class="goal-sort-button">並び替え</button>
+
+  <div class="goal-title-actions">
+    <button id="goalSortButton" class="goal-sort-button">並び替え</button>
+    <button id="goalMultiDeleteButton" class="goal-sort-button">複数削除</button>
+  </div>
 </div>
     <div id="goalList" class="diary-area"></div>
   </section>
@@ -1232,6 +1267,17 @@ function addGoalItem(text, index) {
     checkbox.dataset.index = index;
     swipeContent.appendChild(checkbox);
   }
+  
+  if (isGoalSortMode) {
+  const leftHandle = document.createElement("div");
+  leftHandle.className = "goal-sort-handle";
+  swipeContent.appendChild(leftHandle);
+}
+  if (isGoalSortMode) {
+  const rightHandle = document.createElement("div");
+  rightHandle.className = "goal-sort-handle";
+  swipeContent.appendChild(rightHandle);
+}
 
   const content = document.createElement("div");
   content.className = "text";
@@ -1364,7 +1410,7 @@ function deleteGoalItemByIndex(index) {
     function toggleGoalMultiDelete() {
       if (!isGoalDeleteMode) {
         isGoalDeleteMode = true;
-        goalMultiDeleteButton.textContent = "選択した目標を削除";
+        goalMultiDeleteButton.textContent = "削除する";
         goalMultiDeleteButton.classList.add("delete-mode");
         renderGoalList();
         return;
@@ -1393,8 +1439,8 @@ function deleteGoalItemByIndex(index) {
   isGoalSortMode = !isGoalSortMode;
 
   goalSortButton.textContent = isGoalSortMode ? "並び替え完了" : "並び替え";
+  
   goalSortButton.classList.toggle("sort-mode", isGoalSortMode);
-
   goalList.classList.toggle("sort-mode", isGoalSortMode);
 
   renderGoalList();
