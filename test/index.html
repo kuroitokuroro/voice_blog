@@ -1328,12 +1328,17 @@ function addGoalItem(text, index) {
   swipeContent.className = "swipe-content";
 
   if (isGoalDeleteMode) {
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "goal-checkbox";
-    checkbox.dataset.index = index;
-    swipeContent.appendChild(checkbox);
-  }
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.className = "goal-checkbox";
+  checkbox.dataset.index = index;
+
+  checkbox.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
+  swipeContent.appendChild(checkbox);
+}
   
   if (isGoalSortMode) {
   const leftHandle = document.createElement("div");
@@ -1393,6 +1398,15 @@ function addGoalItem(text, index) {
   item.appendChild(deleteButton);
   item.appendChild(swipeContent);
   goalList.appendChild(item);
+  
+  item.addEventListener("click", () => {
+  if (!isGoalDeleteMode) return;
+
+  const checkbox = item.querySelector(".goal-checkbox");
+  if (!checkbox) return;
+
+  checkbox.checked = !checkbox.checked;
+});
 
   item.addEventListener("touchstart", (event) => {
     if (isGoalDeleteMode) return;
