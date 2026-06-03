@@ -547,6 +547,7 @@
     const DIARY_STORAGE_KEY = "voiceDiaryData";
     const GOAL_STORAGE_KEY = "koeGoalData";
     const HABIT_STORAGE_KEY = "koeHabitData";
+    const TAB_STORAGE_KEY = "koeTabOrder";
 
     const DEFAULT_TABS = [
   { id: "diary", label: "日記", panelId: "diaryPanel" },
@@ -578,6 +579,8 @@
     let selectedHabitIndex = null;
     let isGoalDeleteMode = false;
     let editingHabitIndex = null;
+    let tabOrder = loadTabOrder();
+    let activeTabId = tabOrder[0].id;
 
     const today = getLogicalToday();
     const todayKey = formatDateKey(today);
@@ -1849,6 +1852,22 @@ function openUpdateHistory() {
   activeTabId = "update";
   renderTabs();
   renderPanels();
+}
+
+function loadTabOrder() {
+  const saved = JSON.parse(localStorage.getItem(TAB_STORAGE_KEY));
+  if (!saved) return DEFAULT_TABS;
+
+  const restored = saved
+    .map((savedId) => DEFAULT_TABS.find((tab) => tab.id === savedId))
+    .filter(Boolean);
+
+  return restored.length === DEFAULT_TABS.length ? restored : DEFAULT_TABS;
+}
+
+function saveTabOrder() {
+  const ids = tabOrder.map((tab) => tab.id);
+  localStorage.setItem(TAB_STORAGE_KEY, JSON.stringify(ids));
 }
   </script>
     <div class="bottomIconArea">
