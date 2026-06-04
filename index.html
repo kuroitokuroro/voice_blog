@@ -622,6 +622,15 @@
       #downloadButton {
         font-size: 1em;
       }
+      
+      .tab-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.9;
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+}
     </style>
   </head>
 
@@ -981,69 +990,92 @@
       }
 
       function setupTabDrag(button, startIndex) {
-        let startX = 0;
-        let currentIndex = startIndex;
-        let isDragging = false;
-        let hasMoved = false;
+  let startX = 0;
+  let offsetX = 0;
+  let currentIndex = startIndex;
+  let isDragging = false;
+  let hasMoved = false;
+  let ghost = null;
 
-        function onPointerMove(event) {
-          if (!isDragging) return;
+  function onPointerMove(event) {
+  if (!isDragging || !ghost) return;
 
-          const diff = event.clientX - startX;
+  const diff = event.clientX - startX;
+  const tabWidth = ghost.getBoundingClientRect().width;
+  const moveThreshold = tabWidth * 0.9;
 
-          if (Math.abs(diff) > 10) {
-            hasMoved = true;
-          }
+  if (Math.abs(diff) > 10) {
+    hasMoved = true;
+  }
 
-          if (diff > 40 && currentIndex < tabOrder.length - 1) {
-            swapTabs(currentIndex, currentIndex + 1);
-            currentIndex += 1;
-            startX = event.clientX;
-            draggingTabId = tabOrder[currentIndex].id;
-            return;
-          }
+  ghost.style.left = `${event.clientX - offsetX}px`;
 
-          if (diff < -40 && currentIndex > 0) {
-            swapTabs(currentIndex, currentIndex - 1);
-            currentIndex -= 1;
-            startX = event.clientX;
-            draggingTabId = tabOrder[currentIndex].id;
-          }
-        }
+  if (diff > moveThreshold && currentIndex < tabOrder.length - 1) {
+    swapTabs(currentIndex, currentIndex + 1);
+    currentIndex += 1;
+    startX = event.clientX;
+    draggingTabId = tabOrder[currentIndex].id;
+    return;
+  }
 
-        function onPointerUp() {
-          isDragging = false;
+  if (diff < -moveThreshold && currentIndex > 0) {
+    swapTabs(currentIndex, currentIndex - 1);
+    currentIndex -= 1;
+    startX = event.clientX;
+    draggingTabId = tabOrder[currentIndex].id;
+  }
+}
 
-          document.removeEventListener("pointermove", onPointerMove);
-          document.removeEventListener("pointerup", onPointerUp);
-          document.removeEventListener("pointercancel", onPointerUp);
+  function onPointerUp() {
+    isDragging = false;
 
-          if (!hasMoved) {
-            activeTabId = tabOrder[currentIndex].id;
-            draggingTabId = null;
-            renderTabs();
-            renderPanels();
-            return;
-          }
+    document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("pointerup", onPointerUp);
+    document.removeEventListener("pointercancel", onPointerUp);
 
-          draggingTabId = null;
-          renderTabs();
-        }
+    if (ghost) {
+      ghost.remove();
+      ghost = null;
+    }
 
-        button.addEventListener("pointerdown", (event) => {
-          startX = event.clientX;
-          currentIndex = startIndex;
-          isDragging = true;
-          hasMoved = false;
+    if (!hasMoved) {
+      activeTabId = tabOrder[currentIndex].id;
+      draggingTabId = null;
+      renderTabs();
+      renderPanels();
+      return;
+    }
 
-          draggingTabId = tabOrder[startIndex].id;
-          renderTabs();
+    draggingTabId = null;
+    renderTabs();
+  }
 
-          document.addEventListener("pointermove", onPointerMove);
-          document.addEventListener("pointerup", onPointerUp);
-          document.addEventListener("pointercancel", onPointerUp);
-        });
-      }
+  button.addEventListener("pointerdown", (event) => {
+    const rect = button.getBoundingClientRect();
+
+    startX = event.clientX;
+    offsetX = event.clientX - rect.left;
+    currentIndex = startIndex;
+    isDragging = true;
+    hasMoved = false;
+
+    ghost = button.cloneNode(true);
+    ghost.classList.add("tab-drag-ghost");
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+
+    document.body.appendChild(ghost);
+
+    draggingTabId = tabOrder[startIndex].id;
+    renderTabs();
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerUp);
+  });
+}
 
       function swapTabs(fromIndex, toIndex) {
         const temp = tabOrder[fromIndex];
