@@ -1,2150 +1,2225 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>こえログ</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-<link rel="icon" type="image/jpeg" href="favicon.jpg">
-<link rel="apple-touch-icon" href="favicon.jpg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&family=Noto+Sans+JP:wght@100..900&family=WDXL+Lubrifont+JP+N&family=Zen+Maru+Gothic:wght@500&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 0px 24px;
-      background: #f7f7f7;
-      color: #222;
-    }
-
-    h1 {
-      font-size: 28px;
-      margin-bottom: 16px;
-    }
-
-    h2 {
-      font-size: 18px;
-      margin: 18px 0 10px;
-    }
-
-    button {
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-family: inherit;
-    }
-
-    .tab-bar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      user-select: none;
-      touch-action: none;
-    }
-
-    .tab-button {
-      flex: 1;
-      padding: 12px 8px;
-      border-radius: 12px;
-      background: #d0d0d0;
-      color: #222;
-      font-size: 14px;
-      transition: transform 0.15s ease, background 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-    }
-
-    .tab-button.active {
-      background: #333;
-      color: white;
-    }
-
-    .panel {
-      display: none;
-    }
-
-    .panel.active {
-      display: block;
-    }
-
-    .main-button {
-      width: 100%;
-      padding: 16px;
-      margin-bottom: 16px;
-      font-size: 18px;
-      background: #333;
-      color: white;
-    }
-
-    .main-button.listening {
-      background: #7a3cff;
-    }
-
-    .sub-button {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 16px;
-      font-size: 15px;
-      border-radius: 12px;
-      background: #777;
-      color: white;
-    }
-
-    .sub-button.delete-mode {
-      background: #d33;
-    }
-
-    .diary-area,
-    .past-diary-area,
-    .tool-area {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-
-    .diary-item {
-      position: relative;
-      overflow: hidden;
-      border-bottom: 1px solid #eee;
-      background: white;
-    }
-
-    .swipe-content {
-      position: relative;
-      z-index: 2;
-      background: white;
-      padding: 12px;
-      transition: transform 0.2s ease;
-      display: flex;
-      align-items: center;
-    }
-
-    .diary-item.show-delete .swipe-content {
-      transform: translateX(-64px);
-    }
-
-    .diary-item.show-edit .swipe-content {
-      transform: translateX(64px);
-    }
-
-    .text {
-      line-height: 1.6;
-      font-size: 14px;
-      word-break: break-word;
-    }
-
-    .delete-button,
-    .edit-button {
-      position: absolute;
-      top: 0;
-      width: 64px;
-      height: 100%;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1;
-    }
-
-    .delete-button {
-      right: 0;
-      background: #d33;
-    }
-
-    .edit-button {
-      left: 0;
-      background: #4c956c;
-    }
-
-    .material-symbols-outlined {
-      font-size: 24px;
-    }
-
-    .text.editing {
-      width: 100%;
-      padding: 6px;
-      border: 1px solid #aaa;
-      border-radius: 6px;
-      background: #fffdf2;
-      outline: none;
-    }
-
-    .past-section {
-      margin-top: 24px;
-    }
-
-    .date-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .date-button {
-      padding: 7px 11px;
-      font-size: 13px;
-      background: #d0d0d0;
-      color: #222;
-    }
-
-    .date-button.active {
-      background: #748a74;
-      color: white;
-    }
-
-    .past-diary-area {
-      display: none;
-    }
-
-    .past-diary-area.open {
-      display: block;
-    }
-
-    .past-diary-item {
-      padding: 10px 12px;
-      border-bottom: 1px solid #eee;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .download-area {
-      margin-top: 16px;
-    }
-
-    #monthSelect {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      background: white;
-    }
-
-    .goal-checkbox {
-      margin-right: 10px;
-      transform: scale(1.2);
-    }
-
-    .empty-message {
-      padding: 12px;
-      font-size: 14px;
-      color: #666;
-      line-height: 1.6;
-    }
-    
-
-    .habit-add-area {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .habit-input {
-      flex: 1;
-      min-width: 0;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      font-size: 16px;
-      font-family: inherit;
-      background: white;
-    }
-
-    .habit-add-submit-button {
-      width: 72px;
-      padding: 12px;
-      border-radius: 12px;
-      background: #333;
-      color: white;
-      font-size: 15px;
-    }
-
-    .habit-button-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 12px;
-      background: white;
-      border-radius: 12px;
-      margin-bottom: 16px;
-    }
-
-    .habit-task-button {
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: #eeeeee;
-      color: #333;
-      font-size: 15px;
-      line-height: 1.2;
-      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-      user-select: none;
-      touch-action: manipulation;
-    }
-
-    .habit-task-button.done-today {
-      background: #748a74;
-      color: #ffffff;
-    }
-
-    .habit-task-button.selected {
-      box-shadow: 0 0 0 2px #748a74 inset;
-    }
-
-    .habit-task-button.long-pressing {
-      transform: scale(0.96);
-      background: #748a74;
-    }
-
-    .habit-calendar {
-      display: none;
-      background: white;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 16px;
-    }
-
-    .habit-calendar.open {
-      display: block;
-    }
-
-    .habit-calendar-title {
-      margin-bottom: 10px;
-      font-size: 14px;
-      color: #555;
-      line-height: 1.5;
-    }
-
-    .habit-calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-    }
-
-    .habit-calendar-weekday,
-    .habit-calendar-day {
-      min-height: 34px;
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-    }
-
-    .habit-calendar-weekday {
-      min-height: 22px;
-      color: #888;
-      font-size: 12px;
-    }
-
-    .habit-calendar-day {
-      background: #f1f1f1;
-      color: #777;
-    }
-
-    .habit-calendar-day.done {
-      background: #748a74;
-      color: #ffffff;
-      font-weight: bold;
-    }
-
-    .habit-calendar-day.empty {
-      background: transparent;
-      border: none;
-      font: inherit;
-    }
-
-    .danger-button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 4px;
-  font-size: 1em;
-  border: none;
-  border-radius: 12px;
-  background: #b94a48;
-  color: white;
-  cursor: pointer;
-}
-
-.title {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  font-size: 32px;
-  font-weight: bold;
-  font-family: 'Zen Maru Gothic', sans-serif;
-    font-weight: 300;
-}
-
-.title-icon {
-  width: 36px;
-  height: 36px;
-}
-
-.update-history-list {
-  margin: 0;
-  padding-left: 1.2em;
-  line-height: 1.8;
-  font-size: 15px;
-}
-
-.update-history-list li {
-  margin-bottom: 6px;
-}
-
-.title-row {
-  display: flex;
-  align-items: center;
-}
-
-.title-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.update-history-button:active {
-  margin-left: auto;
-  opacity: 0.6;
-}
-
-.habit-calendar-day {
-  border: none;
-  font: inherit;
-}
-
-.habit-calendar-day.long-pressing {
-  transform: scale(0.96);
-}
-
-.habit-calendar-title-button {
-  border: none;
-  background: transparent;
-  font: inherit;
-  font-weight: bold;
-  color: inherit;
-  padding: 4px;
-}
-
-.habit-title-edit-input {
-  width: 70%;
-  padding: 6px;
-  font: inherit;
-}
-
-.habit-title-edit-button {
-  margin-left: 6px;
-  padding: 6px 10px;
-}
-
-.habit-delete-button {
-  margin-top: 8px;
-  margin-bottom: 10px;
-}
-
-.bottomIconArea{
-  display:flex;
-  justify-content:center;
-  padding:24px 0 32px;
-}
-
-.bottomIcon{
-  width:48px;
-  height:48px;
-}
-
-.tab-button.dragging {
-  opacity: 0.85;
-  transform: translateY(-3px) scale(1.04);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
-}
-
-.goal-title-row {
-  display: flex;
-  align-items: center;
-  margin: 10px 0px;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.goal-title-row h2 {
-  margin: 0;
-}
-
-.goal-sort-button {
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: none;
-  background: #d0d0d0;
-  color: #333;
-  font-size: 13px;
-  font-family: inherit;
-}
-
-.goal-sort-button.sort-mode {
-  background: #748a74;
-  color: white;
-}
-
-.goal-title-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.goal-sort-button.delete-mode {
-  background: #c05050;
-  color: white;
-}
-
-#goalList.sort-mode,
-#goalList.sort-mode * {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-#goalList.sort-mode .edit-button,
-#goalList.sort-mode .delete-button {
-  display: none;
-}
-
-.goal-sort-handle {
-  width: 0.5em;
-  background: #cfcfcf;
-  border-radius: 2px;
-  flex-shrink: 0;
-  align-self: stretch;
-  touch-action: none;
-  position: relative;
-}
-
-.goal-sort-handle::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -2em;
-  right: -2em;
-}
-
-#goalList.sort-mode .swipe-actions {
-  display: none;
-}
-
-.goal-item .swipe-content {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-}
-
-.goal-item .text {
-  flex: 1;
-}
-
-.goal-sort-handle.dragging {
-  background: #999;
-}
-
-.goal-drag-ghost {
-  position: fixed;
-  z-index: 9999;
-  pointer-events: none;
-  background: #ddd;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
-}
-
-.goal-item.drag-placeholder .swipe-content {
-  visibility: hidden;
-}
-
-.goal-drag-ghost .edit-button,
-.goal-drag-ghost .delete-button {
-  display: none;
-}
-
-.goal-item.drop-preview-before {
-  margin-top: var(--goal-drop-space, 28px);
-}
-
-.goal-item.drop-preview-after {
-  margin-bottom: var(--goal-drop-space, 28px);
-}
-
-.goal-item.drag-placeholder {
-  display: none;
-}
-
-.title-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.icon-action-button {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: none;
-  background: #eee;
-  color: #222;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  font-family: inherit;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.icon-action-button .material-symbols-outlined {
-  font-size: 24px;
-}
-
-.icon-action-button:active {
-  opacity: 0.6;
-}
-
-#downloadButton {
-  font-size: 1em;
-}
-  </style>
-</head>
-
-<body>
-<div class="title-row">
-  <div class="title-group">
-    <h1 class="title">こえログ</h1>
-  </div>
-  <div class="title-actions">
-  <button
-    id="updateHistoryButton"
-    class="icon-action-button"
-    type="button"
-    aria-label="更新履歴を開く"
-  >
-    <span class="material-symbols-outlined">history</span>
-  </button>
-
-  <a
-    href="https://odaibako.net/u/voice_blog"
-    target="_blank"
-    rel="noopener noreferrer"
-    class="icon-action-button"
-    aria-label="お題箱を開く"
-  >
-    <span class="material-symbols-outlined">mail</span>
-  </a>
-</div>
-</div>
-  <div id="tabBar" class="tab-bar"></div>
-
-  <section id="diaryPanel" class="panel">
-    <button id="voiceButton" class="main-button">話して日記を書く</button>
-
-    <h2>今日の日記</h2>
-    <div id="todayDiaryList" class="diary-area"></div>
-
-    <div class="past-section">
-      <h2>過去の日記</h2>
-      <div id="dateButtons" class="date-buttons"></div>
-      <div id="pastDiaryList" class="past-diary-area"></div>
-    </div>
-
-    <div class="download-area">
-      <select id="monthSelect"></select>
-      <button id="downloadButton" class="main-button">txtファイルでダウンロード</button>
-      <button id="deleteOldestMonthButton" class="danger-button">
-  一番古い月の日記を消す
-</button>
-    </div>
-  </section>
-
-  <section id="goalPanel" class="panel">
-    <button id="goalVoiceButton" class="main-button">話して目標を追加</button>
-
-   <div class="goal-title-row">
-  <h2>目標</h2>
-
-  <div class="goal-title-actions">
-    <button id="goalSortButton" class="goal-sort-button">並び替え</button>
-    <button id="goalMultiDeleteButton" class="goal-sort-button">複数削除</button>
-  </div>
-</div>
-    <div id="goalList" class="diary-area"></div>
-  </section>
-
-  <section id="habitPanel" class="panel">
-    <div id="habitAddArea" class="habit-add-area">
-      <input
-        id="habitInput"
-        class="habit-input"
-        type="text"
-        autocomplete="off"
-        placeholder="例：水を飲む / 薬 / 風呂"
-      >
-      <button id="habitAddSubmitButton" class="habit-add-submit-button">追加</button>
-    </div>
-
-    <h2>習慣</h2>
-    <div id="habitList" class="habit-button-list"></div>
-    <div id="habitCalendar" class="habit-calendar"></div>
-<div id="habitDangerArea" class="habit-danger-area"></div>
-  </section>
-  
-   <section id="updatePanel" class="panel"><br>
-  <ul class="update-history-list">
-
-<h3>6/4</h3>
-<li>【まだ】音声入力で優先的に変換する単語リストを作りたい</li>
-<li>【まだ】予定が日付順に並ぶ、予定タブを作りたい</li>
-<li>不要コードを整理した</li>
-<li>モードが混ざらないようにした</li>
-<li>並び替えの感度を調整した</li>
-<li>テスト環境と本番環境を分けた</li>
-
-<h3>6/4より前</h3>
-<li>一番下のボタンが押しやすいように、アイコンをつけた</li>
-<li>タイトルのフォント変えた</li>
-<li>【考え中】予定が日付順に並ぶ、予定タブを作りたいね</li>
-<li>💮習慣タブのタスク名、変更できるようにしたいね</li>
-<li>更新履歴タブを新設</li>
-<li>Safari / Chrome で動作確認。タブ切替が動くように修正</li>
-<li>習慣タブの入力欄を常時表示に変更</li>
-  </ul>
-</section>
-
-  <script>
-    const TAB_STORAGE_KEY = "koeTabOrder";
-    const DIARY_STORAGE_KEY = "voiceDiaryData";
-    const GOAL_STORAGE_KEY = "koeGoalData";
-    const HABIT_STORAGE_KEY = "koeHabitData";
-
-    const DEFAULT_TABS = [
-  { id: "diary", label: "日記", panelId: "diaryPanel" },
-  { id: "goal", label: "目標", panelId: "goalPanel" },
-  { id: "habit", label: "習慣", panelId: "habitPanel" },
-];
-
-    const tabBar = document.getElementById("tabBar");
-    const voiceButton = document.getElementById("voiceButton");
-    const downloadButton = document.getElementById("downloadButton");
-    const todayDiaryList = document.getElementById("todayDiaryList");
-    const dateButtons = document.getElementById("dateButtons");
-    const pastDiaryList = document.getElementById("pastDiaryList");
-    const monthSelect = document.getElementById("monthSelect");
-    const goalVoiceButton = document.getElementById("goalVoiceButton");
-    const goalMultiDeleteButton = document.getElementById("goalMultiDeleteButton");
-    const goalList = document.getElementById("goalList");
-    const goalSortButton = document.getElementById("goalSortButton");
-    const deleteOldestMonthButton = document.getElementById("deleteOldestMonthButton");
-    const habitAddArea = document.getElementById("habitAddArea");
-    const habitInput = document.getElementById("habitInput");
-    const habitAddSubmitButton = document.getElementById("habitAddSubmitButton");
-    const habitList = document.getElementById("habitList");
-    const habitCalendar = document.getElementById("habitCalendar");
-    const updateHistoryButton = document.getElementById("updateHistoryButton");
-
-    let tabOrder = loadTabOrder();
-    let activeTabId = tabOrder[0].id;
-    let selectedPastDateKey = null;
-    let selectedHabitIndex = null;
-    let isGoalDeleteMode = false;
-    let editingHabitIndex = null;
-    let draggingTabId = null;
-    let isGoalSortMode = false;
-
-    const today = getLogicalToday();
-    const todayKey = formatDateKey(today);
-
-    setupDiaryVoiceInput();
-    setupGoalVoiceInput();
-    downloadButton.addEventListener("click", downloadTxt);
-    deleteOldestMonthButton.addEventListener("click", deleteOldestMonthDiary);
-    goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
-    goalSortButton.addEventListener("click", toggleGoalSortMode);
-    habitAddSubmitButton.addEventListener("click", addHabitFromInput);
-    habitInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") addHabitFromInput();
-    });
-    updateHistoryButton.addEventListener("click", openUpdateHistory);
-
-    renderTabs();
-    renderPanels();
-    renderTodayDiary();
-    renderPastDateButtons();
-    renderMonthSelect();
-    renderGoalList();
-    renderHabitList();
-
-    function setupDiaryVoiceInput() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-      if (!SpeechRecognition) {
-        voiceButton.textContent = "このブラウザは音声入力に未対応です";
-        voiceButton.disabled = true;
-        return;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>こえログ</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+    />
+    <link rel="icon" type="image/jpeg" href="favicon.jpg" />
+    <link rel="apple-touch-icon" href="favicon.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&family=Noto+Sans+JP:wght@100..900&family=WDXL+Lubrifont+JP+N&family=Zen+Maru+Gothic:wght@500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 0px 24px;
+        background: #f7f7f7;
+        color: #222;
       }
 
-      const recognition = new SpeechRecognition();
-      recognition.lang = "ja-JP";
-      recognition.interimResults = false;
-      recognition.continuous = false;
-
-      voiceButton.addEventListener("click", () => {
-        voiceButton.textContent = "聞いています...";
-        voiceButton.classList.add("listening");
-        recognition.start();
-      });
-
-      recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
-        const items = formatDiary(text);
-
-        items.forEach((item) => saveDiaryItem(todayKey, item));
-
-        renderTodayDiary();
-        renderPastDateButtons();
-        renderMonthSelect();
-      };
-
-      recognition.onend = () => {
-        voiceButton.textContent = "話して日記を書く";
-        voiceButton.classList.remove("listening");
-      };
-
-      recognition.onerror = () => {
-        voiceButton.textContent = "話して日記を書く";
-        voiceButton.classList.remove("listening");
-        alert("音声入力でエラーが発生しました。");
-      };
-    }
-
-    function setupGoalVoiceInput() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-      if (!SpeechRecognition) {
-        goalVoiceButton.textContent = "このブラウザは音声入力に未対応です";
-        goalVoiceButton.disabled = true;
-        return;
+      h1 {
+        font-size: 28px;
+        margin-bottom: 16px;
       }
 
-      const recognition = new SpeechRecognition();
-      recognition.lang = "ja-JP";
-      recognition.interimResults = false;
-      recognition.continuous = false;
+      h2 {
+        font-size: 18px;
+        margin: 18px 0 10px;
+      }
 
-      goalVoiceButton.addEventListener("click", () => {
-        goalVoiceButton.textContent = "聞いています...";
-        goalVoiceButton.classList.add("listening");
-        recognition.start();
+      button {
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .tab-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        user-select: none;
+        touch-action: none;
+      }
+
+      .tab-button {
+        flex: 1;
+        padding: 12px 8px;
+        border-radius: 12px;
+        background: #d0d0d0;
+        color: #222;
+        font-size: 14px;
+        transition:
+          transform 0.15s ease,
+          background 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .tab-button.active {
+        background: #333;
+        color: white;
+      }
+
+      .panel {
+        display: none;
+      }
+
+      .panel.active {
+        display: block;
+      }
+
+      .main-button {
+        width: 100%;
+        padding: 16px;
+        margin-bottom: 16px;
+        font-size: 18px;
+        background: #333;
+        color: white;
+      }
+
+      .main-button.listening {
+        background: #7a3cff;
+      }
+
+      .sub-button {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 16px;
+        font-size: 15px;
+        border-radius: 12px;
+        background: #777;
+        color: white;
+      }
+
+      .sub-button.delete-mode {
+        background: #d33;
+      }
+
+      .diary-area,
+      .past-diary-area,
+      .tool-area {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+
+      .diary-item {
+        position: relative;
+        overflow: hidden;
+        border-bottom: 1px solid #eee;
+        background: white;
+      }
+
+      .swipe-content {
+        position: relative;
+        z-index: 2;
+        background: white;
+        padding: 12px;
+        transition: transform 0.2s ease;
+        display: flex;
+        align-items: center;
+      }
+
+      .diary-item.show-delete .swipe-content {
+        transform: translateX(-64px);
+      }
+
+      .diary-item.show-edit .swipe-content {
+        transform: translateX(64px);
+      }
+
+      .text {
+        line-height: 1.6;
+        font-size: 14px;
+        word-break: break-word;
+      }
+
+      .delete-button,
+      .edit-button {
+        position: absolute;
+        top: 0;
+        width: 64px;
+        height: 100%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+      }
+
+      .delete-button {
+        right: 0;
+        background: #d33;
+      }
+
+      .edit-button {
+        left: 0;
+        background: #4c956c;
+      }
+
+      .material-symbols-outlined {
+        font-size: 24px;
+      }
+
+      .text.editing {
+        width: 100%;
+        padding: 6px;
+        border: 1px solid #aaa;
+        border-radius: 6px;
+        background: #fffdf2;
+        outline: none;
+      }
+
+      .past-section {
+        margin-top: 24px;
+      }
+
+      .date-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .date-button {
+        padding: 7px 11px;
+        font-size: 13px;
+        background: #d0d0d0;
+        color: #222;
+      }
+
+      .date-button.active {
+        background: #748a74;
+        color: white;
+      }
+
+      .past-diary-area {
+        display: none;
+      }
+
+      .past-diary-area.open {
+        display: block;
+      }
+
+      .past-diary-item {
+        padding: 10px 12px;
+        border-bottom: 1px solid #eee;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .download-area {
+        margin-top: 16px;
+      }
+
+      #monthSelect {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        background: white;
+      }
+
+      .goal-checkbox {
+        margin-right: 10px;
+        transform: scale(1.2);
+      }
+
+      .empty-message {
+        padding: 12px;
+        font-size: 14px;
+        color: #666;
+        line-height: 1.6;
+      }
+
+      .habit-add-area {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .habit-input {
+        flex: 1;
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 12px;
+        font-size: 16px;
+        font-family: inherit;
+        background: white;
+      }
+
+      .habit-add-submit-button {
+        width: 72px;
+        padding: 12px;
+        border-radius: 12px;
+        background: #333;
+        color: white;
+        font-size: 15px;
+      }
+
+      .habit-button-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px;
+        background: white;
+        border-radius: 12px;
+        margin-bottom: 16px;
+      }
+
+      .habit-task-button {
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: #eeeeee;
+        color: #333;
+        font-size: 15px;
+        line-height: 1.2;
+        transition:
+          background 0.15s ease,
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+        user-select: none;
+        touch-action: manipulation;
+      }
+
+      .habit-task-button.done-today {
+        background: #748a74;
+        color: #ffffff;
+      }
+
+      .habit-task-button.selected {
+        box-shadow: 0 0 0 2px #748a74 inset;
+      }
+
+      .habit-task-button.long-pressing {
+        transform: scale(0.96);
+        background: #748a74;
+      }
+
+      .habit-calendar {
+        display: none;
+        background: white;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 16px;
+      }
+
+      .habit-calendar.open {
+        display: block;
+      }
+
+      .habit-calendar-title {
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #555;
+        line-height: 1.5;
+      }
+
+      .habit-calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+      }
+
+      .habit-calendar-weekday,
+      .habit-calendar-day {
+        min-height: 34px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+      }
+
+      .habit-calendar-weekday {
+        min-height: 22px;
+        color: #888;
+        font-size: 12px;
+      }
+
+      .habit-calendar-day {
+        background: #f1f1f1;
+        color: #777;
+      }
+
+      .habit-calendar-day.done {
+        background: #748a74;
+        color: #ffffff;
+        font-weight: bold;
+      }
+
+      .habit-calendar-day.empty {
+        background: transparent;
+        border: none;
+        font: inherit;
+      }
+
+      .danger-button {
+        width: 100%;
+        padding: 14px;
+        margin-top: 4px;
+        font-size: 1em;
+        border: none;
+        border-radius: 12px;
+        background: #b94a48;
+        color: white;
+        cursor: pointer;
+      }
+
+      .title {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        font-size: 32px;
+        font-weight: bold;
+        font-family: "Zen Maru Gothic", sans-serif;
+        font-weight: 300;
+      }
+
+      .title-icon {
+        width: 36px;
+        height: 36px;
+      }
+
+      .update-history-list {
+        margin: 0;
+        padding-left: 1.2em;
+        line-height: 1.8;
+        font-size: 15px;
+      }
+
+      .update-history-list li {
+        margin-bottom: 6px;
+      }
+
+      .title-row {
+        display: flex;
+        align-items: center;
+      }
+
+      .title-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .update-history-button:active {
+        margin-left: auto;
+        opacity: 0.6;
+      }
+
+      .habit-calendar-day {
+        border: none;
+        font: inherit;
+      }
+
+      .habit-calendar-day.long-pressing {
+        transform: scale(0.96);
+      }
+
+      .habit-calendar-title-button {
+        border: none;
+        background: transparent;
+        font: inherit;
+        font-weight: bold;
+        color: inherit;
+        padding: 4px;
+      }
+
+      .habit-title-edit-input {
+        width: 70%;
+        padding: 6px;
+        font: inherit;
+      }
+
+      .habit-title-edit-button {
+        margin-left: 6px;
+        padding: 6px 10px;
+      }
+
+      .habit-delete-button {
+        margin-top: 8px;
+        margin-bottom: 10px;
+      }
+
+      .bottomIconArea {
+        display: flex;
+        justify-content: center;
+        padding: 24px 0 32px;
+      }
+
+      .bottomIcon {
+        width: 48px;
+        height: 48px;
+      }
+
+      .tab-button.dragging {
+        opacity: 0.85;
+        transform: translateY(-3px) scale(1.04);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+      }
+
+      .goal-title-row {
+        display: flex;
+        align-items: center;
+        margin: 10px 0px;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .goal-title-row h2 {
+        margin: 0;
+      }
+
+      .goal-sort-button {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: none;
+        background: #d0d0d0;
+        color: #333;
+        font-size: 13px;
+        font-family: inherit;
+      }
+
+      .goal-sort-button.sort-mode {
+        background: #748a74;
+        color: white;
+      }
+
+      .goal-title-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .goal-sort-button.delete-mode {
+        background: #c05050;
+        color: white;
+      }
+
+      #goalList.sort-mode,
+      #goalList.sort-mode * {
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      #goalList.sort-mode .edit-button,
+      #goalList.sort-mode .delete-button {
+        display: none;
+      }
+
+      .goal-sort-handle {
+        width: 0.5em;
+        background: #cfcfcf;
+        border-radius: 2px;
+        flex-shrink: 0;
+        align-self: stretch;
+        touch-action: none;
+        position: relative;
+      }
+
+      .goal-sort-handle::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -2em;
+        right: -2em;
+      }
+
+      #goalList.sort-mode .swipe-actions {
+        display: none;
+      }
+
+      .goal-item .swipe-content {
+        display: flex;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .goal-item .text {
+        flex: 1;
+      }
+
+      .goal-sort-handle.dragging {
+        background: #999;
+      }
+
+      .goal-drag-ghost {
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+        background: #ddd;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+      }
+
+      .goal-item.drag-placeholder .swipe-content {
+        visibility: hidden;
+      }
+
+      .goal-drag-ghost .edit-button,
+      .goal-drag-ghost .delete-button {
+        display: none;
+      }
+
+      .goal-item.drop-preview-before {
+        margin-top: var(--goal-drop-space, 28px);
+      }
+
+      .goal-item.drop-preview-after {
+        margin-bottom: var(--goal-drop-space, 28px);
+      }
+
+      .goal-item.drag-placeholder {
+        display: none;
+      }
+
+      .title-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .icon-action-button {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        border: none;
+        background: #eee;
+        color: #222;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-family: inherit;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .icon-action-button .material-symbols-outlined {
+        font-size: 24px;
+      }
+
+      .icon-action-button:active {
+        opacity: 0.6;
+      }
+
+      #downloadButton {
+        font-size: 1em;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="title-row">
+      <div class="title-group">
+        <h1 class="title">こえログ</h1>
+      </div>
+      <div class="title-actions">
+        <button
+          id="updateHistoryButton"
+          class="icon-action-button"
+          type="button"
+          aria-label="更新履歴を開く"
+        >
+          <span class="material-symbols-outlined">history</span>
+        </button>
+
+        <a
+          href="https://odaibako.net/u/voice_blog"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="icon-action-button"
+          aria-label="お題箱を開く"
+        >
+          <span class="material-symbols-outlined">mail</span>
+        </a>
+
+        <button
+          id="settingsButton"
+          class="icon-action-button"
+          type="button"
+          aria-label="設定を開く"
+        >
+          <span class="material-symbols-outlined"> settings </span>
+        </button>
+      </div>
+    </div>
+    <div id="tabBar" class="tab-bar"></div>
+
+    <section id="diaryPanel" class="panel">
+      <button id="voiceButton" class="main-button">話して日記を書く</button>
+
+      <h2>今日の日記</h2>
+      <div id="todayDiaryList" class="diary-area"></div>
+
+      <div class="past-section">
+        <h2>過去の日記</h2>
+        <div id="dateButtons" class="date-buttons"></div>
+        <div id="pastDiaryList" class="past-diary-area"></div>
+      </div>
+
+      <div class="download-area">
+        <select id="monthSelect"></select>
+        <button id="downloadButton" class="main-button">
+          txtファイルでダウンロード
+        </button>
+        <button id="deleteOldestMonthButton" class="danger-button">
+          一番古い月の日記を消す
+        </button>
+      </div>
+    </section>
+
+    <section id="goalPanel" class="panel">
+      <button id="goalVoiceButton" class="main-button">話して目標を追加</button>
+
+      <div class="goal-title-row">
+        <h2>目標</h2>
+
+        <div class="goal-title-actions">
+          <button id="goalSortButton" class="goal-sort-button">並び替え</button>
+          <button id="goalMultiDeleteButton" class="goal-sort-button">
+            複数削除
+          </button>
+        </div>
+      </div>
+      <div id="goalList" class="diary-area"></div>
+    </section>
+
+    <section id="habitPanel" class="panel">
+      <div id="habitAddArea" class="habit-add-area">
+        <input
+          id="habitInput"
+          class="habit-input"
+          type="text"
+          autocomplete="off"
+          placeholder="例：水を飲む / 薬 / 風呂"
+        />
+        <button id="habitAddSubmitButton" class="habit-add-submit-button">
+          追加
+        </button>
+      </div>
+
+      <h2>習慣</h2>
+      <div id="habitList" class="habit-button-list"></div>
+      <div id="habitCalendar" class="habit-calendar"></div>
+      <div id="habitDangerArea" class="habit-danger-area"></div>
+    </section>
+
+    <section id="updatePanel" class="panel">
+      <br />
+      <ul class="update-history-list">
+        <h3>6/4</h3>
+        <li>【まだ】音声入力で優先的に変換する単語リストを作りたい</li>
+        <li>【まだ】予定が日付順に並ぶ、予定タブを作りたい</li>
+        <li>不要コードを整理した</li>
+        <li>モードが混ざらないようにした</li>
+        <li>並び替えの感度を調整した</li>
+        <li>テスト環境と本番環境を分けた</li>
+
+        <h3>6/4より前</h3>
+        <li>一番下のボタンが押しやすいように、アイコンをつけた</li>
+        <li>タイトルのフォント変えた</li>
+        <li>【考え中】予定が日付順に並ぶ、予定タブを作りたいね</li>
+        <li>💮習慣タブのタスク名、変更できるようにしたいね</li>
+        <li>更新履歴タブを新設</li>
+        <li>Safari / Chrome で動作確認。タブ切替が動くように修正</li>
+        <li>習慣タブの入力欄を常時表示に変更</li>
+      </ul>
+    </section>
+
+    <section id="settingsPanel" class="panel">
+      <br />
+      <h2>設定</h2>
+
+      <p>まだ開発中。</p>
+
+      <br />
+
+      <h3>今後追加予定</h3>
+
+      <ul>
+        <li>バックアップ（エクスポート）</li>
+        <li>データ復元（インポート）</li>
+        <li>変換辞書</li>
+        <li>表示設定</li>
+      </ul>
+
+      <br />
+
+      <p>お楽しみに！</p>
+    </section>
+
+    <script>
+      const TAB_STORAGE_KEY = "koeTabOrder";
+      const DIARY_STORAGE_KEY = "voiceDiaryData";
+      const GOAL_STORAGE_KEY = "koeGoalData";
+      const HABIT_STORAGE_KEY = "koeHabitData";
+
+      const DEFAULT_TABS = [
+        { id: "diary", label: "日記", panelId: "diaryPanel" },
+        { id: "goal", label: "目標", panelId: "goalPanel" },
+        { id: "habit", label: "習慣", panelId: "habitPanel" },
+      ];
+
+      const tabBar = document.getElementById("tabBar");
+      const voiceButton = document.getElementById("voiceButton");
+      const downloadButton = document.getElementById("downloadButton");
+      const todayDiaryList = document.getElementById("todayDiaryList");
+      const dateButtons = document.getElementById("dateButtons");
+      const pastDiaryList = document.getElementById("pastDiaryList");
+      const monthSelect = document.getElementById("monthSelect");
+      const goalVoiceButton = document.getElementById("goalVoiceButton");
+      const goalMultiDeleteButton = document.getElementById(
+        "goalMultiDeleteButton",
+      );
+      const goalList = document.getElementById("goalList");
+      const goalSortButton = document.getElementById("goalSortButton");
+      const deleteOldestMonthButton = document.getElementById(
+        "deleteOldestMonthButton",
+      );
+      const habitAddArea = document.getElementById("habitAddArea");
+      const habitInput = document.getElementById("habitInput");
+      const habitAddSubmitButton = document.getElementById(
+        "habitAddSubmitButton",
+      );
+      const habitList = document.getElementById("habitList");
+      const habitCalendar = document.getElementById("habitCalendar");
+      const updateHistoryButton = document.getElementById(
+        "updateHistoryButton",
+      );
+      const settingsButton = document.getElementById("settingsButton");
+
+      let tabOrder = loadTabOrder();
+      let activeTabId = tabOrder[0].id;
+      let selectedPastDateKey = null;
+      let selectedHabitIndex = null;
+      let isGoalDeleteMode = false;
+      let editingHabitIndex = null;
+      let draggingTabId = null;
+      let isGoalSortMode = false;
+
+      const today = getLogicalToday();
+      const todayKey = formatDateKey(today);
+
+      setupDiaryVoiceInput();
+      setupGoalVoiceInput();
+      downloadButton.addEventListener("click", downloadTxt);
+      deleteOldestMonthButton.addEventListener("click", deleteOldestMonthDiary);
+      goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
+      goalSortButton.addEventListener("click", toggleGoalSortMode);
+      habitAddSubmitButton.addEventListener("click", addHabitFromInput);
+      habitInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") addHabitFromInput();
       });
+      updateHistoryButton.addEventListener("click", openUpdateHistory);
+      settingsButton.addEventListener("click", openSettings);
 
-      recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
-        const items = formatDiary(text);
-
-        items.forEach((item) => saveGoalItem(item));
-        renderGoalList();
-      };
-
-      recognition.onend = () => {
-        goalVoiceButton.textContent = "話して目標を追加";
-        goalVoiceButton.classList.remove("listening");
-      };
-
-      recognition.onerror = () => {
-        goalVoiceButton.textContent = "話して目標を追加";
-        goalVoiceButton.classList.remove("listening");
-        alert("音声入力でエラーが発生しました。");
-      };
-    }
-
-    function loadTabOrder() {
-      const saved = JSON.parse(localStorage.getItem(TAB_STORAGE_KEY));
-      if (!saved) return DEFAULT_TABS;
-
-      const restored = saved
-        .map((savedId) => DEFAULT_TABS.find((tab) => tab.id === savedId))
-        .filter(Boolean);
-
-      return restored.length === DEFAULT_TABS.length ? restored : DEFAULT_TABS;
-    }
-
-    function saveTabOrder() {
-      const ids = tabOrder.map((tab) => tab.id);
-      localStorage.setItem(TAB_STORAGE_KEY, JSON.stringify(ids));
-    }
-
-    function renderTabs() {
-      tabBar.innerHTML = "";
-
-      tabOrder.forEach((tab, index) => {
-        const button = document.createElement("button");
-        button.className = "tab-button";
-        button.textContent = tab.label;
-
-        if (tab.id === activeTabId) button.classList.add("active");
-
-        if (tab.id === draggingTabId) button.classList.add("dragging");
-        
-        setupTabDrag(button, index);
-        tabBar.appendChild(button);
-      });
-    }
-
-    function renderPanels() {
-  document.querySelectorAll(".panel").forEach((panel) => {
-    panel.classList.remove("active");
-  });
-
-  const activeTab = DEFAULT_TABS.find((tab) => tab.id === activeTabId);
-
-  if (activeTab) {
-    document.getElementById(activeTab.panelId).classList.add("active");
-    return;
-  }
-
-  if (activeTabId === "update") {
-    document.getElementById("updatePanel").classList.add("active");
-  }
-}
-
-    function setupTabDrag(button, startIndex) {
-  let startX = 0;
-  let currentIndex = startIndex;
-  let isDragging = false;
-  let hasMoved = false;
-
-  function onPointerMove(event) {
-    if (!isDragging) return;
-
-    const diff = event.clientX - startX;
-
-    if (Math.abs(diff) > 10) {
-      hasMoved = true;
-    }
-
-    if (diff > 40 && currentIndex < tabOrder.length - 1) {
-      swapTabs(currentIndex, currentIndex + 1);
-      currentIndex += 1;
-      startX = event.clientX;
-      draggingTabId = tabOrder[currentIndex].id;
-      return;
-    }
-
-    if (diff < -40 && currentIndex > 0) {
-      swapTabs(currentIndex, currentIndex - 1);
-      currentIndex -= 1;
-      startX = event.clientX;
-      draggingTabId = tabOrder[currentIndex].id;
-    }
-  }
-
-  function onPointerUp() {
-    isDragging = false;
-
-    document.removeEventListener("pointermove", onPointerMove);
-    document.removeEventListener("pointerup", onPointerUp);
-    document.removeEventListener("pointercancel", onPointerUp);
-
-    if (!hasMoved) {
-      activeTabId = tabOrder[currentIndex].id;
-      draggingTabId = null;
       renderTabs();
       renderPanels();
-      return;
-    }
+      renderTodayDiary();
+      renderPastDateButtons();
+      renderMonthSelect();
+      renderGoalList();
+      renderHabitList();
 
-    draggingTabId = null;
-    renderTabs();
-  }
+      function setupDiaryVoiceInput() {
+        const SpeechRecognition =
+          window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  button.addEventListener("pointerdown", (event) => {
-    startX = event.clientX;
-    currentIndex = startIndex;
-    isDragging = true;
-    hasMoved = false;
-
-    draggingTabId = tabOrder[startIndex].id;
-    renderTabs();
-
-    document.addEventListener("pointermove", onPointerMove);
-    document.addEventListener("pointerup", onPointerUp);
-    document.addEventListener("pointercancel", onPointerUp);
-  });
-}
-
-    function swapTabs(fromIndex, toIndex) {
-  const temp = tabOrder[fromIndex];
-  tabOrder[fromIndex] = tabOrder[toIndex];
-  tabOrder[toIndex] = temp;
-
-  saveTabOrder();
-  renderTabs();
-}
-
-    function formatDiary(text) {
-      return text
-        .split(/[。！？、,]/)
-        .map((sentence) => sentence.trim())
-        .filter((sentence) => sentence.length > 0);
-    }
-
-    function renderTodayDiary() {
-      const data = getDiaryData();
-      const items = data[todayKey] || [];
-      todayDiaryList.innerHTML = "";
-
-      items.forEach((text, index) => addTodayDiaryItem(text, index));
-    }
-
-    function addTodayDiaryItem(text, index) {
-      const item = document.createElement("div");
-      item.className = "diary-item";
-
-      const swipeContent = document.createElement("div");
-      swipeContent.className = "swipe-content";
-
-      const content = document.createElement("div");
-      content.className = "text";
-      content.textContent = text;
-      swipeContent.appendChild(content);
-
-      const editButton = document.createElement("div");
-      editButton.className = "edit-button";
-      editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
-
-      const deleteButton = document.createElement("div");
-      deleteButton.className = "delete-button";
-      deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
-
-      let isEditing = false;
-      let startX = 0;
-      let startState = "default";
-
-      editButton.addEventListener("click", () => {
-        if (!isEditing) {
-          isEditing = true;
-          content.contentEditable = "true";
-          content.classList.add("editing");
-          content.focus();
-        } else {
-          isEditing = false;
-          content.contentEditable = "false";
-          content.classList.remove("editing");
-          updateDiaryItem(todayKey, index, content.textContent.trim());
-          item.classList.remove("show-edit");
-          renderTodayDiary();
-          renderMonthSelect();
+        if (!SpeechRecognition) {
+          voiceButton.textContent = "このブラウザは音声入力に未対応です";
+          voiceButton.disabled = true;
+          return;
         }
-      });
 
-      deleteButton.addEventListener("click", () => {
-        deleteDiaryItemByIndex(todayKey, index);
-        renderTodayDiary();
-        renderPastDateButtons();
-        renderMonthSelect();
-      });
+        const recognition = new SpeechRecognition();
+        recognition.lang = "ja-JP";
+        recognition.interimResults = false;
+        recognition.continuous = false;
 
-      item.appendChild(editButton);
-      item.appendChild(deleteButton);
-      item.appendChild(swipeContent);
-      todayDiaryList.appendChild(item);
+        voiceButton.addEventListener("click", () => {
+          voiceButton.textContent = "聞いています...";
+          voiceButton.classList.add("listening");
+          recognition.start();
+        });
 
-      item.addEventListener("touchstart", (event) => {
-        startX = event.touches[0].clientX;
+        recognition.onresult = (event) => {
+          const text = event.results[0][0].transcript;
+          const items = formatDiary(text);
 
-        if (item.classList.contains("show-delete")) startState = "delete";
-        else if (item.classList.contains("show-edit")) startState = "edit";
-        else startState = "default";
-      });
+          items.forEach((item) => saveDiaryItem(todayKey, item));
 
-      item.addEventListener("touchmove", (event) => {
-        const currentX = event.touches[0].clientX;
-        const diff = startX - currentX;
+          renderTodayDiary();
+          renderPastDateButtons();
+          renderMonthSelect();
+        };
 
-        if (startState === "default") {
-          if (diff > 40) {
-            item.classList.add("show-delete");
+        recognition.onend = () => {
+          voiceButton.textContent = "話して日記を書く";
+          voiceButton.classList.remove("listening");
+        };
+
+        recognition.onerror = () => {
+          voiceButton.textContent = "話して日記を書く";
+          voiceButton.classList.remove("listening");
+          alert("音声入力でエラーが発生しました。");
+        };
+      }
+
+      function setupGoalVoiceInput() {
+        const SpeechRecognition =
+          window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+          goalVoiceButton.textContent = "このブラウザは音声入力に未対応です";
+          goalVoiceButton.disabled = true;
+          return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = "ja-JP";
+        recognition.interimResults = false;
+        recognition.continuous = false;
+
+        goalVoiceButton.addEventListener("click", () => {
+          goalVoiceButton.textContent = "聞いています...";
+          goalVoiceButton.classList.add("listening");
+          recognition.start();
+        });
+
+        recognition.onresult = (event) => {
+          const text = event.results[0][0].transcript;
+          const items = formatDiary(text);
+
+          items.forEach((item) => saveGoalItem(item));
+          renderGoalList();
+        };
+
+        recognition.onend = () => {
+          goalVoiceButton.textContent = "話して目標を追加";
+          goalVoiceButton.classList.remove("listening");
+        };
+
+        recognition.onerror = () => {
+          goalVoiceButton.textContent = "話して目標を追加";
+          goalVoiceButton.classList.remove("listening");
+          alert("音声入力でエラーが発生しました。");
+        };
+      }
+
+      function loadTabOrder() {
+        const saved = JSON.parse(localStorage.getItem(TAB_STORAGE_KEY));
+        if (!saved) return DEFAULT_TABS;
+
+        const restored = saved
+          .map((savedId) => DEFAULT_TABS.find((tab) => tab.id === savedId))
+          .filter(Boolean);
+
+        return restored.length === DEFAULT_TABS.length
+          ? restored
+          : DEFAULT_TABS;
+      }
+
+      function saveTabOrder() {
+        const ids = tabOrder.map((tab) => tab.id);
+        localStorage.setItem(TAB_STORAGE_KEY, JSON.stringify(ids));
+      }
+
+      function renderTabs() {
+        tabBar.innerHTML = "";
+
+        tabOrder.forEach((tab, index) => {
+          const button = document.createElement("button");
+          button.className = "tab-button";
+          button.textContent = tab.label;
+
+          if (tab.id === activeTabId) button.classList.add("active");
+
+          if (tab.id === draggingTabId) button.classList.add("dragging");
+
+          setupTabDrag(button, index);
+          tabBar.appendChild(button);
+        });
+      }
+
+      function renderPanels() {
+        document.querySelectorAll(".panel").forEach((panel) => {
+          panel.classList.remove("active");
+        });
+
+        const activeTab = DEFAULT_TABS.find((tab) => tab.id === activeTabId);
+
+        if (activeTab) {
+          document.getElementById(activeTab.panelId).classList.add("active");
+          return;
+        }
+
+        if (activeTabId === "update") {
+          document.getElementById("updatePanel").classList.add("active");
+          return;
+        }
+
+        if (activeTabId === "settings") {
+          document.getElementById("settingsPanel").classList.add("active");
+        }
+      }
+
+      function setupTabDrag(button, startIndex) {
+        let startX = 0;
+        let currentIndex = startIndex;
+        let isDragging = false;
+        let hasMoved = false;
+
+        function onPointerMove(event) {
+          if (!isDragging) return;
+
+          const diff = event.clientX - startX;
+
+          if (Math.abs(diff) > 10) {
+            hasMoved = true;
+          }
+
+          if (diff > 40 && currentIndex < tabOrder.length - 1) {
+            swapTabs(currentIndex, currentIndex + 1);
+            currentIndex += 1;
+            startX = event.clientX;
+            draggingTabId = tabOrder[currentIndex].id;
+            return;
+          }
+
+          if (diff < -40 && currentIndex > 0) {
+            swapTabs(currentIndex, currentIndex - 1);
+            currentIndex -= 1;
+            startX = event.clientX;
+            draggingTabId = tabOrder[currentIndex].id;
+          }
+        }
+
+        function onPointerUp() {
+          isDragging = false;
+
+          document.removeEventListener("pointermove", onPointerMove);
+          document.removeEventListener("pointerup", onPointerUp);
+          document.removeEventListener("pointercancel", onPointerUp);
+
+          if (!hasMoved) {
+            activeTabId = tabOrder[currentIndex].id;
+            draggingTabId = null;
+            renderTabs();
+            renderPanels();
+            return;
+          }
+
+          draggingTabId = null;
+          renderTabs();
+        }
+
+        button.addEventListener("pointerdown", (event) => {
+          startX = event.clientX;
+          currentIndex = startIndex;
+          isDragging = true;
+          hasMoved = false;
+
+          draggingTabId = tabOrder[startIndex].id;
+          renderTabs();
+
+          document.addEventListener("pointermove", onPointerMove);
+          document.addEventListener("pointerup", onPointerUp);
+          document.addEventListener("pointercancel", onPointerUp);
+        });
+      }
+
+      function swapTabs(fromIndex, toIndex) {
+        const temp = tabOrder[fromIndex];
+        tabOrder[fromIndex] = tabOrder[toIndex];
+        tabOrder[toIndex] = temp;
+
+        saveTabOrder();
+        renderTabs();
+      }
+
+      function formatDiary(text) {
+        return text
+          .split(/[。！？、,]/)
+          .map((sentence) => sentence.trim())
+          .filter((sentence) => sentence.length > 0);
+      }
+
+      function renderTodayDiary() {
+        const data = getDiaryData();
+        const items = data[todayKey] || [];
+        todayDiaryList.innerHTML = "";
+
+        items.forEach((text, index) => addTodayDiaryItem(text, index));
+      }
+
+      function addTodayDiaryItem(text, index) {
+        const item = document.createElement("div");
+        item.className = "diary-item";
+
+        const swipeContent = document.createElement("div");
+        swipeContent.className = "swipe-content";
+
+        const content = document.createElement("div");
+        content.className = "text";
+        content.textContent = text;
+        swipeContent.appendChild(content);
+
+        const editButton = document.createElement("div");
+        editButton.className = "edit-button";
+        editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
+
+        const deleteButton = document.createElement("div");
+        deleteButton.className = "delete-button";
+        deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
+
+        let isEditing = false;
+        let startX = 0;
+        let startState = "default";
+
+        editButton.addEventListener("click", () => {
+          if (!isEditing) {
+            isEditing = true;
+            content.contentEditable = "true";
+            content.classList.add("editing");
+            content.focus();
+          } else {
+            isEditing = false;
+            content.contentEditable = "false";
+            content.classList.remove("editing");
+            updateDiaryItem(todayKey, index, content.textContent.trim());
+            item.classList.remove("show-edit");
+            renderTodayDiary();
+            renderMonthSelect();
+          }
+        });
+
+        deleteButton.addEventListener("click", () => {
+          deleteDiaryItemByIndex(todayKey, index);
+          renderTodayDiary();
+          renderPastDateButtons();
+          renderMonthSelect();
+        });
+
+        item.appendChild(editButton);
+        item.appendChild(deleteButton);
+        item.appendChild(swipeContent);
+        todayDiaryList.appendChild(item);
+
+        item.addEventListener("touchstart", (event) => {
+          startX = event.touches[0].clientX;
+
+          if (item.classList.contains("show-delete")) startState = "delete";
+          else if (item.classList.contains("show-edit")) startState = "edit";
+          else startState = "default";
+        });
+
+        item.addEventListener("touchmove", (event) => {
+          const currentX = event.touches[0].clientX;
+          const diff = startX - currentX;
+
+          if (startState === "default") {
+            if (diff > 40) {
+              item.classList.add("show-delete");
+              item.classList.remove("show-edit");
+            }
+
+            if (diff < -40) {
+              item.classList.add("show-edit");
+              item.classList.remove("show-delete");
+            }
+          } else if (startState === "delete") {
+            if (diff < -30) item.classList.remove("show-delete");
+          } else if (startState === "edit") {
+            if (diff > 30) item.classList.remove("show-edit");
+          }
+        });
+
+        document.addEventListener("touchstart", (event) => {
+          if (!item.contains(event.target)) {
+            item.classList.remove("show-delete");
             item.classList.remove("show-edit");
           }
+        });
+      }
 
-          if (diff < -40) {
-            item.classList.add("show-edit");
-            item.classList.remove("show-delete");
+      function renderPastDateButtons() {
+        const data = getDiaryData();
+        dateButtons.innerHTML = "";
+
+        const pastKeys = Object.keys(data)
+          .sort()
+          .reverse()
+          .filter((dateKey) => dateKey !== todayKey)
+          .slice(0, 20);
+
+        pastKeys.forEach((dateKey) => {
+          const date = new Date(dateKey);
+          const button = document.createElement("button");
+          button.className = "date-button";
+          button.textContent = `${date.getMonth() + 1}/${date.getDate()}`;
+
+          if (selectedPastDateKey === dateKey) button.classList.add("active");
+
+          button.addEventListener("click", () => {
+            if (selectedPastDateKey === dateKey) {
+              selectedPastDateKey = null;
+              pastDiaryList.classList.remove("open");
+              pastDiaryList.innerHTML = "";
+            } else {
+              selectedPastDateKey = dateKey;
+              renderPastDiary(dateKey);
+            }
+
+            renderPastDateButtons();
+          });
+
+          dateButtons.appendChild(button);
+        });
+      }
+
+      function renderPastDiary(dateKey) {
+        const data = getDiaryData();
+        const items = data[dateKey] || [];
+
+        pastDiaryList.innerHTML = "";
+        pastDiaryList.classList.add("open");
+
+        items.forEach((text, index) => {
+          addPastDiaryItem(dateKey, text, index);
+        });
+      }
+
+      function addPastDiaryItem(dateKey, text, index) {
+        const item = document.createElement("div");
+        item.className = "diary-item";
+
+        const swipeContent = document.createElement("div");
+        swipeContent.className = "swipe-content";
+
+        const content = document.createElement("div");
+        content.className = "text";
+        content.textContent = text;
+        swipeContent.appendChild(content);
+
+        const editButton = document.createElement("div");
+        editButton.className = "edit-button";
+        editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
+
+        const deleteButton = document.createElement("div");
+        deleteButton.className = "delete-button";
+        deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
+
+        let isEditing = false;
+        let startX = 0;
+        let startState = "default";
+
+        editButton.addEventListener("click", () => {
+          if (!isEditing) {
+            isEditing = true;
+            content.contentEditable = "true";
+            content.classList.add("editing");
+            content.focus();
+          } else {
+            isEditing = false;
+            content.contentEditable = "false";
+            content.classList.remove("editing");
+
+            updateDiaryItem(dateKey, index, content.textContent.trim());
+
+            item.classList.remove("show-edit");
+            renderPastDiary(dateKey);
+            renderMonthSelect();
           }
-        } else if (startState === "delete") {
-          if (diff < -30) item.classList.remove("show-delete");
-        } else if (startState === "edit") {
-          if (diff > 30) item.classList.remove("show-edit");
-        }
-      });
+        });
 
-      document.addEventListener("touchstart", (event) => {
-        if (!item.contains(event.target)) {
-          item.classList.remove("show-delete");
-          item.classList.remove("show-edit");
-        }
-      });
-    }
+        deleteButton.addEventListener("click", () => {
+          deleteDiaryItemByIndex(dateKey, index);
 
-    function renderPastDateButtons() {
-      const data = getDiaryData();
-      dateButtons.innerHTML = "";
+          const data = getDiaryData();
 
-      const pastKeys = Object.keys(data)
-        .sort()
-        .reverse()
-        .filter((dateKey) => dateKey !== todayKey)
-        .slice(0, 20);
-
-      pastKeys.forEach((dateKey) => {
-        const date = new Date(dateKey);
-        const button = document.createElement("button");
-        button.className = "date-button";
-        button.textContent = `${date.getMonth() + 1}/${date.getDate()}`;
-
-        if (selectedPastDateKey === dateKey) button.classList.add("active");
-
-        button.addEventListener("click", () => {
-          if (selectedPastDateKey === dateKey) {
+          if (data[dateKey]) {
+            renderPastDiary(dateKey);
+          } else {
             selectedPastDateKey = null;
             pastDiaryList.classList.remove("open");
             pastDiaryList.innerHTML = "";
-          } else {
-            selectedPastDateKey = dateKey;
-            renderPastDiary(dateKey);
           }
 
           renderPastDateButtons();
+          renderMonthSelect();
         });
 
-        dateButtons.appendChild(button);
-      });
-    }
+        item.appendChild(editButton);
+        item.appendChild(deleteButton);
+        item.appendChild(swipeContent);
+        pastDiaryList.appendChild(item);
 
-    function renderPastDiary(dateKey) {
-  const data = getDiaryData();
-  const items = data[dateKey] || [];
+        item.addEventListener("touchstart", (event) => {
+          startX = event.touches[0].clientX;
 
-  pastDiaryList.innerHTML = "";
-  pastDiaryList.classList.add("open");
+          if (item.classList.contains("show-delete")) startState = "delete";
+          else if (item.classList.contains("show-edit")) startState = "edit";
+          else startState = "default";
+        });
 
-  items.forEach((text, index) => {
-    addPastDiaryItem(dateKey, text, index);
-  });
-}
+        item.addEventListener("touchmove", (event) => {
+          const currentX = event.touches[0].clientX;
+          const diff = startX - currentX;
 
-    function addPastDiaryItem(dateKey, text, index) {
-  const item = document.createElement("div");
-  item.className = "diary-item";
+          if (startState === "default") {
+            if (diff > 40) {
+              item.classList.add("show-delete");
+              item.classList.remove("show-edit");
+            }
 
-  const swipeContent = document.createElement("div");
-  swipeContent.className = "swipe-content";
+            if (diff < -40) {
+              item.classList.add("show-edit");
+              item.classList.remove("show-delete");
+            }
+          } else if (startState === "delete") {
+            if (diff < -30) item.classList.remove("show-delete");
+          } else if (startState === "edit") {
+            if (diff > 30) item.classList.remove("show-edit");
+          }
+        });
 
-  const content = document.createElement("div");
-  content.className = "text";
-  content.textContent = text;
-  swipeContent.appendChild(content);
-
-  const editButton = document.createElement("div");
-  editButton.className = "edit-button";
-  editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
-
-  const deleteButton = document.createElement("div");
-  deleteButton.className = "delete-button";
-  deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
-
-  let isEditing = false;
-  let startX = 0;
-  let startState = "default";
-
-  editButton.addEventListener("click", () => {
-    if (!isEditing) {
-      isEditing = true;
-      content.contentEditable = "true";
-      content.classList.add("editing");
-      content.focus();
-    } else {
-      isEditing = false;
-      content.contentEditable = "false";
-      content.classList.remove("editing");
-
-      updateDiaryItem(dateKey, index, content.textContent.trim());
-
-      item.classList.remove("show-edit");
-      renderPastDiary(dateKey);
-      renderMonthSelect();
-    }
-  });
-
-  deleteButton.addEventListener("click", () => {
-    deleteDiaryItemByIndex(dateKey, index);
-
-    const data = getDiaryData();
-
-    if (data[dateKey]) {
-      renderPastDiary(dateKey);
-    } else {
-      selectedPastDateKey = null;
-      pastDiaryList.classList.remove("open");
-      pastDiaryList.innerHTML = "";
-    }
-
-    renderPastDateButtons();
-    renderMonthSelect();
-  });
-
-  item.appendChild(editButton);
-  item.appendChild(deleteButton);
-  item.appendChild(swipeContent);
-  pastDiaryList.appendChild(item);
-
-  item.addEventListener("touchstart", (event) => {
-    startX = event.touches[0].clientX;
-
-    if (item.classList.contains("show-delete")) startState = "delete";
-    else if (item.classList.contains("show-edit")) startState = "edit";
-    else startState = "default";
-  });
-
-  item.addEventListener("touchmove", (event) => {
-    const currentX = event.touches[0].clientX;
-    const diff = startX - currentX;
-
-    if (startState === "default") {
-      if (diff > 40) {
-        item.classList.add("show-delete");
-        item.classList.remove("show-edit");
+        document.addEventListener("touchstart", (event) => {
+          if (!item.contains(event.target)) {
+            item.classList.remove("show-delete");
+            item.classList.remove("show-edit");
+          }
+        });
       }
 
-      if (diff < -40) {
-        item.classList.add("show-edit");
-        item.classList.remove("show-delete");
+      function getDiaryData() {
+        return JSON.parse(localStorage.getItem(DIARY_STORAGE_KEY)) || {};
       }
-    } else if (startState === "delete") {
-      if (diff < -30) item.classList.remove("show-delete");
-    } else if (startState === "edit") {
-      if (diff > 30) item.classList.remove("show-edit");
-    }
-  });
 
-  document.addEventListener("touchstart", (event) => {
-    if (!item.contains(event.target)) {
-      item.classList.remove("show-delete");
-      item.classList.remove("show-edit");
-    }
-  });
-}
+      function setDiaryData(data) {
+        localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(data));
+      }
 
-    function getDiaryData() {
-      return JSON.parse(localStorage.getItem(DIARY_STORAGE_KEY)) || {};
-    }
+      function saveDiaryItem(dateKey, text) {
+        const data = getDiaryData();
+        if (!data[dateKey]) data[dateKey] = [];
+        data[dateKey].push(text);
+        setDiaryData(data);
+      }
 
-    function setDiaryData(data) {
-      localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(data));
-    }
+      function updateDiaryItem(dateKey, index, newText) {
+        const data = getDiaryData();
+        if (!data[dateKey]) return;
+        if (!newText) return;
+        data[dateKey][index] = newText;
+        setDiaryData(data);
+      }
 
-    function saveDiaryItem(dateKey, text) {
-      const data = getDiaryData();
-      if (!data[dateKey]) data[dateKey] = [];
-      data[dateKey].push(text);
-      setDiaryData(data);
-    }
+      function deleteDiaryItemByIndex(dateKey, index) {
+        const data = getDiaryData();
+        if (!data[dateKey]) return;
+        data[dateKey].splice(index, 1);
+        if (data[dateKey].length === 0) delete data[dateKey];
+        setDiaryData(data);
+      }
 
-    function updateDiaryItem(dateKey, index, newText) {
-      const data = getDiaryData();
-      if (!data[dateKey]) return;
-      if (!newText) return;
-      data[dateKey][index] = newText;
-      setDiaryData(data);
-    }
+      function renderMonthSelect() {
+        const data = getDiaryData();
 
-    function deleteDiaryItemByIndex(dateKey, index) {
-      const data = getDiaryData();
-      if (!data[dateKey]) return;
-      data[dateKey].splice(index, 1);
-      if (data[dateKey].length === 0) delete data[dateKey];
-      setDiaryData(data);
-    }
+        const months = [
+          ...new Set(
+            Object.keys(data)
+              .sort()
+              .map((dateKey) => {
+                const date = new Date(dateKey);
+                return `${date.getFullYear()}/${date.getMonth() + 1}`;
+              }),
+          ),
+        ];
 
-    function renderMonthSelect() {
-      const data = getDiaryData();
+        monthSelect.innerHTML = "";
 
-      const months = [...new Set(
-        Object.keys(data)
+        months.forEach((monthKey) => {
+          const option = document.createElement("option");
+          option.value = monthKey;
+          option.textContent = monthKey;
+          monthSelect.appendChild(option);
+        });
+      }
+
+      function downloadTxt() {
+        const data = getDiaryData();
+        const selectedMonth = monthSelect.value;
+
+        if (!selectedMonth) {
+          alert("ダウンロードする月の日記がありません。");
+          return;
+        }
+
+        const [yearText, monthText] = selectedMonth.split("/");
+        const year = Number(yearText);
+        const month = Number(monthText);
+
+        const targetKeys = Object.keys(data)
           .sort()
-          .map((dateKey) => {
+          .filter((dateKey) => {
             const date = new Date(dateKey);
-            return `${date.getFullYear()}/${date.getMonth() + 1}`;
-          })
-      )];
+            return date.getFullYear() === year && date.getMonth() + 1 === month;
+          });
 
-      monthSelect.innerHTML = "";
+        let text = `【日記】${year}年${month}月\n\n`;
 
-      months.forEach((monthKey) => {
-        const option = document.createElement("option");
-        option.value = monthKey;
-        option.textContent = monthKey;
-        monthSelect.appendChild(option);
-      });
-    }
-
-    function downloadTxt() {
-      const data = getDiaryData();
-      const selectedMonth = monthSelect.value;
-
-      if (!selectedMonth) {
-        alert("ダウンロードする月の日記がありません。");
-        return;
-      }
-
-      const [yearText, monthText] = selectedMonth.split("/");
-      const year = Number(yearText);
-      const month = Number(monthText);
-
-      const targetKeys = Object.keys(data)
-        .sort()
-        .filter((dateKey) => {
+        targetKeys.forEach((dateKey) => {
           const date = new Date(dateKey);
-          return date.getFullYear() === year && date.getMonth() + 1 === month;
+          const day = date.getDate();
+          text += "────────────\n";
+          text += `▼${month}月${day}日\n`;
+          text += "────────────\n";
+          data[dateKey].forEach((item) => {
+            text += `${item}\n`;
+          });
+          text += "\n";
         });
 
-      let text = `【日記】${year}年${month}月\n\n`;
+        text += "────────────\n";
 
-      targetKeys.forEach((dateKey) => {
-        const date = new Date(dateKey);
-        const day = date.getDate();
-        text += "────────────\n";
-        text += `▼${month}月${day}日\n`;
-        text += "────────────\n";
-        data[dateKey].forEach((item) => {
-          text += `${item}\n`;
+        const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `日記_${year}-${String(month).padStart(2, "0")}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function getGoalData() {
+        return JSON.parse(localStorage.getItem(GOAL_STORAGE_KEY)) || [];
+      }
+
+      function setGoalData(data) {
+        localStorage.setItem(GOAL_STORAGE_KEY, JSON.stringify(data));
+      }
+
+      function saveGoalItem(text) {
+        const data = getGoalData();
+        data.push({ text, createdAt: formatDateKey(new Date()) });
+        setGoalData(data);
+      }
+
+      function renderGoalList() {
+        const goals = getGoalData();
+        goalList.innerHTML = "";
+
+        goals.forEach((goal, index) => {
+          const text = typeof goal === "string" ? goal : goal.text;
+          addGoalItem(text, index);
         });
-        text += "\n";
-      });
-
-      text += "────────────\n";
-
-      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `日記_${year}-${String(month).padStart(2, "0")}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function getGoalData() {
-      return JSON.parse(localStorage.getItem(GOAL_STORAGE_KEY)) || [];
-    }
-
-    function setGoalData(data) {
-      localStorage.setItem(GOAL_STORAGE_KEY, JSON.stringify(data));
-    }
-
-    function saveGoalItem(text) {
-      const data = getGoalData();
-      data.push({ text, createdAt: formatDateKey(new Date()) });
-      setGoalData(data);
-    }
-
-    function renderGoalList() {
-  const goals = getGoalData();
-  goalList.innerHTML = "";
-
-  goals.forEach((goal, index) => {
-    const text = typeof goal === "string" ? goal : goal.text;
-    addGoalItem(text, index);
-  });
-}
-
-function addGoalItem(text, index) {
-  const item = document.createElement("div");
-  item.className = "diary-item goal-item";
-
-  const swipeContent = document.createElement("div");
-  swipeContent.className = "swipe-content";
-
-  if (isGoalDeleteMode) {
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.className = "goal-checkbox";
-  checkbox.dataset.index = index;
-
-  checkbox.addEventListener("click", (event) => {
-    event.stopPropagation();
-  });
-
-  swipeContent.appendChild(checkbox);
-}
-  
-  if (isGoalSortMode) {
-  const leftHandle = document.createElement("div");
-  leftHandle.className = "goal-sort-handle";
-  setupGoalSortHandle(leftHandle, item, index);
-  swipeContent.appendChild(leftHandle);
-}
-
-  const content = document.createElement("div");
-  content.className = "text";
-  content.textContent = text;
-  swipeContent.appendChild(content);
-  
-  if (isGoalSortMode) {
-  const rightHandle = document.createElement("div");
-  rightHandle.className = "goal-sort-handle";
-  setupGoalSortHandle(rightHandle, item, index);
-  swipeContent.appendChild(rightHandle);
-}
-
-  const editButton = document.createElement("div");
-  editButton.className = "edit-button";
-  editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
-
-  const deleteButton = document.createElement("div");
-  deleteButton.className = "delete-button";
-  deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
-
-  let isEditing = false;
-  let startX = 0;
-  let startState = "default";
-
-  editButton.addEventListener("click", () => {
-    if (!isEditing) {
-      isEditing = true;
-      content.contentEditable = "true";
-      content.classList.add("editing");
-      content.focus();
-    } else {
-      isEditing = false;
-      content.contentEditable = "false";
-      content.classList.remove("editing");
-
-      updateGoalItem(index, content.textContent.trim());
-
-      item.classList.remove("show-edit");
-      renderGoalList();
-    }
-  });
-
-  deleteButton.addEventListener("click", () => {
-    deleteGoalItemByIndex(index);
-    renderGoalList();
-  });
-
-  item.appendChild(editButton);
-  item.appendChild(deleteButton);
-  item.appendChild(swipeContent);
-  goalList.appendChild(item);
-  
-  item.addEventListener("click", () => {
-  if (!isGoalDeleteMode) return;
-
-  const checkbox = item.querySelector(".goal-checkbox");
-  if (!checkbox) return;
-
-  checkbox.checked = !checkbox.checked;
-});
-
-  item.addEventListener("touchstart", (event) => {
-    if (isGoalDeleteMode) return;
-    if (isGoalSortMode) return;
-
-    startX = event.touches[0].clientX;
-
-    if (item.classList.contains("show-delete")) {
-      startState = "delete";
-    } else if (item.classList.contains("show-edit")) {
-      startState = "edit";
-    } else {
-      startState = "default";
-    }
-  });
-
-  item.addEventListener("touchmove", (event) => {
-    if (isGoalDeleteMode) return;
-    if (isGoalSortMode) return;
-
-    const currentX = event.touches[0].clientX;
-    const diff = startX - currentX;
-
-    if (startState === "default") {
-      if (diff > 40) {
-        item.classList.add("show-delete");
-        item.classList.remove("show-edit");
       }
 
-      if (diff < -40) {
-        item.classList.add("show-edit");
-        item.classList.remove("show-delete");
+      function addGoalItem(text, index) {
+        const item = document.createElement("div");
+        item.className = "diary-item goal-item";
+
+        const swipeContent = document.createElement("div");
+        swipeContent.className = "swipe-content";
+
+        if (isGoalDeleteMode) {
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.className = "goal-checkbox";
+          checkbox.dataset.index = index;
+
+          checkbox.addEventListener("click", (event) => {
+            event.stopPropagation();
+          });
+
+          swipeContent.appendChild(checkbox);
+        }
+
+        if (isGoalSortMode) {
+          const leftHandle = document.createElement("div");
+          leftHandle.className = "goal-sort-handle";
+          setupGoalSortHandle(leftHandle, item, index);
+          swipeContent.appendChild(leftHandle);
+        }
+
+        const content = document.createElement("div");
+        content.className = "text";
+        content.textContent = text;
+        swipeContent.appendChild(content);
+
+        if (isGoalSortMode) {
+          const rightHandle = document.createElement("div");
+          rightHandle.className = "goal-sort-handle";
+          setupGoalSortHandle(rightHandle, item, index);
+          swipeContent.appendChild(rightHandle);
+        }
+
+        const editButton = document.createElement("div");
+        editButton.className = "edit-button";
+        editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
+
+        const deleteButton = document.createElement("div");
+        deleteButton.className = "delete-button";
+        deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
+
+        let isEditing = false;
+        let startX = 0;
+        let startState = "default";
+
+        editButton.addEventListener("click", () => {
+          if (!isEditing) {
+            isEditing = true;
+            content.contentEditable = "true";
+            content.classList.add("editing");
+            content.focus();
+          } else {
+            isEditing = false;
+            content.contentEditable = "false";
+            content.classList.remove("editing");
+
+            updateGoalItem(index, content.textContent.trim());
+
+            item.classList.remove("show-edit");
+            renderGoalList();
+          }
+        });
+
+        deleteButton.addEventListener("click", () => {
+          deleteGoalItemByIndex(index);
+          renderGoalList();
+        });
+
+        item.appendChild(editButton);
+        item.appendChild(deleteButton);
+        item.appendChild(swipeContent);
+        goalList.appendChild(item);
+
+        item.addEventListener("click", () => {
+          if (!isGoalDeleteMode) return;
+
+          const checkbox = item.querySelector(".goal-checkbox");
+          if (!checkbox) return;
+
+          checkbox.checked = !checkbox.checked;
+        });
+
+        item.addEventListener("touchstart", (event) => {
+          if (isGoalDeleteMode) return;
+          if (isGoalSortMode) return;
+
+          startX = event.touches[0].clientX;
+
+          if (item.classList.contains("show-delete")) {
+            startState = "delete";
+          } else if (item.classList.contains("show-edit")) {
+            startState = "edit";
+          } else {
+            startState = "default";
+          }
+        });
+
+        item.addEventListener("touchmove", (event) => {
+          if (isGoalDeleteMode) return;
+          if (isGoalSortMode) return;
+
+          const currentX = event.touches[0].clientX;
+          const diff = startX - currentX;
+
+          if (startState === "default") {
+            if (diff > 40) {
+              item.classList.add("show-delete");
+              item.classList.remove("show-edit");
+            }
+
+            if (diff < -40) {
+              item.classList.add("show-edit");
+              item.classList.remove("show-delete");
+            }
+          } else if (startState === "delete") {
+            if (diff < -30) {
+              item.classList.remove("show-delete");
+            }
+          } else if (startState === "edit") {
+            if (diff > 30) {
+              item.classList.remove("show-edit");
+            }
+          }
+        });
+
+        document.addEventListener("touchstart", (event) => {
+          if (!item.contains(event.target)) {
+            item.classList.remove("show-delete");
+            item.classList.remove("show-edit");
+          }
+        });
       }
-    } else if (startState === "delete") {
-      if (diff < -30) {
-        item.classList.remove("show-delete");
+
+      function setupGoalSortHandle(handle, item, startIndex) {
+        let ghost = null;
+        let offsetY = 0;
+        let isDragging = false;
+        let ghostHeight = 0;
+
+        function onPointerMove(event) {
+          if (!isDragging || !ghost) return;
+
+          ghost.style.top = `${event.clientY - offsetY}px`;
+          updateGoalDropPreview(event.clientY);
+        }
+
+        function onPointerUp(event) {
+          if (!isDragging) return;
+
+          isDragging = false;
+
+          document.removeEventListener("pointermove", onPointerMove);
+          document.removeEventListener("pointerup", onPointerUp);
+          document.removeEventListener("pointercancel", onPointerUp);
+
+          const toIndex = getGoalDropIndex(event.clientY);
+
+          clearGoalDropPreview();
+
+          goalList.style.removeProperty("--goal-drop-space");
+
+          if (ghost) {
+            ghost.remove();
+            ghost = null;
+          }
+
+          item.classList.remove("drag-placeholder");
+
+          if (!moveGoalItem(startIndex, toIndex)) {
+            renderGoalList();
+          }
+        }
+
+        handle.addEventListener("pointerdown", (event) => {
+          if (!isGoalSortMode) return;
+
+          event.preventDefault();
+
+          const rect = item.getBoundingClientRect();
+          ghostHeight = rect.height;
+          goalList.style.setProperty("--goal-drop-space", `${ghostHeight}px`);
+          offsetY = event.clientY - rect.top;
+
+          ghost = item.cloneNode(true);
+          ghost.classList.add("goal-drag-ghost");
+          ghost.style.left = `${rect.left}px`;
+          ghost.style.top = `${rect.top}px`;
+          ghost.style.width = `${rect.width}px`;
+          ghost.style.height = `${rect.height}px`;
+
+          document.body.appendChild(ghost);
+
+          item.classList.add("drag-placeholder");
+
+          isDragging = true;
+          updateGoalDropPreview(event.clientY);
+
+          document.addEventListener("pointermove", onPointerMove);
+          document.addEventListener("pointerup", onPointerUp);
+          document.addEventListener("pointercancel", onPointerUp);
+        });
       }
-    } else if (startState === "edit") {
-      if (diff > 30) {
-        item.classList.remove("show-edit");
+
+      function getGoalDropIndex(pointerY) {
+        const items = Array.from(
+          goalList.querySelectorAll(".goal-item:not(.drag-placeholder)"),
+        );
+
+        for (let i = 0; i < items.length; i++) {
+          const rect = items[i].getBoundingClientRect();
+          const centerY = rect.top + rect.height * 0.75;
+
+          if (pointerY < centerY) {
+            return i;
+          }
+        }
+
+        return items.length;
       }
-    }
-  });
 
-  document.addEventListener("touchstart", (event) => {
-    if (!item.contains(event.target)) {
-      item.classList.remove("show-delete");
-      item.classList.remove("show-edit");
-    }
-  });
-}
+      function moveGoalItem(fromIndex, toIndex) {
+        const data = getGoalData();
 
-function setupGoalSortHandle(handle, item, startIndex) {
-  let ghost = null;
-  let offsetY = 0;
-  let isDragging = false;
-  let ghostHeight = 0;
+        if (!data[fromIndex]) return false;
+        if (toIndex < 0) return false;
+        if (toIndex > data.length - 1) toIndex = data.length - 1;
 
-  function onPointerMove(event) {
-    if (!isDragging || !ghost) return;
+        const movedGoal = data.splice(fromIndex, 1)[0];
 
-    ghost.style.top = `${event.clientY - offsetY}px`;
-    updateGoalDropPreview(event.clientY);
-  }
+        if (toIndex > data.length) {
+          toIndex = data.length;
+        }
 
-  function onPointerUp(event) {
-    if (!isDragging) return;
+        data.splice(toIndex, 0, movedGoal);
 
-    isDragging = false;
-
-    document.removeEventListener("pointermove", onPointerMove);
-    document.removeEventListener("pointerup", onPointerUp);
-    document.removeEventListener("pointercancel", onPointerUp);
-
-    const toIndex = getGoalDropIndex(event.clientY);
-
-    clearGoalDropPreview();
-    
-    goalList.style.removeProperty("--goal-drop-space");
-
-    if (ghost) {
-      ghost.remove();
-      ghost = null;
-    }
-
-    item.classList.remove("drag-placeholder");
-
-    if (!moveGoalItem(startIndex, toIndex)) {
-      renderGoalList();
-    }
-  }
-
-  handle.addEventListener("pointerdown", (event) => {
-    if (!isGoalSortMode) return;
-
-    event.preventDefault();
-
-    const rect = item.getBoundingClientRect();
-    ghostHeight = rect.height;
-goalList.style.setProperty("--goal-drop-space", `${ghostHeight}px`);
-    offsetY = event.clientY - rect.top;
-
-    ghost = item.cloneNode(true);
-    ghost.classList.add("goal-drag-ghost");
-    ghost.style.left = `${rect.left}px`;
-    ghost.style.top = `${rect.top}px`;
-    ghost.style.width = `${rect.width}px`;
-    ghost.style.height = `${rect.height}px`;
-
-    document.body.appendChild(ghost);
-
-    item.classList.add("drag-placeholder");
-
-    isDragging = true;
-    updateGoalDropPreview(event.clientY);
-
-    document.addEventListener("pointermove", onPointerMove);
-    document.addEventListener("pointerup", onPointerUp);
-    document.addEventListener("pointercancel", onPointerUp);
-  });
-}
-
-function getGoalDropIndex(pointerY) {
-  const items = Array.from(
-    goalList.querySelectorAll(".goal-item:not(.drag-placeholder)")
-  );
-
-  for (let i = 0; i < items.length; i++) {
-    const rect = items[i].getBoundingClientRect();
-    const centerY = rect.top + rect.height * 0.75;
-
-    if (pointerY < centerY) {
-      return i;
-    }
-  }
-
-  return items.length;
-}
-
-function moveGoalItem(fromIndex, toIndex) {
-  const data = getGoalData();
-
-  if (!data[fromIndex]) return false;
-  if (toIndex < 0) return false;
-  if (toIndex > data.length - 1) toIndex = data.length - 1;
-
-  const movedGoal = data.splice(fromIndex, 1)[0];
-
-  if (toIndex > data.length) {
-    toIndex = data.length;
-  }
-
-  data.splice(toIndex, 0, movedGoal);
-
-  setGoalData(data);
-  renderGoalList();
-
-  return true;
-}
-
-function updateGoalItem(index, newText) {
-  const data = getGoalData();
-
-  if (!newText) return;
-  if (!data[index]) return;
-
-  if (typeof data[index] === "string") {
-    data[index] = newText;
-  } else {
-    data[index].text = newText;
-  }
-
-  setGoalData(data);
-}
-
-function deleteGoalItemByIndex(index) {
-  const data = getGoalData();
-
-  if (!data[index]) return;
-
-  data.splice(index, 1);
-
-  setGoalData(data);
-}
-
-    function toggleGoalMultiDelete() {
-  if (isGoalSortMode) {
-    isGoalSortMode = false;
-    goalSortButton.textContent = "並び替え";
-    goalSortButton.classList.remove("sort-mode");
-    goalList.classList.remove("sort-mode");
-  }
-  
-      if (!isGoalDeleteMode) {
-        isGoalDeleteMode = true;
-        goalMultiDeleteButton.textContent = "削除する";
-        goalMultiDeleteButton.classList.add("delete-mode");
+        setGoalData(data);
         renderGoalList();
-        return;
+
+        return true;
       }
 
-      const checkedBoxes = goalList.querySelectorAll(".goal-checkbox:checked");
+      function updateGoalItem(index, newText) {
+        const data = getGoalData();
 
-      if (checkedBoxes.length === 0) {
+        if (!newText) return;
+        if (!data[index]) return;
+
+        if (typeof data[index] === "string") {
+          data[index] = newText;
+        } else {
+          data[index].text = newText;
+        }
+
+        setGoalData(data);
+      }
+
+      function deleteGoalItemByIndex(index) {
+        const data = getGoalData();
+
+        if (!data[index]) return;
+
+        data.splice(index, 1);
+
+        setGoalData(data);
+      }
+
+      function toggleGoalMultiDelete() {
+        if (isGoalSortMode) {
+          isGoalSortMode = false;
+          goalSortButton.textContent = "並び替え";
+          goalSortButton.classList.remove("sort-mode");
+          goalList.classList.remove("sort-mode");
+        }
+
+        if (!isGoalDeleteMode) {
+          isGoalDeleteMode = true;
+          goalMultiDeleteButton.textContent = "削除する";
+          goalMultiDeleteButton.classList.add("delete-mode");
+          renderGoalList();
+          return;
+        }
+
+        const checkedBoxes = goalList.querySelectorAll(
+          ".goal-checkbox:checked",
+        );
+
+        if (checkedBoxes.length === 0) {
+          isGoalDeleteMode = false;
+          goalMultiDeleteButton.textContent = "複数削除";
+          goalMultiDeleteButton.classList.remove("delete-mode");
+          renderGoalList();
+          return;
+        }
+
+        const deleteIndexes = Array.from(checkedBoxes).map((checkbox) =>
+          Number(checkbox.dataset.index),
+        );
+        deleteGoalItems(deleteIndexes);
+
         isGoalDeleteMode = false;
         goalMultiDeleteButton.textContent = "複数削除";
         goalMultiDeleteButton.classList.remove("delete-mode");
         renderGoalList();
-        return;
       }
 
-      const deleteIndexes = Array.from(checkedBoxes).map((checkbox) => Number(checkbox.dataset.index));
-      deleteGoalItems(deleteIndexes);
+      function toggleGoalSortMode() {
+        if (isGoalDeleteMode) {
+          isGoalDeleteMode = false;
+          goalMultiDeleteButton.textContent = "複数削除";
+          goalMultiDeleteButton.classList.remove("delete-mode");
+        }
 
-      isGoalDeleteMode = false;
-      goalMultiDeleteButton.textContent = "複数削除";
-      goalMultiDeleteButton.classList.remove("delete-mode");
-      renderGoalList();
-    }
-    
-    function toggleGoalSortMode() {
-  if (isGoalDeleteMode) {
-    isGoalDeleteMode = false;
-    goalMultiDeleteButton.textContent = "複数削除";
-    goalMultiDeleteButton.classList.remove("delete-mode");
-  }
+        isGoalSortMode = !isGoalSortMode;
 
-  isGoalSortMode = !isGoalSortMode;
+        goalSortButton.textContent = isGoalSortMode
+          ? "並び替え完了"
+          : "並び替え";
+        goalSortButton.classList.toggle("sort-mode", isGoalSortMode);
+        goalList.classList.toggle("sort-mode", isGoalSortMode);
 
-  goalSortButton.textContent = isGoalSortMode ? "並び替え完了" : "並び替え";
-  goalSortButton.classList.toggle("sort-mode", isGoalSortMode);
-  goalList.classList.toggle("sort-mode", isGoalSortMode);
-
-  renderGoalList();
-}
-
-    function deleteGoalItems(indexes) {
-      const data = getGoalData();
-      const filtered = data.filter((_, index) => !indexes.includes(index));
-      setGoalData(filtered);
-    }
-
-
-
-    function addHabitFromInput() {
-  const taskText = habitInput.value.trim();
-
-  if (!taskText) {
-    habitInput.focus();
-    return;
-  }
-
-  if (editingHabitIndex !== null) {
-    const data = getHabitData();
-
-    if (data[editingHabitIndex]) {
-      data[editingHabitIndex].text = taskText;
-      setHabitData(data);
-      selectedHabitIndex = editingHabitIndex;
-    }
-
-    editingHabitIndex = null;
-    habitAddSubmitButton.textContent = "追加";
-  } else {
-    saveHabitItem(taskText);
-    selectedHabitIndex = getHabitData().length - 1;
-  }
-
-  habitInput.value = "";
-  habitInput.focus();
-  renderHabitList();
-}
-
-    function getHabitData() {
-      return JSON.parse(localStorage.getItem(HABIT_STORAGE_KEY)) || [];
-    }
-
-    function setHabitData(data) {
-      localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
-    }
-
-    function saveHabitItem(text) {
-      const data = getHabitData();
-      data.push({ text, doneDates: [] });
-      setHabitData(data);
-    }
-
-    function toggleHabitDone(index) {
-      const data = getHabitData();
-      if (!data[index]) return;
-
-      if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
-
-      const doneIndex = data[index].doneDates.indexOf(todayKey);
-
-      if (doneIndex >= 0) {
-        data[index].doneDates.splice(doneIndex, 1);
-      } else {
-        data[index].doneDates.push(todayKey);
+        renderGoalList();
       }
 
-      setHabitData(data);
-      selectedHabitIndex = index;
-      renderHabitList();
-      renderHabitCalendar();
-    }
-
-function toggleHabitDoneByDate(index, dateKey) {
-  const data = getHabitData();
-  if (!data[index]) return;
-
-  if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
-
-  const doneIndex = data[index].doneDates.indexOf(dateKey);
-
-  if (doneIndex >= 0) {
-    data[index].doneDates.splice(doneIndex, 1);
-  } else {
-    data[index].doneDates.push(dateKey);
-  }
-
-  setHabitData(data);
-  selectedHabitIndex = index;
-  renderHabitList();
-  renderHabitCalendar();
-}
-
-    function renderHabitList() {
-      const habits = getHabitData();
-      habitList.innerHTML = "";
-
-      if (habits.length === 0) {
-  selectedHabitIndex = null;
-
-  habitCalendar.classList.remove("open");
-  habitCalendar.innerHTML = "";
-
-  const habitDangerArea = document.getElementById("habitDangerArea");
-  habitDangerArea.innerHTML = "";
-
-  const empty = document.createElement("div");
-  empty.className = "empty-message";
-  empty.textContent = "＋ボタンから習慣を追加できます。";
-  habitList.appendChild(empty);
-
-  return;
-}
-
-      if (selectedHabitIndex !== null && !habits[selectedHabitIndex]) {
-        selectedHabitIndex = null;
+      function deleteGoalItems(indexes) {
+        const data = getGoalData();
+        const filtered = data.filter((_, index) => !indexes.includes(index));
+        setGoalData(filtered);
       }
 
-      habits.forEach((habit, index) => {
+      function addHabitFromInput() {
+        const taskText = habitInput.value.trim();
+
+        if (!taskText) {
+          habitInput.focus();
+          return;
+        }
+
+        if (editingHabitIndex !== null) {
+          const data = getHabitData();
+
+          if (data[editingHabitIndex]) {
+            data[editingHabitIndex].text = taskText;
+            setHabitData(data);
+            selectedHabitIndex = editingHabitIndex;
+          }
+
+          editingHabitIndex = null;
+          habitAddSubmitButton.textContent = "追加";
+        } else {
+          saveHabitItem(taskText);
+          selectedHabitIndex = getHabitData().length - 1;
+        }
+
+        habitInput.value = "";
+        habitInput.focus();
+        renderHabitList();
+      }
+
+      function getHabitData() {
+        return JSON.parse(localStorage.getItem(HABIT_STORAGE_KEY)) || [];
+      }
+
+      function setHabitData(data) {
+        localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
+      }
+
+      function saveHabitItem(text) {
+        const data = getHabitData();
+        data.push({ text, doneDates: [] });
+        setHabitData(data);
+      }
+
+      function toggleHabitDone(index) {
+        const data = getHabitData();
+        if (!data[index]) return;
+
+        if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
+
+        const doneIndex = data[index].doneDates.indexOf(todayKey);
+
+        if (doneIndex >= 0) {
+          data[index].doneDates.splice(doneIndex, 1);
+        } else {
+          data[index].doneDates.push(todayKey);
+        }
+
+        setHabitData(data);
+        selectedHabitIndex = index;
+        renderHabitList();
+        renderHabitCalendar();
+      }
+
+      function toggleHabitDoneByDate(index, dateKey) {
+        const data = getHabitData();
+        if (!data[index]) return;
+
+        if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
+
+        const doneIndex = data[index].doneDates.indexOf(dateKey);
+
+        if (doneIndex >= 0) {
+          data[index].doneDates.splice(doneIndex, 1);
+        } else {
+          data[index].doneDates.push(dateKey);
+        }
+
+        setHabitData(data);
+        selectedHabitIndex = index;
+        renderHabitList();
+        renderHabitCalendar();
+      }
+
+      function renderHabitList() {
+        const habits = getHabitData();
+        habitList.innerHTML = "";
+
+        if (habits.length === 0) {
+          selectedHabitIndex = null;
+
+          habitCalendar.classList.remove("open");
+          habitCalendar.innerHTML = "";
+
+          const habitDangerArea = document.getElementById("habitDangerArea");
+          habitDangerArea.innerHTML = "";
+
+          const empty = document.createElement("div");
+          empty.className = "empty-message";
+          empty.textContent = "＋ボタンから習慣を追加できます。";
+          habitList.appendChild(empty);
+
+          return;
+        }
+
+        if (selectedHabitIndex !== null && !habits[selectedHabitIndex]) {
+          selectedHabitIndex = null;
+        }
+
+        habits.forEach((habit, index) => {
+          const button = document.createElement("button");
+          button.className = "habit-task-button";
+          button.textContent = habit.text;
+          button.type = "button";
+
+          const isDoneToday =
+            Array.isArray(habit.doneDates) &&
+            habit.doneDates.includes(todayKey);
+          if (isDoneToday) button.classList.add("done-today");
+          if (selectedHabitIndex === index) button.classList.add("selected");
+
+          setupHabitButtonPress(button, index);
+          habitList.appendChild(button);
+        });
+
+        renderHabitCalendar();
+      }
+
+      function setupHabitButtonPress(button, index) {
+        button.addEventListener("click", () => {
+          toggleHabitDone(index);
+
+          selectedHabitIndex = index;
+          renderHabitList();
+          renderHabitCalendar();
+        });
+      }
+
+      function setupHabitCalendarDayPress(cell, dateKey) {
+        let longPressTimer = null;
+        let didLongPress = false;
+        const longPressDuration = 550;
+
+        cell.addEventListener("pointerdown", (event) => {
+          didLongPress = false;
+          cell.classList.add("long-pressing");
+          cell.setPointerCapture(event.pointerId);
+
+          longPressTimer = setTimeout(() => {
+            didLongPress = true;
+            cell.classList.remove("long-pressing");
+
+            toggleHabitDoneByDate(selectedHabitIndex, dateKey);
+          }, longPressDuration);
+        });
+
+        cell.addEventListener("pointerup", () => {
+          clearTimeout(longPressTimer);
+          cell.classList.remove("long-pressing");
+        });
+
+        cell.addEventListener("pointercancel", () => {
+          clearTimeout(longPressTimer);
+          cell.classList.remove("long-pressing");
+        });
+
+        cell.addEventListener("pointerleave", () => {
+          clearTimeout(longPressTimer);
+          cell.classList.remove("long-pressing");
+        });
+      }
+
+      function renderHabitCalendar() {
+        const habits = getHabitData();
+        const habitDangerArea = document.getElementById("habitDangerArea");
+
+        if (selectedHabitIndex === null || !habits[selectedHabitIndex]) {
+          habitCalendar.classList.remove("open");
+          habitCalendar.innerHTML = "";
+          habitDangerArea.innerHTML = "";
+          return;
+        }
+
+        const habit = habits[selectedHabitIndex];
+        const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        const year = baseDate.getFullYear();
+        const month = baseDate.getMonth();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+        const firstWeekday = baseDate.getDay();
+        const doneDates = Array.isArray(habit.doneDates) ? habit.doneDates : [];
+
+        habitDangerArea.innerHTML = "";
+        habitCalendar.innerHTML = "";
+        habitCalendar.classList.add("open");
+
+        const title = document.createElement("div");
+        title.className = "habit-calendar-title";
+
+        const titleButton = document.createElement("button");
+        titleButton.type = "button";
+        titleButton.className = "habit-calendar-title-button";
+        titleButton.textContent = `${habit.text}｜${year}年${month + 1}月の達成日`;
+
+        titleButton.addEventListener("click", () => {
+          showHabitTitleEdit(selectedHabitIndex, title);
+        });
+
+        title.appendChild(titleButton);
+        habitCalendar.appendChild(title);
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "danger-button habit-delete-button";
+        deleteButton.textContent = "この習慣を削除";
+
+        deleteButton.addEventListener("click", () => {
+          deleteSelectedHabit();
+        });
+
+        habitDangerArea.appendChild(deleteButton);
+
+        const grid = document.createElement("div");
+        grid.className = "habit-calendar-grid";
+
+        ["日", "月", "火", "水", "木", "金", "土"].forEach((weekday) => {
+          const cell = document.createElement("div");
+          cell.className = "habit-calendar-weekday";
+          cell.textContent = weekday;
+          grid.appendChild(cell);
+        });
+
+        for (let i = 0; i < firstWeekday; i++) {
+          const empty = document.createElement("div");
+          empty.className = "habit-calendar-day empty";
+          grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= lastDate; day++) {
+          const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "habit-calendar-day";
+          cell.textContent = day;
+
+          if (doneDates.includes(dateKey)) cell.classList.add("done");
+
+          setupHabitCalendarDayPress(cell, dateKey);
+
+          grid.appendChild(cell);
+        }
+
+        habitCalendar.appendChild(grid);
+      }
+
+      function showHabitTitleEdit(index, titleElement) {
+        const data = getHabitData();
+        if (!data[index]) return;
+
+        titleElement.innerHTML = "";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = data[index].text;
+        input.className = "habit-title-edit-input";
+
         const button = document.createElement("button");
-        button.className = "habit-task-button";
-        button.textContent = habit.text;
         button.type = "button";
+        button.textContent = "変更";
+        button.className = "habit-title-edit-button";
 
-        const isDoneToday = Array.isArray(habit.doneDates) && habit.doneDates.includes(todayKey);
-        if (isDoneToday) button.classList.add("done-today");
-        if (selectedHabitIndex === index) button.classList.add("selected");
+        button.addEventListener("click", () => {
+          const newName = input.value.trim();
+          if (!newName) return;
 
-        setupHabitButtonPress(button, index);
-        habitList.appendChild(button);
-      });
+          const latestData = getHabitData();
+          if (!latestData[index]) return;
 
-      renderHabitCalendar();
-    }
+          latestData[index].text = newName;
+          setHabitData(latestData);
 
-    function setupHabitButtonPress(button, index) {
-  button.addEventListener("click", () => {
-    toggleHabitDone(index);
+          selectedHabitIndex = index;
+          renderHabitList();
+          renderHabitCalendar();
+        });
 
-    selectedHabitIndex = index;
-    renderHabitList();
-    renderHabitCalendar();
-  });
-}
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            button.click();
+          }
+        });
 
-function setupHabitCalendarDayPress(cell, dateKey) {
-  let longPressTimer = null;
-  let didLongPress = false;
-  const longPressDuration = 550;
+        titleElement.appendChild(input);
+        titleElement.appendChild(button);
 
-  cell.addEventListener("pointerdown", (event) => {
-    didLongPress = false;
-    cell.classList.add("long-pressing");
-    cell.setPointerCapture(event.pointerId);
-
-    longPressTimer = setTimeout(() => {
-      didLongPress = true;
-      cell.classList.remove("long-pressing");
-
-      toggleHabitDoneByDate(selectedHabitIndex, dateKey);
-    }, longPressDuration);
-  });
-
-  cell.addEventListener("pointerup", () => {
-    clearTimeout(longPressTimer);
-    cell.classList.remove("long-pressing");
-  });
-
-  cell.addEventListener("pointercancel", () => {
-    clearTimeout(longPressTimer);
-    cell.classList.remove("long-pressing");
-  });
-
-  cell.addEventListener("pointerleave", () => {
-    clearTimeout(longPressTimer);
-    cell.classList.remove("long-pressing");
-  });
-}
-
-    function renderHabitCalendar() {
-  const habits = getHabitData();
-  const habitDangerArea = document.getElementById("habitDangerArea");
-
-  if (selectedHabitIndex === null || !habits[selectedHabitIndex]) {
-    habitCalendar.classList.remove("open");
-    habitCalendar.innerHTML = "";
-    habitDangerArea.innerHTML = "";
-    return;
-  }
-
-  const habit = habits[selectedHabitIndex];
-  const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
-  const year = baseDate.getFullYear();
-const month = baseDate.getMonth();
-const lastDate = new Date(year, month + 1, 0).getDate();
-const firstWeekday = baseDate.getDay();
-const doneDates = Array.isArray(habit.doneDates) ? habit.doneDates : [];
-
-      habitDangerArea.innerHTML = "";
-      habitCalendar.innerHTML = "";
-      habitCalendar.classList.add("open");
-
-      const title = document.createElement("div");
-title.className = "habit-calendar-title";
-
-const titleButton = document.createElement("button");
-titleButton.type = "button";
-titleButton.className = "habit-calendar-title-button";
-titleButton.textContent = `${habit.text}｜${year}年${month + 1}月の達成日`;
-
-titleButton.addEventListener("click", () => {
-  showHabitTitleEdit(selectedHabitIndex, title);
-
-});
-
-title.appendChild(titleButton);
-habitCalendar.appendChild(title);
-
-const deleteButton = document.createElement("button");
-deleteButton.type = "button";
-deleteButton.className = "danger-button habit-delete-button";
-deleteButton.textContent = "この習慣を削除";
-
-deleteButton.addEventListener("click", () => {
-  deleteSelectedHabit();
-});
-
-habitDangerArea.appendChild(deleteButton);
-
-      const grid = document.createElement("div");
-      grid.className = "habit-calendar-grid";
-
-      ["日", "月", "火", "水", "木", "金", "土"].forEach((weekday) => {
-        const cell = document.createElement("div");
-        cell.className = "habit-calendar-weekday";
-        cell.textContent = weekday;
-        grid.appendChild(cell);
-      });
-
-      for (let i = 0; i < firstWeekday; i++) {
-        const empty = document.createElement("div");
-        empty.className = "habit-calendar-day empty";
-        grid.appendChild(empty);
+        input.focus();
+        input.select();
       }
 
-      for (let day = 1; day <= lastDate; day++) {
-  const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const cell = document.createElement("button");
-  cell.type = "button";
-  cell.className = "habit-calendar-day";
-  cell.textContent = day;
+      function deleteSelectedHabit() {
+        const data = getHabitData();
 
-  if (doneDates.includes(dateKey)) cell.classList.add("done");
+        if (selectedHabitIndex === null || !data[selectedHabitIndex]) {
+          alert("削除できる習慣がありません。");
+          return;
+        }
 
-  setupHabitCalendarDayPress(cell, dateKey);
+        const targetName = data[selectedHabitIndex].text;
 
-  grid.appendChild(cell);
-}
+        const firstConfirm = confirm(
+          `「${targetName}」を削除します。\n\n` +
+            "この操作は元に戻せません。\n\n" +
+            "削除しますか？",
+        );
 
-      habitCalendar.appendChild(grid);
-    }
-    
-    function showHabitTitleEdit(index, titleElement) {
-  const data = getHabitData();
-  if (!data[index]) return;
+        if (!firstConfirm) return;
 
-  titleElement.innerHTML = "";
+        const typed = prompt(
+          `本当に「${targetName}」を削除する場合は、\n` +
+            "「削除」と入力してください。",
+        );
 
-  const input = document.createElement("input");
-  input.type = "text";
-  input.value = data[index].text;
-  input.className = "habit-title-edit-input";
+        if (typed !== "削除") {
+          alert("削除をキャンセルしました。");
+          return;
+        }
 
-  const button = document.createElement("button");
-  button.type = "button";
-  button.textContent = "変更";
-  button.className = "habit-title-edit-button";
+        data.splice(selectedHabitIndex, 1);
+        setHabitData(data);
 
-  button.addEventListener("click", () => {
-    const newName = input.value.trim();
-    if (!newName) return;
+        if (data.length === 0) {
+          selectedHabitIndex = null;
+        } else if (selectedHabitIndex >= data.length) {
+          selectedHabitIndex = data.length - 1;
+        }
 
-    const latestData = getHabitData();
-    if (!latestData[index]) return;
+        renderHabitList();
+        renderHabitCalendar();
 
-    latestData[index].text = newName;
-    setHabitData(latestData);
+        alert(`「${targetName}」を削除しました。`);
+      }
 
-    selectedHabitIndex = index;
-    renderHabitList();
-    renderHabitCalendar();
-  });
+      function formatDateKey(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
 
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      button.click();
-    }
-  });
+      function getLogicalToday() {
+        const now = new Date();
 
-  titleElement.appendChild(input);
-  titleElement.appendChild(button);
+        const logicalDate = new Date(now);
 
-  input.focus();
-  input.select();
-}
+        logicalDate.setHours(logicalDate.getHours() - 4);
 
-function deleteSelectedHabit() {
-  const data = getHabitData();
+        return logicalDate;
+      }
 
-  if (selectedHabitIndex === null || !data[selectedHabitIndex]) {
-    alert("削除できる習慣がありません。");
-    return;
-  }
+      function deleteOldestMonthDiary() {
+        const data = getDiaryData();
+        const dateKeys = Object.keys(data).sort();
 
-  const targetName = data[selectedHabitIndex].text;
+        if (dateKeys.length === 0) {
+          alert("削除できる日記がありません。");
+          return;
+        }
 
-  const firstConfirm = confirm(
-    `「${targetName}」を削除します。\n\n` +
-    "この操作は元に戻せません。\n\n" +
-    "削除しますか？"
-  );
+        const oldestDate = new Date(dateKeys[0]);
+        const year = oldestDate.getFullYear();
+        const month = oldestDate.getMonth() + 1;
+        const targetMonth = `${year}/${month}`;
 
-  if (!firstConfirm) return;
+        const firstConfirm = confirm(
+          `${targetMonth} の日記を削除します。\n\n` +
+            "この操作は元に戻せません。\n" +
+            "先にtxtファイルで保存しているか確認してください。\n\n" +
+            "削除しますか？",
+        );
 
-  const typed = prompt(
-    `本当に「${targetName}」を削除する場合は、\n` +
-    "「削除」と入力してください。"
-  );
+        if (!firstConfirm) return;
 
-  if (typed !== "削除") {
-    alert("削除をキャンセルしました。");
-    return;
-  }
+        const typed = prompt(
+          `本当に ${targetMonth} の日記を削除する場合は、\n` +
+            "「削除」と入力してください。",
+        );
 
-  data.splice(selectedHabitIndex, 1);
-  setHabitData(data);
+        if (typed !== "削除") {
+          alert("削除をキャンセルしました。");
+          return;
+        }
 
-  if (data.length === 0) {
-    selectedHabitIndex = null;
-  } else if (selectedHabitIndex >= data.length) {
-    selectedHabitIndex = data.length - 1;
-  }
+        Object.keys(data).forEach((dateKey) => {
+          const date = new Date(dateKey);
 
-  renderHabitList();
-  renderHabitCalendar();
+          if (date.getFullYear() === year && date.getMonth() + 1 === month) {
+            delete data[dateKey];
+          }
+        });
 
-  alert(`「${targetName}」を削除しました。`);
-}
+        setDiaryData(data);
 
-    function formatDateKey(date) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    }
-    
-    function getLogicalToday() {
+        selectedPastDateKey = null;
+        pastDiaryList.classList.remove("open");
+        pastDiaryList.innerHTML = "";
 
-  const now = new Date();
+        renderTodayDiary();
+        renderPastDateButtons();
+        renderMonthSelect();
 
-  const logicalDate = new Date(now);
+        alert(`${targetMonth} の日記を削除しました。`);
+      }
 
-  logicalDate.setHours(logicalDate.getHours() - 4);
+      function openUpdateHistory() {
+        activeTabId = "update";
+        renderTabs();
+        renderPanels();
+      }
 
-  return logicalDate;
-}
+      function clearGoalDropPreview() {
+        const items = goalList.querySelectorAll(".goal-item");
 
-function deleteOldestMonthDiary() {
-  const data = getDiaryData();
-  const dateKeys = Object.keys(data).sort();
+        items.forEach((item) => {
+          item.classList.remove("drop-preview-before");
+          item.classList.remove("drop-preview-after");
+        });
+      }
 
-  if (dateKeys.length === 0) {
-    alert("削除できる日記がありません。");
-    return;
-  }
+      function updateGoalDropPreview(pointerY) {
+        const items = Array.from(
+          goalList.querySelectorAll(".goal-item:not(.drag-placeholder)"),
+        );
 
-  const oldestDate = new Date(dateKeys[0]);
-  const year = oldestDate.getFullYear();
-  const month = oldestDate.getMonth() + 1;
-  const targetMonth = `${year}/${month}`;
+        const dropIndex = getGoalDropIndex(pointerY);
 
-  const firstConfirm = confirm(
-    `${targetMonth} の日記を削除します。\n\n` +
-    "この操作は元に戻せません。\n" +
-    "先にtxtファイルで保存しているか確認してください。\n\n" +
-    "削除しますか？"
-  );
+        clearGoalDropPreview();
 
-  if (!firstConfirm) return;
+        if (items.length === 0) return;
 
-  const typed = prompt(
-    `本当に ${targetMonth} の日記を削除する場合は、\n` +
-    "「削除」と入力してください。"
-  );
+        if (dropIndex >= items.length) {
+          items[items.length - 1].classList.add("drop-preview-after");
+          return;
+        }
 
-  if (typed !== "削除") {
-    alert("削除をキャンセルしました。");
-    return;
-  }
+        items[dropIndex].classList.add("drop-preview-before");
+      }
 
-  Object.keys(data).forEach((dateKey) => {
-    const date = new Date(dateKey);
-
-    if (
-      date.getFullYear() === year &&
-      date.getMonth() + 1 === month
-    ) {
-      delete data[dateKey];
-    }
-  });
-
-  setDiaryData(data);
-
-  selectedPastDateKey = null;
-  pastDiaryList.classList.remove("open");
-  pastDiaryList.innerHTML = "";
-
-  renderTodayDiary();
-  renderPastDateButtons();
-  renderMonthSelect();
-
-  alert(`${targetMonth} の日記を削除しました。`);
-}
-
-function openUpdateHistory() {
-  activeTabId = "update";
-  renderTabs();
-  renderPanels();
-}
-
-function clearGoalDropPreview() {
-  const items = goalList.querySelectorAll(".goal-item");
-
-  items.forEach((item) => {
-    item.classList.remove("drop-preview-before");
-    item.classList.remove("drop-preview-after");
-  });
-}
-
-function updateGoalDropPreview(pointerY) {
-  const items = Array.from(
-    goalList.querySelectorAll(".goal-item:not(.drag-placeholder)")
-  );
-
-  const dropIndex = getGoalDropIndex(pointerY);
-
-  clearGoalDropPreview();
-
-  if (items.length === 0) return;
-
-  if (dropIndex >= items.length) {
-    items[items.length - 1].classList.add("drop-preview-after");
-    return;
-  }
-
-  items[dropIndex].classList.add("drop-preview-before");
-}
-  </script>
+      function openSettings() {
+        activeTabId = "settings";
+        renderTabs();
+        renderPanels();
+      }
+    </script>
     <div class="bottomIconArea">
-  <img src="icon.png" class="bottomIcon">
-</div>
-</body>
+      <img src="icon.png" class="bottomIcon" />
+    </div>
+  </body>
 </html>
