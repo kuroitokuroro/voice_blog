@@ -61,11 +61,6 @@
       color: white;
     }
 
-    .tab-button.dragging {
-      opacity: 0.7;
-      transform: scale(0.96);
-    }
-
     .panel {
       display: none;
     }
@@ -558,15 +553,6 @@
   background: #999;
 }
 
-.goal-item.dragging {
-  background: #ddd;
-}
-
-.goal-item.dragging .swipe-content {
-  background: #ddd;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-}
-
 .goal-drag-ghost {
   position: fixed;
   z-index: 9999;
@@ -590,6 +576,10 @@
 
 .goal-item.drop-preview-after {
   margin-bottom: var(--goal-drop-space, 28px);
+}
+
+.goal-item.drag-placeholder {
+  display: none;
 }
   </style>
 </head>
@@ -1530,11 +1520,13 @@ goalList.style.setProperty("--goal-drop-space", `${ghostHeight}px`);
 }
 
 function getGoalDropIndex(pointerY) {
-  const items = Array.from(goalList.querySelectorAll(".goal-item"));
+  const items = Array.from(
+    goalList.querySelectorAll(".goal-item:not(.drag-placeholder)")
+  );
 
   for (let i = 0; i < items.length; i++) {
     const rect = items[i].getBoundingClientRect();
-    const centerY = rect.top + rect.height / 2;
+    const centerY = rect.top + rect.height * 0.75;
 
     if (pointerY < centerY) {
       return i;
@@ -1548,19 +1540,16 @@ function moveGoalItem(fromIndex, toIndex) {
   const data = getGoalData();
 
   if (!data[fromIndex]) return false;
-
-  let insertIndex = toIndex;
-
-  if (insertIndex > fromIndex) {
-    insertIndex -= 1;
-  }
-
-  if (insertIndex === fromIndex) return false;
-  if (insertIndex < 0) return false;
-  if (insertIndex > data.length) return false;
+  if (toIndex < 0) return false;
+  if (toIndex > data.length - 1) toIndex = data.length - 1;
 
   const movedGoal = data.splice(fromIndex, 1)[0];
-  data.splice(insertIndex, 0, movedGoal);
+
+  if (toIndex > data.length) {
+    toIndex = data.length;
+  }
+
+  data.splice(toIndex, 0, movedGoal);
 
   setGoalData(data);
   renderGoalList();
@@ -1574,7 +1563,11 @@ function updateGoalItem(index, newText) {
   if (!newText) return;
   if (!data[index]) return;
 
-  data[index].text = newText;
+  if (typeof data[index] === "string") {
+    data[index] = newText;
+  } else {
+    data[index].text = newText;
+  }
 
   setGoalData(data);
 }
@@ -1690,22 +1683,6 @@ function deleteGoalItemByIndex(index) {
       data.push({ text, doneDates: [] });
       setHabitData(data);
     }
-    
-    function renameHabitItem(index) {
-  const data = getHabitData();
-  if (!data[index]) return;
-
-  editingHabitIndex = index;
-  selectedHabitIndex = index;
-
-  habitInput.value = data[index].text;
-  habitInput.focus();
-  habitInput.select();
-
-  habitAddSubmitButton.textContent = "変更";
-
-  renderHabitList();
-}
 
     function toggleHabitDone(index) {
       const data = getHabitData();
@@ -1752,21 +1729,21 @@ function toggleHabitDoneByDate(index, dateKey) {
       habitList.innerHTML = "";
 
       if (habits.length === 0) {
-        selectedHabitIndex = null;
-        
-        habitCalendar.classList.remove("open");
-        habitCalendar.innerHTML = "";
-        habitDangerArea.innerHTML = "";
-return;
+  selectedHabitIndex = null;
 
-const habitDangerArea = document.getElementById("habitDangerArea");
+  habitCalendar.classList.remove("open");
+  habitCalendar.innerHTML = "";
 
-        const empty = document.createElement("div");
-        empty.className = "empty-message";
-        empty.textContent = "＋ボタンからローマ字で習慣を追加できます。例：furo → ふろ";
-        habitList.appendChild(empty);
-        return;
-      }
+  const habitDangerArea = document.getElementById("habitDangerArea");
+  habitDangerArea.innerHTML = "";
+
+  const empty = document.createElement("div");
+  empty.className = "empty-message";
+  empty.textContent = "＋ボタンから習慣を追加できます。";
+  habitList.appendChild(empty);
+
+  return;
+}
 
       if (selectedHabitIndex !== null && !habits[selectedHabitIndex]) {
         selectedHabitIndex = null;
@@ -2094,7 +2071,10 @@ function clearGoalDropPreview() {
 }
 
 function updateGoalDropPreview(pointerY) {
-  const items = Array.from(goalList.querySelectorAll(".goal-item"));
+  const items = Array.from(
+    goalList.querySelectorAll(".goal-item:not(.drag-placeholder)")
+  );
+
   const dropIndex = getGoalDropIndex(pointerY);
 
   clearGoalDropPreview();
