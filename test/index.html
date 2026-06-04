@@ -61,11 +61,6 @@
       color: white;
     }
 
-    .tab-button.dragging {
-      opacity: 0.7;
-      transform: scale(0.96);
-    }
-
     .panel {
       display: none;
     }
@@ -556,15 +551,6 @@
 
 .goal-sort-handle.dragging {
   background: #999;
-}
-
-.goal-item.dragging {
-  background: #ddd;
-}
-
-.goal-item.dragging .swipe-content {
-  background: #ddd;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
 
 .goal-drag-ghost {
@@ -1473,7 +1459,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
     if (!isDragging || !ghost) return;
 
     ghost.style.top = `${event.clientY - offsetY}px`;
-    updateGoalDropPreview(event.clientY, startIndex);
+    updateGoalDropPreview(event.clientY);
   }
 
   function onPointerUp(event) {
@@ -1525,7 +1511,7 @@ goalList.style.setProperty("--goal-drop-space", `${ghostHeight}px`);
     item.classList.add("drag-placeholder");
 
     isDragging = true;
-    updateGoalDropPreview(event.clientY, startIndex);
+    updateGoalDropPreview(event.clientY);
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
@@ -1577,7 +1563,11 @@ function updateGoalItem(index, newText) {
   if (!newText) return;
   if (!data[index]) return;
 
-  data[index].text = newText;
+  if (typeof data[index] === "string") {
+    data[index] = newText;
+  } else {
+    data[index].text = newText;
+  }
 
   setGoalData(data);
 }
@@ -1693,22 +1683,6 @@ function deleteGoalItemByIndex(index) {
       data.push({ text, doneDates: [] });
       setHabitData(data);
     }
-    
-    function renameHabitItem(index) {
-  const data = getHabitData();
-  if (!data[index]) return;
-
-  editingHabitIndex = index;
-  selectedHabitIndex = index;
-
-  habitInput.value = data[index].text;
-  habitInput.focus();
-  habitInput.select();
-
-  habitAddSubmitButton.textContent = "変更";
-
-  renderHabitList();
-}
 
     function toggleHabitDone(index) {
       const data = getHabitData();
@@ -1755,21 +1729,21 @@ function toggleHabitDoneByDate(index, dateKey) {
       habitList.innerHTML = "";
 
       if (habits.length === 0) {
-        selectedHabitIndex = null;
-        
-        habitCalendar.classList.remove("open");
-        habitCalendar.innerHTML = "";
-        habitDangerArea.innerHTML = "";
-return;
+  selectedHabitIndex = null;
 
-const habitDangerArea = document.getElementById("habitDangerArea");
+  habitCalendar.classList.remove("open");
+  habitCalendar.innerHTML = "";
 
-        const empty = document.createElement("div");
-        empty.className = "empty-message";
-        empty.textContent = "＋ボタンからローマ字で習慣を追加できます。例：furo → ふろ";
-        habitList.appendChild(empty);
-        return;
-      }
+  const habitDangerArea = document.getElementById("habitDangerArea");
+  habitDangerArea.innerHTML = "";
+
+  const empty = document.createElement("div");
+  empty.className = "empty-message";
+  empty.textContent = "＋ボタンから習慣を追加できます。";
+  habitList.appendChild(empty);
+
+  return;
+}
 
       if (selectedHabitIndex !== null && !habits[selectedHabitIndex]) {
         selectedHabitIndex = null;
