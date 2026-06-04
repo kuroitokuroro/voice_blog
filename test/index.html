@@ -1469,7 +1469,7 @@ function setupGoalSortHandle(handle, item, startIndex) {
     if (!isDragging || !ghost) return;
 
     ghost.style.top = `${event.clientY - offsetY}px`;
-    updateGoalDropPreview(event.clientY);
+    updateGoalDropPreview(event.clientY, startIndex);
   }
 
   function onPointerUp(event) {
@@ -1521,7 +1521,7 @@ goalList.style.setProperty("--goal-drop-space", `${ghostHeight}px`);
     item.classList.add("drag-placeholder");
 
     isDragging = true;
-    updateGoalDropPreview(event.clientY);
+    updateGoalDropPreview(event.clientY, startIndex);
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
@@ -2093,13 +2093,17 @@ function clearGoalDropPreview() {
   });
 }
 
-function updateGoalDropPreview(pointerY) {
+function updateGoalDropPreview(pointerY, startIndex) {
   const items = Array.from(goalList.querySelectorAll(".goal-item"));
   const dropIndex = getGoalDropIndex(pointerY);
 
   clearGoalDropPreview();
 
   if (items.length === 0) return;
+
+  if (dropIndex === startIndex || dropIndex === startIndex + 1) {
+    return;
+  }
 
   if (dropIndex >= items.length) {
     items[items.length - 1].classList.add("drop-preview-after");
