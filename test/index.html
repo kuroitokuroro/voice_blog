@@ -639,6 +639,17 @@
   >
     <span class="material-symbols-outlined">mail</span>
   </a>
+  
+<button
+  id="settingsButton"
+  class="icon-action-button"
+  type="button"
+  aria-label="設定を開く"
+>
+  <span class="material-symbols-outlined">
+    settings
+  </span>
+</button>
 </div>
 </div>
   <div id="tabBar" class="tab-bar"></div>
@@ -716,6 +727,28 @@
 <li>Safari / Chrome で動作確認。タブ切替が動くように修正</li>
 <li>習慣タブの入力欄を常時表示に変更</li>
   </ul>
+  </section>
+  
+  <section id="settingsPanel" class="panel">
+  <br>
+  <h2>設定</h2>
+
+  <p>まだ開発中。</p>
+
+  <br>
+
+  <h3>今後追加予定</h3>
+
+  <ul>
+    <li>バックアップ（エクスポート）</li>
+    <li>データ復元（インポート）</li>
+    <li>変換辞書</li>
+    <li>表示設定</li>
+  </ul>
+
+  <br>
+
+  <p>お楽しみに！</p>
 </section>
 
   <script>
@@ -748,6 +781,7 @@
     const habitList = document.getElementById("habitList");
     const habitCalendar = document.getElementById("habitCalendar");
     const updateHistoryButton = document.getElementById("updateHistoryButton");
+    const settingsButton = document.getElementById("settingsButton");
 
     let tabOrder = loadTabOrder();
     let activeTabId = tabOrder[0].id;
@@ -772,6 +806,10 @@
       if (event.key === "Enter") addHabitFromInput();
     });
     updateHistoryButton.addEventListener("click", openUpdateHistory);
+    settingsButton.addEventListener(
+  "click",
+  openSettings
+);
 
     renderTabs();
     renderPanels();
@@ -911,6 +949,11 @@
 
   if (activeTabId === "update") {
     document.getElementById("updatePanel").classList.add("active");
+    return;
+  }
+
+  if (activeTabId === "settings") {
+    document.getElementById("settingsPanel").classList.add("active");
   }
 }
 
@@ -2141,6 +2184,12 @@ function updateGoalDropPreview(pointerY) {
   }
 
   items[dropIndex].classList.add("drop-preview-before");
+}
+
+function openSettings() {
+  activeTabId = "settings";
+  renderTabs();
+  renderPanels();
 }
   </script>
     <div class="bottomIconArea">
