@@ -1540,7 +1540,7 @@ function getGoalDropIndex(pointerY) {
 
   for (let i = 0; i < items.length; i++) {
     const rect = items[i].getBoundingClientRect();
-    const centerY = rect.top + rect.height / 2;
+    const centerY = rect.top + rect.height * 0.75;
 
     if (pointerY < centerY) {
       return i;
