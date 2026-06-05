@@ -1299,918 +1299,962 @@ renderHabitList();
   });
 }
 
-      function getDiaryData() {
-        return JSON.parse(localStorage.getItem(DIARY_STORAGE_KEY)) || {};
-      }
+ function getDiaryData() {
+  return JSON.parse(localStorage.getItem(DIARY_STORAGE_KEY)) || {};
+}
 
-      function setDiaryData(data) {
-        localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(data));
-      }
+ function setDiaryData(data) {
+  localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(data));
+}
 
-      function saveDiaryItem(dateKey, text) {
-        const data = getDiaryData();
-        if (!data[dateKey]) data[dateKey] = [];
-        data[dateKey].push(text);
-        setDiaryData(data);
-      }
+ function saveDiaryItem(dateKey, text) {
+  const data = getDiaryData();
 
-      function updateDiaryItem(dateKey, index, newText) {
-        const data = getDiaryData();
-        if (!data[dateKey]) return;
-        if (!newText) return;
-        data[dateKey][index] = newText;
-        setDiaryData(data);
-      }
+  if (!data[dateKey]) data[dateKey] = [];
 
-      function deleteDiaryItemByIndex(dateKey, index) {
-        const data = getDiaryData();
-        if (!data[dateKey]) return;
-        data[dateKey].splice(index, 1);
-        if (data[dateKey].length === 0) delete data[dateKey];
-        setDiaryData(data);
-      }
+  data[dateKey].push(text);
+  setDiaryData(data);
+}
 
-      function renderMonthSelect() {
-        const data = getDiaryData();
+ function updateDiaryItem(dateKey, index, newText) {
+  const data = getDiaryData();
 
-        const months = [
-          ...new Set(
-            Object.keys(data)
-              .sort()
-              .map((dateKey) => {
-                const date = new Date(dateKey);
-                return `${date.getFullYear()}/${date.getMonth() + 1}`;
-              }),
-          ),
-        ];
+  if (!data[dateKey]) return;
+  if (!newText) return;
 
-        monthSelect.innerHTML = "";
+  data[dateKey][index] = newText;
+  setDiaryData(data);
+}
 
-        months.forEach((monthKey) => {
-          const option = document.createElement("option");
-          option.value = monthKey;
-          option.textContent = monthKey;
-          monthSelect.appendChild(option);
-        });
-      }
+ function deleteDiaryItemByIndex(dateKey, index) {
+  const data = getDiaryData();
 
-      function downloadTxt() {
-        const data = getDiaryData();
-        const selectedMonth = monthSelect.value;
+  if (!data[dateKey]) return;
 
-        if (!selectedMonth) {
-          alert("ダウンロードする月の日記がありません。");
-          return;
-        }
+  data[dateKey].splice(index, 1);
 
-        const [yearText, monthText] = selectedMonth.split("/");
-        const year = Number(yearText);
-        const month = Number(monthText);
+  if (data[dateKey].length === 0) delete data[dateKey];
 
-        const targetKeys = Object.keys(data)
-          .sort()
-          .filter((dateKey) => {
-            const date = new Date(dateKey);
-            return date.getFullYear() === year && date.getMonth() + 1 === month;
-          });
+  setDiaryData(data);
+}
 
-        let text = `【日記】${year}年${month}月\n\n`;
+ function renderMonthSelect() {
+  const data = getDiaryData();
 
-        targetKeys.forEach((dateKey) => {
+  const months = [
+    ...new Set(
+      Object.keys(data)
+        .sort()
+        .map((dateKey) => {
           const date = new Date(dateKey);
-          const day = date.getDate();
-          text += "────────────\n";
-          text += `▼${month}月${day}日\n`;
-          text += "────────────\n";
-          data[dateKey].forEach((item) => {
-            text += `${item}\n`;
-          });
-          text += "\n";
-        });
+          return `${date.getFullYear()}/${date.getMonth() + 1}`;
+        }),
+    ),
+  ];
 
-        text += "────────────\n";
+  monthSelect.innerHTML = "";
 
-        const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `日記_${year}-${String(month).padStart(2, "0")}.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
+  months.forEach((monthKey) => {
+    const option = document.createElement("option");
+    option.value = monthKey;
+    option.textContent = monthKey;
+    monthSelect.appendChild(option);
+  });
+}
+
+ function downloadTxt() {
+  const data = getDiaryData();
+  const selectedMonth = monthSelect.value;
+
+  if (!selectedMonth) {
+    alert("ダウンロードする月の日記がありません。");
+    return;
+  }
+
+  const [yearText, monthText] = selectedMonth.split("/");
+  const year = Number(yearText);
+  const month = Number(monthText);
+
+  const targetKeys = Object.keys(data)
+    .sort()
+    .filter((dateKey) => {
+      const date = new Date(dateKey);
+
+      return (
+        date.getFullYear() === year &&
+        date.getMonth() + 1 === month
+      );
+    });
+
+  let text = `【日記】${year}年${month}月\n\n`;
+
+  targetKeys.forEach((dateKey) => {
+    const date = new Date(dateKey);
+    const day = date.getDate();
+
+    text += "────────────\n";
+    text += `▼${month}月${day}日\n`;
+    text += "────────────\n";
+
+    data[dateKey].forEach((item) => {
+      text += `${item}\n`;
+    });
+
+    text += "\n";
+  });
+
+  text += "────────────\n";
+
+  const blob = new Blob([text], {type: "text/plain;charset=utf-8",
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `日記_${year}-${String(month).padStart(2, "0")}.txt`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+ function getGoalData() {
+  return JSON.parse(localStorage.getItem(GOAL_STORAGE_KEY)) || [];
+}
+
+ function setGoalData(data) {
+  localStorage.setItem(
+    GOAL_STORAGE_KEY,
+    JSON.stringify(data),
+  );
+}
+
+ function saveGoalItem(text) {
+  const data = getGoalData();
+
+  data.push({text,createdAt: formatDateKey(new Date()),
+  });
+
+  setGoalData(data);
+}
+
+ function renderGoalList() {
+  const goals = getGoalData();
+
+  goalList.innerHTML = "";
+
+  goals.forEach((goal, index) => {
+    const text =
+      typeof goal === "string"
+        ? goal
+        : goal.text;
+
+    addGoalItem(text, index);
+  });
+}
+
+ function addGoalItem(text, index) {
+  const item = document.createElement("div");
+  item.className = "diary-item goal-item";
+
+  const swipeContent = document.createElement("div");
+  swipeContent.className = "swipe-content";
+
+  if (isGoalDeleteMode) {
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "goal-checkbox";
+    checkbox.dataset.index = index;
+
+    checkbox.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+
+    swipeContent.appendChild(checkbox);
+  }
+
+  if (isGoalSortMode) {
+    const leftHandle = document.createElement("div");
+    leftHandle.className = "goal-sort-handle";
+    setupGoalSortHandle(leftHandle, item, index);
+    swipeContent.appendChild(leftHandle);
+  }
+
+  const content = document.createElement("div");
+  content.className = "text";
+  content.textContent = text;
+  swipeContent.appendChild(content);
+
+  if (isGoalSortMode) {
+    const rightHandle = document.createElement("div");
+    rightHandle.className = "goal-sort-handle";
+    setupGoalSortHandle(rightHandle, item, index);
+    swipeContent.appendChild(rightHandle);
+  }
+
+  const editButton = document.createElement("div");
+  editButton.className = "edit-button";
+  editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
+
+  const deleteButton = document.createElement("div");
+  deleteButton.className = "delete-button";
+  deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
+
+  let isEditing = false;
+  let startX = 0;
+  let startState = "default";
+
+  editButton.addEventListener("click", () => {
+    if (!isEditing) {
+      isEditing = true;
+      content.contentEditable = "true";
+      content.classList.add("editing");
+      content.focus();
+      return;
+    }
+
+    isEditing = false;
+    content.contentEditable = "false";
+    content.classList.remove("editing");
+
+    updateGoalItem(index, content.textContent.trim());
+
+    item.classList.remove("show-edit");
+    renderGoalList();
+  });
+
+  deleteButton.addEventListener("click", () => {
+    deleteGoalItemByIndex(index);
+    renderGoalList();
+  });
+
+  item.appendChild(editButton);
+  item.appendChild(deleteButton);
+  item.appendChild(swipeContent);
+  goalList.appendChild(item);
+
+  item.addEventListener("click", () => {
+    if (!isGoalDeleteMode) return;
+
+    const checkbox = item.querySelector(".goal-checkbox");
+
+    if (!checkbox) return;
+
+    checkbox.checked = !checkbox.checked;
+  });
+
+  item.addEventListener("touchstart", (event) => {
+    if (isGoalDeleteMode) return;
+    if (isGoalSortMode) return;
+
+    startX = event.touches[0].clientX;
+
+    if (item.classList.contains("show-delete")) {
+      startState = "delete";
+    } else if (item.classList.contains("show-edit")) {
+      startState = "edit";
+    } else {
+      startState = "default";
+    }
+  });
+
+  item.addEventListener("touchmove", (event) => {
+    if (isGoalDeleteMode) return;
+    if (isGoalSortMode) return;
+
+    const currentX = event.touches[0].clientX;
+    const diff = startX - currentX;
+
+    if (startState === "default") {
+      if (diff > 40) {
+        item.classList.add("show-delete");
+        item.classList.remove("show-edit");
       }
 
-      function getGoalData() {
-        return JSON.parse(localStorage.getItem(GOAL_STORAGE_KEY)) || [];
+      if (diff < -40) {
+        item.classList.add("show-edit");
+        item.classList.remove("show-delete");
       }
 
-      function setGoalData(data) {
-        localStorage.setItem(GOAL_STORAGE_KEY, JSON.stringify(data));
-      }
-
-      function saveGoalItem(text) {
-        const data = getGoalData();
-        data.push({ text, createdAt: formatDateKey(new Date()) });
-        setGoalData(data);
-      }
-
-      function renderGoalList() {
-        const goals = getGoalData();
-        goalList.innerHTML = "";
-
-        goals.forEach((goal, index) => {
-          const text = typeof goal === "string" ? goal : goal.text;
-          addGoalItem(text, index);
-        });
-      }
-
-      function addGoalItem(text, index) {
-        const item = document.createElement("div");
-        item.className = "diary-item goal-item";
-
-        const swipeContent = document.createElement("div");
-        swipeContent.className = "swipe-content";
-
-        if (isGoalDeleteMode) {
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.className = "goal-checkbox";
-          checkbox.dataset.index = index;
-
-          checkbox.addEventListener("click", (event) => {
-            event.stopPropagation();
-          });
-
-          swipeContent.appendChild(checkbox);
-        }
-
-        if (isGoalSortMode) {
-          const leftHandle = document.createElement("div");
-          leftHandle.className = "goal-sort-handle";
-          setupGoalSortHandle(leftHandle, item, index);
-          swipeContent.appendChild(leftHandle);
-        }
-
-        const content = document.createElement("div");
-        content.className = "text";
-        content.textContent = text;
-        swipeContent.appendChild(content);
-
-        if (isGoalSortMode) {
-          const rightHandle = document.createElement("div");
-          rightHandle.className = "goal-sort-handle";
-          setupGoalSortHandle(rightHandle, item, index);
-          swipeContent.appendChild(rightHandle);
-        }
-
-        const editButton = document.createElement("div");
-        editButton.className = "edit-button";
-        editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
-
-        const deleteButton = document.createElement("div");
-        deleteButton.className = "delete-button";
-        deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
-
-        let isEditing = false;
-        let startX = 0;
-        let startState = "default";
-
-        editButton.addEventListener("click", () => {
-          if (!isEditing) {
-            isEditing = true;
-            content.contentEditable = "true";
-            content.classList.add("editing");
-            content.focus();
-          } else {
-            isEditing = false;
-            content.contentEditable = "false";
-            content.classList.remove("editing");
-
-            updateGoalItem(index, content.textContent.trim());
-
-           item.classList.remove("show-edit");
-            renderGoalList();
-          }
-        });
-
-        deleteButton.addEventListener("click", () => {
-          deleteGoalItemByIndex(index);
-          renderGoalList();
-        });
-
-        item.appendChild(editButton);
-        item.appendChild(deleteButton);
-        item.appendChild(swipeContent);
-        goalList.appendChild(item);
-
-        item.addEventListener("click", () => {
-          if (!isGoalDeleteMode) return;
-
-          const checkbox = item.querySelector(".goal-checkbox");
-          if (!checkbox) return;
-
-          checkbox.checked = !checkbox.checked;
-        });
-
-        item.addEventListener("touchstart", (event) => {
-          if (isGoalDeleteMode) return;
-          if (isGoalSortMode) return;
-
-          startX = event.touches[0].clientX;
-
-          if (item.classList.contains("show-delete")) {
-            startState = "delete";
-          } else if (item.classList.contains("show-edit")) {
-            startState = "edit";
-          } else {
-            startState = "default";
-          }
-        });
-
-        item.addEventListener("touchmove", (event) => {
-          if (isGoalDeleteMode) return;
-          if (isGoalSortMode) return;
-
-          const currentX = event.touches[0].clientX;
-          const diff = startX - currentX;
-
-          if (startState === "default") {
-            if (diff > 40) {
-              item.classList.add("show-delete");
-              item.classList.remove("show-edit");
-            }
-
-            if (diff < -40) {
-              item.classList.add("show-edit");
-              item.classList.remove("show-delete");
-            }
-          } else if (startState === "delete") {
-            if (diff < -30) {
-              item.classList.remove("show-delete");
-            }
-          } else if (startState === "edit") {
-            if (diff > 30) {
-              item.classList.remove("show-edit");
-            }
-          }
-        });
-
-        document.addEventListener("touchstart", (event) => {
-          if (!item.contains(event.target)) {
-            item.classList.remove("show-delete");
-            item.classList.remove("show-edit");
-          }
-        });
-      }
-
-      function setupGoalSortHandle(handle, item, startIndex) {
-        let ghost = null;
-        let offsetY = 0;
-        let isDragging = false;
-        let ghostHeight = 0;
+      return;
+    }
 
-        function onPointerMove(event) {
-          if (!isDragging || !ghost) return;
+    if (startState === "delete") {
+      if (diff < -30) item.classList.remove("show-delete");
+      return;
+    }
 
-          ghost.style.top = `${event.clientY - offsetY}px`;
-          updateGoalDropPreview(event.clientY);
-        }
+    if (startState === "edit") {
+      if (diff > 30) item.classList.remove("show-edit");
+    }
+  });
 
-        function onPointerUp(event) {
-          if (!isDragging) return;
+  document.addEventListener("touchstart", (event) => {
+    if (!item.contains(event.target)) {
+      item.classList.remove("show-delete");
+      item.classList.remove("show-edit");
+    }
+  });
+}
 
-          isDragging = false;
+ function setupGoalSortHandle(handle, item, startIndex) {
+  let ghost = null;
+  let offsetY = 0;
+  let isDragging = false;
+  let ghostHeight = 0;
 
-          document.removeEventListener("pointermove", onPointerMove);
-          document.removeEventListener("pointerup", onPointerUp);
-          document.removeEventListener("pointercancel", onPointerUp);
+  function onPointerMove(event) {
+    if (!isDragging || !ghost) return;
 
-          const toIndex = getGoalDropIndex(event.clientY);
+    ghost.style.top = `${event.clientY - offsetY}px`;
+    updateGoalDropPreview(event.clientY);
+  }
 
-          clearGoalDropPreview();
+  function onPointerUp(event) {
+    if (!isDragging) return;
 
-          goalList.style.removeProperty("--goal-drop-space");
+    isDragging = false;
 
-          if (ghost) {
-            ghost.remove();
-            ghost = null;
-          }
+    document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("pointerup", onPointerUp);
+    document.removeEventListener("pointercancel", onPointerUp);
 
-          item.classList.remove("drag-placeholder");
+    const toIndex = getGoalDropIndex(event.clientY);
 
-          if (!moveGoalItem(startIndex, toIndex)) {
-            renderGoalList();
-          }
-        }
+    clearGoalDropPreview();
+    goalList.style.removeProperty("--goal-drop-space");
 
-        handle.addEventListener("pointerdown", (event) => {
-          if (!isGoalSortMode) return;
+    if (ghost) {
+      ghost.remove();
+      ghost = null;
+    }
 
-          event.preventDefault();
+    item.classList.remove("drag-placeholder");
 
-          const rect = item.getBoundingClientRect();
-          ghostHeight = rect.height;
-          goalList.style.setProperty("--goal-drop-space", `${ghostHeight}px`);
-          offsetY = event.clientY - rect.top;
+    if (!moveGoalItem(startIndex, toIndex)) {
+      renderGoalList();
+    }
+  }
 
-          ghost = item.cloneNode(true);
-          ghost.classList.add("goal-drag-ghost");
-          ghost.style.left = `${rect.left}px`;
-          ghost.style.top = `${rect.top}px`;
-          ghost.style.width = `${rect.width}px`;
-          ghost.style.height = `${rect.height}px`;
-
-          document.body.appendChild(ghost);
-
-          item.classList.add("drag-placeholder");
-
-          isDragging = true;
-          updateGoalDropPreview(event.clientY);
-
-          document.addEventListener("pointermove", onPointerMove);
-          document.addEventListener("pointerup", onPointerUp);
-          document.addEventListener("pointercancel", onPointerUp);
-        });
-      }
-
-      function getGoalDropIndex(pointerY) {
-        const items = Array.from(
-          goalList.querySelectorAll(".goal-item:not(.drag-placeholder)"),
-        );
-
-        for (let i = 0; i < items.length; i++) {
-          const rect = items[i].getBoundingClientRect();
-          const centerY = rect.top + rect.height * 0.75;
-
-          if (pointerY < centerY) {
-            return i;
-          }
-        }
-
-        return items.length;
-      }
-
-      function moveGoalItem(fromIndex, toIndex) {
-        const data = getGoalData();
-
-        if (!data[fromIndex]) return false;
-        if (toIndex < 0) return false;
-        if (toIndex > data.length - 1) toIndex = data.length - 1;
-
-        const movedGoal = data.splice(fromIndex, 1)[0];
-
-        if (toIndex > data.length) {
-          toIndex = data.length;
-        }
-
-        data.splice(toIndex, 0, movedGoal);
-
-        setGoalData(data);
-        renderGoalList();
-
-        return true;
-      }
-
-      function updateGoalItem(index, newText) {
-        const data = getGoalData();
-
-        if (!newText) return;
-        if (!data[index]) return;
-
-        if (typeof data[index] === "string") {
-          data[index] = newText;
-        } else {
-          data[index].text = newText;
-        }
-
-        setGoalData(data);
-      }
-
-      function deleteGoalItemByIndex(index) {
-        const data = getGoalData();
-
-        if (!data[index]) return;
-
-        data.splice(index, 1);
-
-        setGoalData(data);
-      }
-
-      function toggleGoalMultiDelete() {
-        if (isGoalSortMode) {
-          isGoalSortMode = false;
-          goalSortButton.textContent = "並び替え";
-          goalSortButton.classList.remove("sort-mode");
-          goalList.classList.remove("sort-mode");
-        }
-
-        if (!isGoalDeleteMode) {
-          isGoalDeleteMode = true;
-          goalMultiDeleteButton.textContent = "削除する";
-          goalMultiDeleteButton.classList.add("delete-mode");
-          renderGoalList();
-          return;
-        }
-
-        const checkedBoxes = goalList.querySelectorAll(
-          ".goal-checkbox:checked",
-        );
-
-        if (checkedBoxes.length === 0) {
-          isGoalDeleteMode = false;
-          goalMultiDeleteButton.textContent = "複数削除";
-          goalMultiDeleteButton.classList.remove("delete-mode");
-          renderGoalList();
-          return;
-        }
-
-        const deleteIndexes = Array.from(checkedBoxes).map((checkbox) =>
-          Number(checkbox.dataset.index),
-        );
-        deleteGoalItems(deleteIndexes);
-
-        isGoalDeleteMode = false;
-        goalMultiDeleteButton.textContent = "複数削除";
-        goalMultiDeleteButton.classList.remove("delete-mode");
-        renderGoalList();
-      }
-
-      function toggleGoalSortMode() {
-        if (isGoalDeleteMode) {
-          isGoalDeleteMode = false;
-          goalMultiDeleteButton.textContent = "複数削除";
-          goalMultiDeleteButton.classList.remove("delete-mode");
-        }
-
-        isGoalSortMode = !isGoalSortMode;
-
-        goalSortButton.textContent = isGoalSortMode
-          ? "並び替え完了"
-          : "並び替え";
-        goalSortButton.classList.toggle("sort-mode", isGoalSortMode);
-        goalList.classList.toggle("sort-mode", isGoalSortMode);
-
-        renderGoalList();
-      }
-
-      function deleteGoalItems(indexes) {
-        const data = getGoalData();
-        const filtered = data.filter((_, index) => !indexes.includes(index));
-        setGoalData(filtered);
-      }
-
-      function addHabitFromInput() {
-        const taskText = habitInput.value.trim();
-
-        if (!taskText) {
-          habitInput.focus();
-          return;
-        }
-
-        if (editingHabitIndex !== null) {
-          const data = getHabitData();
-
-          if (data[editingHabitIndex]) {
-            data[editingHabitIndex].text = taskText;
-            setHabitData(data);
-            selectedHabitIndex = editingHabitIndex;
-          }
-
-          editingHabitIndex = null;
-          habitAddSubmitButton.textContent = "追加";
-        } else {
-          saveHabitItem(taskText);
-          selectedHabitIndex = getHabitData().length - 1;
-        }
-
-        habitInput.value = "";
-        habitInput.focus();
-        renderHabitList();
-      }
-
-      function getHabitData() {
-        return JSON.parse(localStorage.getItem(HABIT_STORAGE_KEY)) || [];
-      }
-
-      function setHabitData(data) {
-        localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
-      }
-
-      function saveHabitItem(text) {
-        const data = getHabitData();
-        data.push({ text, doneDates: [] });
-        setHabitData(data);
-      }
-
-      function toggleHabitDone(index) {
-        const data = getHabitData();
-        if (!data[index]) return;
-
-        if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
-
-        const doneIndex = data[index].doneDates.indexOf(todayKey);
-
-        if (doneIndex >= 0) {
-          data[index].doneDates.splice(doneIndex, 1);
-        } else {
-          data[index].doneDates.push(todayKey);
-        }
-
-        setHabitData(data);
-        selectedHabitIndex = index;
-        renderHabitList();
-        renderHabitCalendar();
-      }
-
-      function toggleHabitDoneByDate(index, dateKey) {
-        const data = getHabitData();
-        if (!data[index]) return;
-
-        if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
-
-        const doneIndex = data[index].doneDates.indexOf(dateKey);
-
-        if (doneIndex >= 0) {
-          data[index].doneDates.splice(doneIndex, 1);
-        } else {
-          data[index].doneDates.push(dateKey);
-        }
-
-        setHabitData(data);
-        selectedHabitIndex = index;
-        renderHabitList();
-        renderHabitCalendar();
-      }
-
-      function renderHabitList() {
-        const habits = getHabitData();
-        habitList.innerHTML = "";
-
-        if (habits.length === 0) {
-          selectedHabitIndex = null;
-
-          habitCalendar.classList.remove("open");
-          habitCalendar.innerHTML = "";
-
-          const habitDangerArea = document.getElementById("habitDangerArea");
-          habitDangerArea.innerHTML = "";
-
-          const empty = document.createElement("div");
-          empty.className = "empty-message";
-          empty.textContent = "＋ボタンから習慣を追加できます。";
-          habitList.appendChild(empty);
-
-          return;
-        }
-
-        if (selectedHabitIndex !== null && !habits[selectedHabitIndex]) {
-          selectedHabitIndex = null;
-        }
-
-        habits.forEach((habit, index) => {
-          const button = document.createElement("button");
-          button.className = "habit-task-button";
-          button.textContent = habit.text;
-          button.type = "button";
-
-          const isDoneToday =
-            Array.isArray(habit.doneDates) &&
-            habit.doneDates.includes(todayKey);
-          if (isDoneToday) button.classList.add("done-today");
-          if (selectedHabitIndex === index) button.classList.add("selected");
-
-          setupHabitButtonPress(button, index);
-          habitList.appendChild(button);
-        });
-
-        renderHabitCalendar();
-      }
-
-      function setupHabitButtonPress(button, index) {
-        button.addEventListener("click", () => {
-          toggleHabitDone(index);
-
-          selectedHabitIndex = index;
-          renderHabitList();
-          renderHabitCalendar();
-        });
-      }
-
-      function setupHabitCalendarDayPress(cell, dateKey) {
-        let longPressTimer = null;
-        let didLongPress = false;
-        const longPressDuration = 550;
-
-        cell.addEventListener("pointerdown", (event) => {
-          didLongPress = false;
-          cell.classList.add("long-pressing");
-          cell.setPointerCapture(event.pointerId);
-
-          longPressTimer = setTimeout(() => {
-            didLongPress = true;
-            cell.classList.remove("long-pressing");
-
-            toggleHabitDoneByDate(selectedHabitIndex, dateKey);
-          }, longPressDuration);
-        });
-
-        cell.addEventListener("pointerup", () => {
-          clearTimeout(longPressTimer);
-          cell.classList.remove("long-pressing");
-        });
-
-        cell.addEventListener("pointercancel", () => {
-          clearTimeout(longPressTimer);
-          cell.classList.remove("long-pressing");
-        });
-
-        cell.addEventListener("pointerleave", () => {
-          clearTimeout(longPressTimer);
-          cell.classList.remove("long-pressing");
-        });
-      }
-
-      function renderHabitCalendar() {
-        const habits = getHabitData();
-        const habitDangerArea = document.getElementById("habitDangerArea");
-
-        if (selectedHabitIndex === null || !habits[selectedHabitIndex]) {
-          habitCalendar.classList.remove("open");
-          habitCalendar.innerHTML = "";
-          habitDangerArea.innerHTML = "";
-          return;
-        }
-
-        const habit = habits[selectedHabitIndex];
-        const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        const year = baseDate.getFullYear();
-        const month = baseDate.getMonth();
-        const lastDate = new Date(year, month + 1, 0).getDate();
-        const firstWeekday = baseDate.getDay();
-        const doneDates = Array.isArray(habit.doneDates) ? habit.doneDates : [];
-
-        habitDangerArea.innerHTML = "";
-        habitCalendar.innerHTML = "";
-        habitCalendar.classList.add("open");
-
-        const title = document.createElement("div");
-        title.className = "habit-calendar-title";
-
-        const titleButton = document.createElement("button");
-        titleButton.type = "button";
-        titleButton.className = "habit-calendar-title-button";
-        titleButton.textContent = `${habit.text}｜${year}年${month + 1}月の達成日`;
-
-        titleButton.addEventListener("click", () => {
-          showHabitTitleEdit(selectedHabitIndex, title);
-        });
-
-        title.appendChild(titleButton);
-        habitCalendar.appendChild(title);
-
-        const deleteButton = document.createElement("button");
-        deleteButton.type = "button";
-        deleteButton.className = "danger-button habit-delete-button";
-        deleteButton.textContent = "この習慣を削除";
-
-        deleteButton.addEventListener("click", () => {
-          deleteSelectedHabit();
-        });
-
-        habitDangerArea.appendChild(deleteButton);
-
-        const grid = document.createElement("div");
-        grid.className = "habit-calendar-grid";
-
-        ["日", "月", "火", "水", "木", "金", "土"].forEach((weekday) => {
-          const cell = document.createElement("div");
-          cell.className = "habit-calendar-weekday";
-          cell.textContent = weekday;
-          grid.appendChild(cell);
-        });
-
-        for (let i = 0; i < firstWeekday; i++) {
-          const empty = document.createElement("div");
-          empty.className = "habit-calendar-day empty";
-          grid.appendChild(empty);
-        }
-
-        for (let day = 1; day <= lastDate; day++) {
-          const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const cell = document.createElement("button");
-          cell.type = "button";
-          cell.className = "habit-calendar-day";
-          cell.textContent = day;
-
-          if (doneDates.includes(dateKey)) cell.classList.add("done");
-
-          setupHabitCalendarDayPress(cell, dateKey);
-
-          grid.appendChild(cell);
-        }
-
-        habitCalendar.appendChild(grid);
-      }
-
-      function showHabitTitleEdit(index, titleElement) {
-        const data = getHabitData();
-        if (!data[index]) return;
-
-        titleElement.innerHTML = "";
-
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = data[index].text;
-        input.className = "habit-title-edit-input";
-
-        const button = document.createElement("button");
-        button.type = "button";
-        button.textContent = "変更";
-        button.className = "habit-title-edit-button";
-
-        button.addEventListener("click", () => {
-          const newName = input.value.trim();
-          if (!newName) return;
-
-          const latestData = getHabitData();
-          if (!latestData[index]) return;
-
-          latestData[index].text = newName;
-          setHabitData(latestData);
-
-          selectedHabitIndex = index;
-          renderHabitList();
-          renderHabitCalendar();
-        });
-
-        input.addEventListener("keydown", (event) => {
-          if (event.key === "Enter") {
-            button.click();
-          }
-        });
-
-        titleElement.appendChild(input);
-        titleElement.appendChild(button);
-
-        input.focus();
-        input.select();
-      }
-
-      function deleteSelectedHabit() {
-        const data = getHabitData();
-
-        if (selectedHabitIndex === null || !data[selectedHabitIndex]) {
-          alert("削除できる習慣がありません。");
-          return;
-        }
-
-        const targetName = data[selectedHabitIndex].text;
-
-        const firstConfirm = confirm(
-          `「${targetName}」を削除します。\n\n` +
-            "この操作は元に戻せません。\n\n" +
-            "削除しますか？",
-        );
-
-        if (!firstConfirm) return;
-
-        const typed = prompt(
-          `本当に「${targetName}」を削除する場合は、\n` +
-            "「削除」と入力してください。",
-        );
-
-        if (typed !== "削除") {
-          alert("削除をキャンセルしました。");
-          return;
-        }
-
-        data.splice(selectedHabitIndex, 1);
-        setHabitData(data);
-
-        if (data.length === 0) {
-          selectedHabitIndex = null;
-        } else if (selectedHabitIndex >= data.length) {
-          selectedHabitIndex = data.length - 1;
-        }
-
-        renderHabitList();
-        renderHabitCalendar();
-
-        alert(`「${targetName}」を削除しました。`);
-      }
-
-      function formatDateKey(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
-      }
-
-      function getLogicalToday() {
-        const now = new Date();
-
-        const logicalDate = new Date(now);
-
-        logicalDate.setHours(logicalDate.getHours() - 4);
-
-        return logicalDate;
-      }
-
-      function deleteOldestMonthDiary() {
-        const data = getDiaryData();
-        const dateKeys = Object.keys(data).sort();
-
-        if (dateKeys.length === 0) {
-          alert("削除できる日記がありません。");
-          return;
-        }
-
-        const oldestDate = new Date(dateKeys[0]);
-        const year = oldestDate.getFullYear();
-        const month = oldestDate.getMonth() + 1;
-        const targetMonth = `${year}/${month}`;
-
-        const firstConfirm = confirm(
-          `${targetMonth} の日記を削除します。\n\n` +
-            "この操作は元に戻せません。\n" +
-            "先にtxtファイルで保存しているか確認してください。\n\n" +
-            "削除しますか？",
-        );
-
-        if (!firstConfirm) return;
-
-        const typed = prompt(
-          `本当に ${targetMonth} の日記を削除する場合は、\n` +
-            "「削除」と入力してください。",
-        );
-
-        if (typed !== "削除") {
-          alert("削除をキャンセルしました。");
-          return;
-        }
-
-        Object.keys(data).forEach((dateKey) => {
-          const date = new Date(dateKey);
-
-          if (date.getFullYear() === year && date.getMonth() + 1 === month) {
-            delete data[dateKey];
-          }
-        });
-
-        setDiaryData(data);
-
-        selectedPastDateKey = null;
-        pastDiaryList.classList.remove("open");
-        pastDiaryList.innerHTML = "";
-
-        renderTodayDiary();
-        renderPastDateButtons();
-        renderMonthSelect();
-
-        alert(`${targetMonth} の日記を削除しました。`);
-      }
-
-      function openUpdateHistory() {
-        activeTabId = "update";
-        renderTabs();
-        renderPanels();
-      }
-
-      function clearGoalDropPreview() {
-        const items = goalList.querySelectorAll(".goal-item");
-
-        items.forEach((item) => {
-          item.classList.remove("drop-preview-before");
-          item.classList.remove("drop-preview-after");
-        });
-      }
-
-      function updateGoalDropPreview(pointerY) {
-        const items = Array.from(
-          goalList.querySelectorAll(".goal-item:not(.drag-placeholder)"),
-        );
-
-        const dropIndex = getGoalDropIndex(pointerY);
-
-        clearGoalDropPreview();
-
-        if (items.length === 0) return;
-
-        if (dropIndex >= items.length) {
-          items[items.length - 1].classList.add("drop-preview-after");
-          return;
-        }
-
-        items[dropIndex].classList.add("drop-preview-before");
-      }
-
-      function openSettings() {
-        activeTabId = "settings";
-        renderTabs();
-        renderPanels();
-      }
+  handle.addEventListener("pointerdown", (event) => {
+    if (!isGoalSortMode) return;
+
+    event.preventDefault();
+
+    const rect = item.getBoundingClientRect();
+
+    ghostHeight = rect.height;
+    goalList.style.setProperty("--goal-drop-space", `${ghostHeight}px`);
+
+    offsetY = event.clientY - rect.top;
+
+    ghost = item.cloneNode(true);
+    ghost.classList.add("goal-drag-ghost");
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+
+    document.body.appendChild(ghost);
+
+    item.classList.add("drag-placeholder");
+
+    isDragging = true;
+    updateGoalDropPreview(event.clientY);
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerUp);
+  });
+}
+
+ function getGoalDropIndex(pointerY) {
+  const items = Array.from(
+    goalList.querySelectorAll(".goal-item:not(.drag-placeholder)"),
+  );
+
+  for (let i = 0; i < items.length; i++) {
+    const rect = items[i].getBoundingClientRect();
+    const centerY = rect.top + rect.height * 0.75;
+
+    if (pointerY < centerY) return i;
+  }
+
+  return items.length;
+}
+
+ function moveGoalItem(fromIndex, toIndex) {
+  const data = getGoalData();
+
+  if (!data[fromIndex]) return false;
+  if (toIndex < 0) return false;
+
+  if (toIndex > data.length - 1) {
+    toIndex = data.length - 1;
+  }
+
+  const movedGoal = data.splice(fromIndex, 1)[0];
+
+  if (toIndex > data.length) {toIndex = data.length;
+  }
+
+  data.splice(toIndex, 0, movedGoal);
+
+  setGoalData(data);
+  renderGoalList();
+
+  return true;
+}
+
+ function updateGoalItem(index, newText) {
+  const data = getGoalData();
+
+  if (!newText) return;
+  if (!data[index]) return;
+
+  if (typeof data[index] === "string") {
+    data[index] = newText;
+  } else {
+    data[index].text = newText;
+  }
+
+  setGoalData(data);
+}
+
+ function deleteGoalItemByIndex(index) {
+  const data = getGoalData();
+
+  if (!data[index]) return;
+
+  data.splice(index, 1);
+
+  setGoalData(data);
+}
+
+ function toggleGoalMultiDelete() {
+  if (isGoalSortMode) {
+    isGoalSortMode = false;
+    goalSortButton.textContent = "並び替え";
+    goalSortButton.classList.remove("sort-mode");
+    goalList.classList.remove("sort-mode");
+  }
+
+  if (!isGoalDeleteMode) {
+    isGoalDeleteMode = true;
+    goalMultiDeleteButton.textContent = "削除する";
+    goalMultiDeleteButton.classList.add("delete-mode");
+    renderGoalList();
+    return;
+  }
+
+  const checkedBoxes = goalList.querySelectorAll(".goal-checkbox:checked");
+
+  if (checkedBoxes.length === 0) {
+    isGoalDeleteMode = false;
+    goalMultiDeleteButton.textContent = "複数削除";
+    goalMultiDeleteButton.classList.remove("delete-mode");
+    renderGoalList();
+    return;
+  }
+
+  const deleteIndexes = Array.from(checkedBoxes).map((checkbox) =>
+    Number(checkbox.dataset.index),
+  );
+
+  deleteGoalItems(deleteIndexes);
+
+  isGoalDeleteMode = false;
+  goalMultiDeleteButton.textContent = "複数削除";
+  goalMultiDeleteButton.classList.remove("delete-mode");
+  renderGoalList();
+}
+
+ function toggleGoalSortMode() {
+  if (isGoalDeleteMode) {
+    isGoalDeleteMode = false;
+    goalMultiDeleteButton.textContent = "複数削除";
+    goalMultiDeleteButton.classList.remove("delete-mode");
+  }
+
+  isGoalSortMode = !isGoalSortMode;
+
+  goalSortButton.textContent = isGoalSortMode  ? "並び替え完了" : "並び替え";
+
+  goalSortButton.classList.toggle( "sort-mode", isGoalSortMode,
+  );
+
+  goalList.classList.toggle( "sort-mode", isGoalSortMode,
+  );
+
+  renderGoalList();
+}
+
+ function deleteGoalItems(indexes) {
+  const data = getGoalData();
+  const filtered = data.filter((_, index) => !indexes.includes(index));
+
+  setGoalData(filtered);
+}
+
+ function addHabitFromInput() {
+  const taskText = habitInput.value.trim();
+
+  if (!taskText) {
+    habitInput.focus();
+    return;
+  }
+
+  if (editingHabitIndex !== null) {
+    const data = getHabitData();
+
+    if (data[editingHabitIndex]) {
+      data[editingHabitIndex].text = taskText;
+      setHabitData(data);
+      selectedHabitIndex = editingHabitIndex;
+    }
+
+    editingHabitIndex = null;
+    habitAddSubmitButton.textContent = "追加";
+  } else {
+    saveHabitItem(taskText);
+    selectedHabitIndex = getHabitData().length - 1;
+  }
+
+  habitInput.value = "";
+  habitInput.focus();
+  renderHabitList();
+}
+
+ function getHabitData() {
+  return JSON.parse(localStorage.getItem(HABIT_STORAGE_KEY)) || [];
+}
+
+ function setHabitData(data) {
+  localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
+}
+
+ function saveHabitItem(text) {
+  const data = getHabitData();
+
+  data.push({ text, doneDates: [] });
+  setHabitData(data);
+}
+
+ function toggleHabitDone(index) {
+  const data = getHabitData();
+
+  if (!data[index]) return;
+
+  if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
+
+  const doneIndex = data[index].doneDates.indexOf(todayKey);
+
+  if (doneIndex >= 0) {
+    data[index].doneDates.splice(doneIndex, 1);
+  } else {
+    data[index].doneDates.push(todayKey);
+  }
+
+  setHabitData(data);
+  selectedHabitIndex = index;
+  renderHabitList();
+  renderHabitCalendar();
+}
+
+ function toggleHabitDoneByDate(index, dateKey) {
+  const data = getHabitData();
+
+  if (!data[index]) return;
+
+  if (!Array.isArray(data[index].doneDates)) data[index].doneDates = [];
+
+  const doneIndex = data[index].doneDates.indexOf(dateKey);
+
+  if (doneIndex >= 0) {
+    data[index].doneDates.splice(doneIndex, 1);
+  } else {
+    data[index].doneDates.push(dateKey);
+  }
+
+  setHabitData(data);
+  selectedHabitIndex = index;
+  renderHabitList();
+  renderHabitCalendar();
+}
+
+ function renderHabitList() {
+  const habits = getHabitData();
+
+  habitList.innerHTML = "";
+
+  if (habits.length === 0) {
+    selectedHabitIndex = null;
+
+    habitCalendar.classList.remove("open");
+    habitCalendar.innerHTML = "";
+
+    const habitDangerArea = document.getElementById("habitDangerArea");
+    habitDangerArea.innerHTML = "";
+
+    const empty = document.createElement("div");
+    empty.className = "empty-message";
+    empty.textContent = "＋ボタンから習慣を追加できます。";
+    habitList.appendChild(empty);
+
+    return;
+  }
+
+  if (selectedHabitIndex !== null && !habits[selectedHabitIndex]) {
+    selectedHabitIndex = null;
+  }
+
+  habits.forEach((habit, index) => {
+    const button = document.createElement("button");
+    button.className = "habit-task-button";
+    button.textContent = habit.text;
+    button.type = "button";
+
+    const isDoneToday =
+      Array.isArray(habit.doneDates) &&
+      habit.doneDates.includes(todayKey);
+
+    if (isDoneToday) button.classList.add("done-today");
+    if (selectedHabitIndex === index) button.classList.add("selected");
+
+    setupHabitButtonPress(button, index);
+    habitList.appendChild(button);
+  });
+
+  renderHabitCalendar();
+}
+
+ function setupHabitButtonPress(button, index) {
+  button.addEventListener("click", () => {
+    toggleHabitDone(index);
+
+    selectedHabitIndex = index;
+    renderHabitList();
+    renderHabitCalendar();
+  });
+}
+
+ function setupHabitCalendarDayPress(cell, dateKey) {
+  let longPressTimer = null;
+  let didLongPress = false;
+  const longPressDuration = 550;
+
+  cell.addEventListener("pointerdown", (event) => {
+    didLongPress = false;
+    cell.classList.add("long-pressing");
+    cell.setPointerCapture(event.pointerId);
+
+    longPressTimer = setTimeout(() => {
+      didLongPress = true;
+      cell.classList.remove("long-pressing");
+
+      toggleHabitDoneByDate(selectedHabitIndex, dateKey);
+    }, longPressDuration);
+  });
+
+  cell.addEventListener("pointerup", () => {
+    clearTimeout(longPressTimer);
+    cell.classList.remove("long-pressing");
+  });
+
+  cell.addEventListener("pointercancel", () => {
+    clearTimeout(longPressTimer);
+    cell.classList.remove("long-pressing");
+  });
+
+  cell.addEventListener("pointerleave", () => {
+    clearTimeout(longPressTimer);
+    cell.classList.remove("long-pressing");
+  });
+}
+
+ function renderHabitCalendar() {
+  const habits = getHabitData();
+  const habitDangerArea = document.getElementById("habitDangerArea");
+
+  if (selectedHabitIndex === null || !habits[selectedHabitIndex]) {
+    habitCalendar.classList.remove("open");
+    habitCalendar.innerHTML = "";
+    habitDangerArea.innerHTML = "";
+    return;
+  }
+
+  const habit = habits[selectedHabitIndex];
+  const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  const year = baseDate.getFullYear();
+  const month = baseDate.getMonth();
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = baseDate.getDay();
+  const doneDates = Array.isArray(habit.doneDates) ? habit.doneDates : [];
+
+  habitDangerArea.innerHTML = "";
+  habitCalendar.innerHTML = "";
+  habitCalendar.classList.add("open");
+
+  const title = document.createElement("div");
+  title.className = "habit-calendar-title";
+
+  const titleButton = document.createElement("button");
+  titleButton.type = "button";
+  titleButton.className = "habit-calendar-title-button";
+  titleButton.textContent = `${habit.text}｜${year}年${month + 1}月の達成日`;
+
+  titleButton.addEventListener("click", () => {
+    showHabitTitleEdit(selectedHabitIndex, title);
+  });
+
+  title.appendChild(titleButton);
+  habitCalendar.appendChild(title);
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "danger-button habit-delete-button";
+  deleteButton.textContent = "この習慣を削除";
+
+  deleteButton.addEventListener("click", () => {
+    deleteSelectedHabit();
+  });
+
+  habitDangerArea.appendChild(deleteButton);
+
+  const grid = document.createElement("div");
+  grid.className = "habit-calendar-grid";
+
+  ["日", "月", "火", "水", "木", "金", "土"].forEach((weekday) => {
+    const cell = document.createElement("div");
+    cell.className = "habit-calendar-weekday";
+    cell.textContent = weekday;
+    grid.appendChild(cell);
+  });
+
+  for (let i = 0; i < firstWeekday; i++) {
+    const empty = document.createElement("div");
+    empty.className = "habit-calendar-day empty";
+    grid.appendChild(empty);
+  }
+
+  for (let day = 1; day <= lastDate; day++) {
+    const dateKey =
+      `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "habit-calendar-day";
+    cell.textContent = day;
+
+    if (doneDates.includes(dateKey)) cell.classList.add("done");
+
+    setupHabitCalendarDayPress(cell, dateKey);
+    grid.appendChild(cell);
+  }
+
+  habitCalendar.appendChild(grid);
+}
+
+ function showHabitTitleEdit(index, titleElement) {
+  const data = getHabitData();
+
+  if (!data[index]) return;
+
+  titleElement.innerHTML = "";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = data[index].text;
+  input.className = "habit-title-edit-input";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "変更";
+  button.className = "habit-title-edit-button";
+
+  button.addEventListener("click", () => {
+    const newName = input.value.trim();
+
+    if (!newName) return;
+
+    const latestData = getHabitData();
+
+    if (!latestData[index]) return;
+
+    latestData[index].text = newName;
+    setHabitData(latestData);
+
+    selectedHabitIndex = index;
+    renderHabitList();
+    renderHabitCalendar();
+  });
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") button.click();
+  });
+
+  titleElement.appendChild(input);
+  titleElement.appendChild(button);
+
+  input.focus();
+  input.select();
+}
+
+ function deleteSelectedHabit() {
+  const data = getHabitData();
+
+  if (selectedHabitIndex === null || !data[selectedHabitIndex]) {
+    alert("削除できる習慣がありません。");
+    return;
+  }
+
+  const targetName = data[selectedHabitIndex].text;
+
+  const firstConfirm = confirm(
+    `「${targetName}」を削除します。\n\n` +
+      "この操作は元に戻せません。\n\n" +
+      "削除しますか？",
+  );
+
+  if (!firstConfirm) return;
+
+  const typed = prompt(
+    `本当に「${targetName}」を削除する場合は、\n` +
+      "「削除」と入力してください。",
+  );
+
+  if (typed !== "削除") {
+    alert("削除をキャンセルしました。");
+    return;
+  }
+
+  data.splice(selectedHabitIndex, 1);
+  setHabitData(data);
+
+  if (data.length === 0) {
+    selectedHabitIndex = null;
+  } else if (selectedHabitIndex >= data.length) {
+    selectedHabitIndex = data.length - 1;
+  }
+
+  renderHabitList();
+  renderHabitCalendar();
+
+  alert(`「${targetName}」を削除しました。`);
+}
+
+ function formatDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+ function getLogicalToday() {
+  const now = new Date();
+  const logicalDate = new Date(now);
+
+  logicalDate.setHours(logicalDate.getHours() - 4);
+
+  return logicalDate;
+}
+
+ function deleteOldestMonthDiary() {
+  const data = getDiaryData();
+  const dateKeys = Object.keys(data).sort();
+
+  if (dateKeys.length === 0) {
+    alert("削除できる日記がありません。");
+    return;
+  }
+
+  const oldestDate = new Date(dateKeys[0]);
+  const year = oldestDate.getFullYear();
+  const month = oldestDate.getMonth() + 1;
+  const targetMonth = `${year}/${month}`;
+
+  const firstConfirm = confirm(
+    `${targetMonth} の日記を削除します。\n\n` +
+      "この操作は元に戻せません。\n" +
+      "先にtxtファイルで保存しているか確認してください。\n\n" +
+      "削除しますか？",
+  );
+
+  if (!firstConfirm) return;
+
+  const typed = prompt(
+    `本当に ${targetMonth} の日記を削除する場合は、\n` +
+      "「削除」と入力してください。",
+  );
+
+  if (typed !== "削除") {
+    alert("削除をキャンセルしました。");
+    return;
+  }
+
+  Object.keys(data).forEach((dateKey) => {
+    const date = new Date(dateKey);
+
+    if (date.getFullYear() === year && date.getMonth() + 1 === month) {
+      delete data[dateKey];
+    }
+  });
+
+  setDiaryData(data);
+
+  selectedPastDateKey = null;
+  pastDiaryList.classList.remove("open");
+  pastDiaryList.innerHTML = "";
+
+  renderTodayDiary();
+  renderPastDateButtons();
+  renderMonthSelect();
+
+  alert(`${targetMonth} の日記を削除しました。`);
+}
+
+ function openUpdateHistory() {
+  activeTabId = "update";
+  renderTabs();
+  renderPanels();
+}
+
+ function clearGoalDropPreview() {
+  const items = goalList.querySelectorAll(".goal-item");
+
+  items.forEach((item) => {
+    item.classList.remove("drop-preview-before");
+    item.classList.remove("drop-preview-after");
+  });
+}
+
+ function updateGoalDropPreview(pointerY) {
+  const items = Array.from(
+    goalList.querySelectorAll(".goal-item:not(.drag-placeholder)"),
+  );
+
+  const dropIndex = getGoalDropIndex(pointerY);
+
+  clearGoalDropPreview();
+
+  if (items.length === 0) return;
+
+  if (dropIndex >= items.length) {
+    items[items.length - 1].classList.add("drop-preview-after");
+    return;
+  }
+
+  items[dropIndex].classList.add("drop-preview-before");
+}
+
+ function openSettings() {
+  activeTabId = "settings";
+  renderTabs();
+  renderPanels();
+}
     </script>
-    <div class="bottomIconArea">
-      <img src="icon.png" class="bottomIcon" />
+    <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
     </div>
   </body>
 </html>
