@@ -682,6 +682,11 @@
 
   <section id="updatePanel" class="panel">
       <br>
+<h3>6/5</h3>
+  <ul class="update-history-list">
+<li>音声入力ボタンを2回押すとバグる不具合を修整</li>
+</ul>
+
 <h3>6/4</h3>
   <ul class="update-history-list">
 <li>【まだ】音声入力で優先的に変換する単語リストを作りたい</li>
@@ -774,6 +779,9 @@ let isGoalDeleteMode = false;
 let editingHabitIndex = null;
 let draggingTabId = null;
 let isGoalSortMode = false;
+let isDiaryVoiceInputReady = false;
+let isDiaryListening = false;
+let isGoalListening = false;
 
 const today = getLogicalToday();
 const todayKey = formatDateKey(today);
@@ -800,8 +808,11 @@ renderGoalList();
 renderHabitList();
 
  function setupDiaryVoiceInput() {
-   const SpeechRecognition =
-     window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (isDiaryVoiceInputReady) return;
+  isDiaryVoiceInputReady = true;
+
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
 
    if (!SpeechRecognition) {
      voiceButton.textContent = "このブラウザは音声入力に未対応です";
@@ -815,32 +826,45 @@ renderHabitList();
    recognition.continuous = false;
 
    voiceButton.addEventListener("click", () => {
-     voiceButton.textContent = "聞いています...";
-     voiceButton.classList.add("listening");
-     recognition.start();
-  });
+  if (isDiaryListening) return;
+
+  isDiaryListening = true;
+  voiceButton.textContent = "聞いています...";
+  voiceButton.classList.add("listening");
+  voiceButton.disabled = true;
+
+  recognition.start();
+});
 
    recognition.onresult = (event) => {
-     const text = event.results[0][0].transcript;
-     const items = formatDiary(text);
+  const result = event.results[event.resultIndex];
 
-     items.forEach((item) => saveDiaryItem(todayKey, item));
+  if (!result.isFinal) return;
 
-     renderTodayDiary();
-     renderPastDateButtons();
-     renderMonthSelect();
-   };
+  const text = result[0].transcript;
+  const items = formatDiary(text);
+
+  items.forEach((item) => saveDiaryItem(todayKey, item));
+
+  renderTodayDiary();
+  renderPastDateButtons();
+  renderMonthSelect();
+};
 
    recognition.onend = () => {
-     voiceButton.textContent = "話して日記を書く";
-     voiceButton.classList.remove("listening");
-  };
+  isDiaryListening = false;
+  voiceButton.textContent = "話して日記を書く";
+  voiceButton.classList.remove("listening");
+  voiceButton.disabled = false;
+};
 
    recognition.onerror = () => {
-     voiceButton.textContent = "話して日記を書く";
-     voiceButton.classList.remove("listening");
-     alert("音声入力でエラーが発生しました。");
-   };
+  isDiaryListening = false;
+  voiceButton.textContent = "話して日記を書く";
+  voiceButton.classList.remove("listening");
+  voiceButton.disabled = false;
+  alert("音声入力でエラーが発生しました。");
+  };
  }
 
  function setupGoalVoiceInput() {
@@ -859,10 +883,16 @@ renderHabitList();
    recognition.continuous = false;
 
    goalVoiceButton.addEventListener("click", () => {
-     goalVoiceButton.textContent = "聞いています...";
-     goalVoiceButton.classList.add("listening");
-     recognition.start();
-  });
+  if (isGoalListening) return;
+
+  isGoalListening = true;
+
+  goalVoiceButton.textContent = "聞いています...";
+  goalVoiceButton.classList.add("listening");
+  goalVoiceButton.disabled = true;
+
+  recognition.start();
+});
 
    recognition.onresult = (event) => {
      const text = event.results[0][0].transcript;
@@ -873,15 +903,22 @@ renderHabitList();
   };
 
    recognition.onend = () => {
-     goalVoiceButton.textContent = "話して目標を追加";
-     goalVoiceButton.classList.remove("listening");
-  };
+  isGoalListening = false;
+
+  goalVoiceButton.textContent = "話して目標を書く";
+  goalVoiceButton.classList.remove("listening");
+  goalVoiceButton.disabled = false;
+};
 
    recognition.onerror = () => {
-     goalVoiceButton.textContent = "話して目標を追加";
-     goalVoiceButton.classList.remove("listening");
-     alert("音声入力でエラーが発生しました。");
-   };
+  isGoalListening = false;
+
+  goalVoiceButton.textContent = "話して目標を書く";
+  goalVoiceButton.classList.remove("listening");
+  goalVoiceButton.disabled = false;
+
+  alert("音声入力でエラーが発生しました。");
+  };
  }
 
  function loadTabOrder() {
