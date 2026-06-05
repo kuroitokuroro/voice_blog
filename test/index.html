@@ -667,9 +667,7 @@
 
     <div class="past-section">
        <h2>過去の日記</h2>
-        <div id="dateButtons" class="date-buttons"></div>
-<div id="pastDiaryCalendar" class="habit-calendar"></div>
-<div id="pastDiaryList" class="past-diary-area"></div>
+        <div id="dateButtons" class="date-buttons"></div><div id="pastDiaryCalendar" class="habit-calendar"></div><div id="pastDiaryList" class="past-diary-area"></div>
       </div>
 
     <div class="download-area">
@@ -873,6 +871,7 @@ renderHabitList();
 
   renderTodayDiary();
   renderPastDateButtons();
+  renderPastDiaryCalendar();
   renderMonthSelect();
 };
 
@@ -2264,6 +2263,15 @@ nextButton.addEventListener("click", () => {
   activeTabId = "settings";
   renderTabs();
   renderPanels();
+}
+
+ function renderPastDiaryCalendar() {
+  pastDiaryCalendar.innerHTML = "";
+
+  const title = document.createElement("div");
+  title.textContent = "日記カレンダー";
+
+  pastDiaryCalendar.appendChild(title);
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
