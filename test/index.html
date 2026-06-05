@@ -2267,12 +2267,57 @@ nextButton.addEventListener("click", () => {
 }
 
  function renderPastDiaryCalendar() {
+  const data = getDiaryData();
+  const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  const year = baseDate.getFullYear();
+  const month = baseDate.getMonth();
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = baseDate.getDay();
+
   pastDiaryCalendar.innerHTML = "";
+  pastDiaryCalendar.classList.add("open");
 
   const title = document.createElement("div");
-  title.textContent = "日記カレンダー";
+  title.className = "habit-calendar-title";
+  title.textContent = `${year}年${month + 1}月の日記`;
 
   pastDiaryCalendar.appendChild(title);
+
+  const grid = document.createElement("div");
+  grid.className = "habit-calendar-grid";
+
+  ["日", "月", "火", "水", "木", "金", "土"].forEach((weekday) => {
+    const cell = document.createElement("div");
+    cell.className = "habit-calendar-weekday";
+    cell.textContent = weekday;
+    grid.appendChild(cell);
+  });
+
+  for (let i = 0; i < firstWeekday; i++) {
+    const empty = document.createElement("div");
+    empty.className = "habit-calendar-day empty";
+    grid.appendChild(empty);
+  }
+
+  for (let day = 1; day <= lastDate; day++) {
+    const dateKey =
+      `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "habit-calendar-day";
+    cell.textContent = day;
+
+    if (data[dateKey]) cell.classList.add("done");
+
+    cell.addEventListener("click", () => {
+      renderPastDiary(dateKey);
+    });
+
+    grid.appendChild(cell);
+  }
+
+  pastDiaryCalendar.appendChild(grid);
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
