@@ -668,7 +668,8 @@
     <div class="past-section">
        <h2>過去の日記</h2>
         <div id="dateButtons" class="date-buttons"></div>
-        <div id="pastDiaryList" class="past-diary-area"></div>
+<div id="pastDiaryCalendar" class="habit-calendar"></div>
+<div id="pastDiaryList" class="past-diary-area"></div>
       </div>
 
     <div class="download-area">
@@ -792,6 +793,7 @@ const updateHistoryButton = document.getElementById(
   "updateHistoryButton",
 );
 const settingsButton = document.getElementById("settingsButton");
+const pastDiaryCalendar = document.getElementById("pastDiaryCalendar");
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -1228,7 +1230,7 @@ document.addEventListener("touchstart", (event) => {
     .sort()
     .reverse()
     .filter((dateKey) => dateKey !== todayKey)
-    .slice(0, 20);
+    .slice(0, 5);
 
   pastKeys.forEach((dateKey) => {
     const date = new Date(dateKey);
