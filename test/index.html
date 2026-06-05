@@ -1056,11 +1056,11 @@ console.log("pastDiaryCalendar:", pastDiaryCalendar);
     }
 
     if (!hasMoved) {
-      closeSwipeActions();
       activeTabId = tabOrder[currentIndex].id;
       draggingTabId = null;
       renderTabs();
       renderPanels();
+      closeSwipeActions();
       return;
     }
 
