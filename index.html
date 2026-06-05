@@ -1264,9 +1264,15 @@ moreButton.textContent = "もっと過去の日記";
 
 moreButton.addEventListener("click", () => {
   isPastDiaryCalendarOpen = !isPastDiaryCalendarOpen;
+  
+  moreButton.classList.toggle("active");
 
   if (!isPastDiaryCalendarOpen) {
     pastDiaryList.innerHTML = "";
+
+    document.querySelectorAll(".date-button.active").forEach((button) => {
+      button.classList.remove("active");
+    });
   }
 
   renderPastDiaryCalendar();
