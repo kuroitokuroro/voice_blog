@@ -314,10 +314,13 @@
   }
 
   .habit-calendar-title {
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   font-size: 14px;
   color: #555;
   line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   }
 
   .habit-calendar-grid {
@@ -618,6 +621,25 @@
   transform: translateY(-3px) scale(1.04);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
   }
+  
+  .month-nav-button {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 3px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  background: none;
+  font-size: 15px;
+  color:#666;
+}
+
+.month-nav-button:disabled {
+  opacity: 0.3;
+}
 </style>
 </head>
 
@@ -645,8 +667,7 @@
 
     <div class="past-section">
        <h2>過去の日記</h2>
-        <div id="dateButtons" class="date-buttons"></div>
-        <div id="pastDiaryList" class="past-diary-area"></div>
+        <div id="dateButtons" class="date-buttons"></div><div id="pastDiaryCalendar" class="habit-calendar"></div><div id="pastDiaryList" class="past-diary-area"></div>
       </div>
 
     <div class="download-area">
@@ -770,6 +791,7 @@ const updateHistoryButton = document.getElementById(
   "updateHistoryButton",
 );
 const settingsButton = document.getElementById("settingsButton");
+const pastDiaryCalendar = document.getElementById("pastDiaryCalendar");
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -782,6 +804,7 @@ let isGoalSortMode = false;
 let isDiaryVoiceInputReady = false;
 let isDiaryListening = false;
 let isGoalListening = false;
+let habitCalendarMonthOffset = 0;
 
 const today = getLogicalToday();
 const todayKey = formatDateKey(today);
@@ -803,6 +826,7 @@ renderTabs();
 renderPanels();
 renderTodayDiary();
 renderPastDateButtons();
+renderPastDiaryCalendar();
 renderMonthSelect();
 renderGoalList();
 renderHabitList();
@@ -1186,6 +1210,7 @@ document.addEventListener("touchstart", (event) => {
     
     renderTodayDiary();
     renderPastDateButtons();
+    renderPastDiaryCalendar();
     renderMonthSelect();
   });
 
@@ -1194,7 +1219,6 @@ document.addEventListener("touchstart", (event) => {
   item.appendChild(swipeContent);
   todayDiaryList.appendChild(item);
   setupSwipeActions(item);
-
   }
 
  function renderPastDateButtons() {
@@ -1205,7 +1229,7 @@ document.addEventListener("touchstart", (event) => {
     .sort()
     .reverse()
     .filter((dateKey) => dateKey !== todayKey)
-    .slice(0, 20);
+    .slice(0, 5);
 
   pastKeys.forEach((dateKey) => {
     const date = new Date(dateKey);
@@ -1946,7 +1970,9 @@ document.addEventListener("touchstart", (event) => {
   }
 
   const habit = habits[selectedHabitIndex];
-  const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  const baseDate = new Date(
+  today.getFullYear(),
+  today.getMonth() + habitCalendarMonthOffset,1);
   const year = baseDate.getFullYear();
   const month = baseDate.getMonth();
   const lastDate = new Date(year, month + 1, 0).getDate();
@@ -1959,7 +1985,28 @@ document.addEventListener("touchstart", (event) => {
 
   const title = document.createElement("div");
   title.className = "habit-calendar-title";
+  
+  const prevButton = document.createElement("button");
+prevButton.type = "button";
+prevButton.className = "month-nav-button";
+prevButton.textContent = "◀";
+prevButton.addEventListener("click", () => {
+  habitCalendarMonthOffset--;
+  renderHabitCalendar();
+});
 
+const nextButton = document.createElement("button");
+nextButton.type = "button";
+nextButton.className = "month-nav-button";
+nextButton.textContent = "▶";
+nextButton.disabled = habitCalendarMonthOffset >= 0;
+nextButton.addEventListener("click", () => {
+  if (habitCalendarMonthOffset >= 0) return;
+
+  habitCalendarMonthOffset++;
+  renderHabitCalendar();
+});
+  
   const titleButton = document.createElement("button");
   titleButton.type = "button";
   titleButton.className = "habit-calendar-title-button";
@@ -1969,7 +2016,9 @@ document.addEventListener("touchstart", (event) => {
     showHabitTitleEdit(selectedHabitIndex, title);
   });
 
+  title.appendChild(prevButton);
   title.appendChild(titleButton);
+  title.appendChild(nextButton);
   habitCalendar.appendChild(title);
 
   const deleteButton = document.createElement("button");
@@ -2214,6 +2263,15 @@ document.addEventListener("touchstart", (event) => {
   activeTabId = "settings";
   renderTabs();
   renderPanels();
+}
+
+ function renderPastDiaryCalendar() {
+  pastDiaryCalendar.innerHTML = "";
+
+  const title = document.createElement("div");
+  title.textContent = "日記カレンダー";
+
+  pastDiaryCalendar.appendChild(title);
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
