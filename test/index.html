@@ -1209,7 +1209,6 @@ document.addEventListener("touchstart", (event) => {
     
     renderTodayDiary();
     renderPastDateButtons();
-    renderPastDiaryCalendar();
     renderMonthSelect();
   });
 
@@ -1218,7 +1217,6 @@ document.addEventListener("touchstart", (event) => {
   item.appendChild(swipeContent);
   todayDiaryList.appendChild(item);
   setupSwipeActions(item);
-
   }
 
  function renderPastDateButtons() {
@@ -1324,6 +1322,7 @@ document.addEventListener("touchstart", (event) => {
     }
 
     renderPastDateButtons();
+    renderPastDiaryCalendar();
     renderMonthSelect();
   });
 
