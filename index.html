@@ -1060,6 +1060,7 @@ console.log("pastDiaryCalendar:", pastDiaryCalendar);
       draggingTabId = null;
       renderTabs();
       renderPanels();
+      closeSwipeActions();
       return;
     }
 
@@ -2251,6 +2252,7 @@ nextButton.addEventListener("click", () => {
 }
 
  function openUpdateHistory() {
+  closeSwipeActions();
   activeTabId = "update";
   renderTabs();
   renderPanels();
@@ -2285,6 +2287,7 @@ nextButton.addEventListener("click", () => {
 }
 
  function openSettings() {
+  closeSwipeActions();
   activeTabId = "settings";
   renderTabs();
   renderPanels();
