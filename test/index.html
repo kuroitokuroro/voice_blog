@@ -805,6 +805,8 @@ let isDiaryVoiceInputReady = false;
 let isDiaryListening = false;
 let isGoalListening = false;
 let habitCalendarMonthOffset = 0;
+let pastDiaryCalendarMonthOffset = 0;
+let isPastDiaryCalendarOpen = false;
 
 const today = getLogicalToday();
 const todayKey = formatDateKey(today);
@@ -1255,6 +1257,17 @@ document.addEventListener("touchstart", (event) => {
 
     dateButtons.appendChild(button);
   });
+  const moreButton = document.createElement("button");
+moreButton.type = "button";
+moreButton.className = "date-button";
+moreButton.textContent = "もっと過去の日記";
+
+moreButton.addEventListener("click", () => {
+  isPastDiaryCalendarOpen = !isPastDiaryCalendarOpen;
+  renderPastDiaryCalendar();
+});
+
+dateButtons.appendChild(moreButton);
 }
 
  function renderPastDiary(dateKey) {
@@ -2267,8 +2280,16 @@ nextButton.addEventListener("click", () => {
 }
 
  function renderPastDiaryCalendar() {
+  pastDiaryCalendar.innerHTML = "";
+
+  if (!isPastDiaryCalendarOpen) {
+    pastDiaryCalendar.classList.remove("open");
+    return;
+  }
+
+  pastDiaryCalendar.classList.add("open");
   const data = getDiaryData();
-  const baseDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  const baseDate = new Date(today.getFullYear(), today.getMonth() +pastDiaryCalendarMonthOffset, 1);
   const year = baseDate.getFullYear();
   const month = baseDate.getMonth();
   const lastDate = new Date(year, month + 1, 0).getDate();
@@ -2278,10 +2299,37 @@ nextButton.addEventListener("click", () => {
   pastDiaryCalendar.classList.add("open");
 
   const title = document.createElement("div");
-  title.className = "habit-calendar-title";
-  title.textContent = `${year}年${month + 1}月の日記`;
+title.className = "habit-calendar-title";
 
-  pastDiaryCalendar.appendChild(title);
+const prevButton = document.createElement("button");
+prevButton.type = "button";
+prevButton.className = "month-nav-button";
+prevButton.textContent = "◀";
+prevButton.addEventListener("click", () => {
+  pastDiaryCalendarMonthOffset--;
+  renderPastDiaryCalendar();
+});
+
+const titleText = document.createElement("div");
+titleText.className = "habit-calendar-title-button";
+titleText.textContent = `${year}年${month + 1}月の日記`;
+
+const nextButton = document.createElement("button");
+nextButton.type = "button";
+nextButton.className = "month-nav-button";
+nextButton.textContent = "▶";
+nextButton.disabled = pastDiaryCalendarMonthOffset >= 0;
+nextButton.addEventListener("click", () => {
+  if (pastDiaryCalendarMonthOffset >= 0) return;
+
+  pastDiaryCalendarMonthOffset++;
+  renderPastDiaryCalendar();
+});
+
+title.appendChild(prevButton);
+title.appendChild(titleText);
+title.appendChild(nextButton);
+pastDiaryCalendar.appendChild(title);
 
   const grid = document.createElement("div");
   grid.className = "habit-calendar-grid";
