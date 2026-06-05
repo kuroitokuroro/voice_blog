@@ -1074,6 +1074,68 @@ renderHabitList();
    saveTabOrder();
    renderTabs();
  }
+ 
+ function closeSwipeActions(exceptItem = null) {
+  document.querySelectorAll(".show-delete, .show-edit").forEach((item) => {
+    if (item === exceptItem) return;
+
+    item.classList.remove("show-delete");
+    item.classList.remove("show-edit");
+  });
+}
+
+ function setupSwipeActions(item, options = {}) {
+  let startX = 0;
+  let startState = "default";
+
+  item.addEventListener("touchstart", (event) => {
+    if (options.shouldBlock && options.shouldBlock()) return;
+
+    closeSwipeActions(item);
+    startX = event.touches[0].clientX;
+
+    if (item.classList.contains("show-delete")) {startState = "delete";
+      return;
+    }
+
+    if (item.classList.contains("show-edit")) {startState = "edit";
+      return;
+    }
+
+    startState = "default";
+  });
+
+  item.addEventListener("touchmove", (event) => {
+    if (options.shouldBlock && options.shouldBlock()) return;
+
+    const currentX = event.touches[0].clientX;
+    const diff = startX - currentX;
+
+    if (startState === "default") {
+      if (diff > 40) {item.classList.add("show-delete"); item.classList.remove("show-edit");
+      }
+
+      if (diff < -40) {item.classList.add("show-edit"); item.classList.remove("show-delete");
+      }
+      return;
+    }
+
+    if (startState === "delete") {
+      if (diff < -30) item.classList.remove("show-delete");
+      return;
+    }
+
+    if (startState === "edit") {
+      if (diff > 30) item.classList.remove("show-edit");
+    }
+  });
+}
+
+document.addEventListener("touchstart", (event) => {
+  if (event.target.closest(".diary-item")) return;
+
+  closeSwipeActions();
+});
 
  function formatDiary(text) {
    return text.split(/[。！？、,]/)
@@ -1110,21 +1172,10 @@ renderHabitList();
    deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
 
    let isEditing = false;
-   let startX = 0;
-   let startState = "default";
 
    editButton.addEventListener("click", () => {
-     if (!isEditing) {
-       isEditing = true;
-       content.contentEditable = "true";
-       content.classList.add("editing");
-       content.focus();
-           } else {
-       isEditing = false;
-       content.contentEditable = "false";
-       content.classList.remove("editing");
-       updateDiaryItem(todayKey, index, content.textContent.trim());
-       item.classList.remove("show-edit");
+     if (!isEditing) {isEditing = true; content.contentEditable = "true"; content.classList.add("editing"); content.focus();} 
+     else {isEditing = false; content.contentEditable = "false"; content.classList.remove("editing"); updateDiaryItem(todayKey, index, content.textContent.trim()); item.classList.remove("show-edit");
        renderTodayDiary();
        renderMonthSelect();
     }
@@ -1132,6 +1183,7 @@ renderHabitList();
 
   deleteButton.addEventListener("click", () => {
     deleteDiaryItemByIndex(todayKey, index);
+    
     renderTodayDiary();
     renderPastDateButtons();
     renderMonthSelect();
@@ -1141,42 +1193,8 @@ renderHabitList();
   item.appendChild(deleteButton);
   item.appendChild(swipeContent);
   todayDiaryList.appendChild(item);
+  setupSwipeActions(item);
 
-  item.addEventListener("touchstart", (event) => {
-    startX = event.touches[0].clientX;
-
-    if (item.classList.contains("show-delete")) startState = "delete";
-    else if (item.classList.contains("show-edit")) startState = "edit";
-    else startState = "default";
-  });
-
-  item.addEventListener("touchmove", (event) => {
-    const currentX = event.touches[0].clientX;
-    const diff = startX - currentX;
-
-    if (startState === "default") {
-      if (diff > 40) {
-        item.classList.add("show-delete");
-        item.classList.remove("show-edit");
-      }
-
-      if (diff < -40) {
-        item.classList.add("show-edit");
-        item.classList.remove("show-delete");
-      }
-    } else if (startState === "delete") {
-         if (diff < -30) item.classList.remove("show-delete");
-    } else if (startState === "edit") {
-         if (diff > 30) item.classList.remove("show-edit");
-      }
-    });
-
-   document.addEventListener("touchstart", (event) => {
-     if (!item.contains(event.target)) {
-      item.classList.remove("show-delete");
-      item.classList.remove("show-edit");
-     }
-    });
   }
 
  function renderPastDateButtons() {
@@ -1247,8 +1265,6 @@ renderHabitList();
   deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
 
   let isEditing = false;
-  let startX = 0;
-  let startState = "default";
 
   editButton.addEventListener("click", () => {
     if (!isEditing) {
@@ -1291,49 +1307,8 @@ renderHabitList();
   item.appendChild(deleteButton);
   item.appendChild(swipeContent);
   pastDiaryList.appendChild(item);
+  setupSwipeActions(item);
 
-  item.addEventListener("touchstart", (event) => {
-    startX = event.touches[0].clientX;
-
-    if (item.classList.contains("show-delete")) startState = "delete";
-    else if (item.classList.contains("show-edit")) startState = "edit";
-    else startState = "default";
-  });
-
-  item.addEventListener("touchmove", (event) => {
-    const currentX = event.touches[0].clientX;
-    const diff = startX - currentX;
-
-    if (startState === "default") {
-      if (diff > 40) {
-        item.classList.add("show-delete");
-        item.classList.remove("show-edit");
-      }
-
-      if (diff < -40) {
-        item.classList.add("show-edit");
-        item.classList.remove("show-delete");
-      }
-
-      return;
-    }
-
-    if (startState === "delete") {
-      if (diff < -30) item.classList.remove("show-delete");
-      return;
-    }
-
-    if (startState === "edit") {
-      if (diff > 30) item.classList.remove("show-edit");
-    }
-  });
-
-  document.addEventListener("touchstart", (event) => {
-    if (!item.contains(event.target)) {
-      item.classList.remove("show-delete");
-      item.classList.remove("show-edit");
-    }
-  });
 }
 
  function getDiaryData() {
@@ -1538,8 +1513,6 @@ renderHabitList();
   deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
 
   let isEditing = false;
-  let startX = 0;
-  let startState = "default";
 
   editButton.addEventListener("click", () => {
     if (!isEditing) {
@@ -1570,6 +1543,10 @@ renderHabitList();
   item.appendChild(swipeContent);
   goalList.appendChild(item);
 
+  setupSwipeActions(item, {
+  shouldBlock: () => isGoalDeleteMode || isGoalSortMode,
+});
+
   item.addEventListener("click", () => {
     if (!isGoalDeleteMode) return;
 
@@ -1580,58 +1557,6 @@ renderHabitList();
     checkbox.checked = !checkbox.checked;
   });
 
-  item.addEventListener("touchstart", (event) => {
-    if (isGoalDeleteMode) return;
-    if (isGoalSortMode) return;
-
-    startX = event.touches[0].clientX;
-
-    if (item.classList.contains("show-delete")) {
-      startState = "delete";
-    } else if (item.classList.contains("show-edit")) {
-      startState = "edit";
-    } else {
-      startState = "default";
-    }
-  });
-
-  item.addEventListener("touchmove", (event) => {
-    if (isGoalDeleteMode) return;
-    if (isGoalSortMode) return;
-
-    const currentX = event.touches[0].clientX;
-    const diff = startX - currentX;
-
-    if (startState === "default") {
-      if (diff > 40) {
-        item.classList.add("show-delete");
-        item.classList.remove("show-edit");
-      }
-
-      if (diff < -40) {
-        item.classList.add("show-edit");
-        item.classList.remove("show-delete");
-      }
-
-      return;
-    }
-
-    if (startState === "delete") {
-      if (diff < -30) item.classList.remove("show-delete");
-      return;
-    }
-
-    if (startState === "edit") {
-      if (diff > 30) item.classList.remove("show-edit");
-    }
-  });
-
-  document.addEventListener("touchstart", (event) => {
-    if (!item.contains(event.target)) {
-      item.classList.remove("show-delete");
-      item.classList.remove("show-edit");
-    }
-  });
 }
 
  function setupGoalSortHandle(handle, item, startIndex) {
