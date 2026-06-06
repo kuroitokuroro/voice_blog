@@ -640,6 +640,22 @@
 .month-nav-button:disabled {
   opacity: 0.3;
 }
+
+.schedule-add-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.schedule-input {
+  min-height: 72px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  resize: vertical;
+}
 </style>
 </head>
 
@@ -700,9 +716,26 @@
       <div id="habitCalendar" class="habit-calendar"></div>
       <div id="habitDangerArea" class="habit-danger-area"></div>
     </section>
+    
+    <section id="schedulePanel" class="panel">
+  <h2>こえ予定</h2>
+
+  <div class="schedule-add-area">
+    <textarea id="scheduleInput" class="schedule-input" placeholder="例：病院 / 市役所 / スーパー"></textarea>
+    <button id="scheduleAddButton" class="main-button">追加</button>
+  </div>
+
+  <div id="scheduleList" class="diary-area"></div>
+</section>
 
   <section id="updatePanel" class="panel">
       <br>
+      
+<h3>6/6</h3>
+  <ul class="update-history-list">
+<li>新しいタブを作るの緊張する。</li>
+</ul>
+
 <h3>6/5</h3>
   <ul class="update-history-list">
 <li>音声入力ボタンを2回押すとバグる不具合を修整</li>
@@ -757,11 +790,13 @@ const TAB_STORAGE_KEY = "koeTabOrder";
 const DIARY_STORAGE_KEY = "voiceDiaryData";
 const GOAL_STORAGE_KEY = "koeGoalData";
 const HABIT_STORAGE_KEY = "koeHabitData";
+const SCHEDULE_STORAGE_KEY = "koeScheduleData";
 
 const DEFAULT_TABS = [
   { id: "diary", label: "日記", panelId: "diaryPanel" },
   { id: "goal", label: "目標", panelId: "goalPanel" },
   { id: "habit", label: "習慣", panelId: "habitPanel" },
+  { id: "schedule", label: "予定", panelId: "schedulePanel" },
 ];
 
 const tabBar = document.getElementById("tabBar");
@@ -792,6 +827,9 @@ const updateHistoryButton = document.getElementById(
 );
 const settingsButton = document.getElementById("settingsButton");
 const pastDiaryCalendar = document.getElementById("pastDiaryCalendar");
+const scheduleInput = document.getElementById("scheduleInput");
+const scheduleAddButton = document.getElementById("scheduleAddButton");
+const scheduleList = document.getElementById("scheduleList");
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -825,6 +863,7 @@ habitInput.addEventListener("keydown", (event) => {
 });
 updateHistoryButton.addEventListener("click", openUpdateHistory);
 settingsButton.addEventListener("click", openSettings);
+scheduleAddButton.addEventListener("click", addScheduleFromInput);
 
 renderTabs();
 renderPanels();
@@ -834,8 +873,7 @@ renderPastDiaryCalendar();
 renderMonthSelect();
 renderGoalList();
 renderHabitList();
-
-console.log("pastDiaryCalendar:", pastDiaryCalendar);
+renderScheduleList();
 
  function setupDiaryVoiceInput() {
   if (isDiaryVoiceInputReady) return;
@@ -1268,7 +1306,7 @@ moreButton.textContent = "もっと過去の日記";
 moreButton.addEventListener("click", () => {
   isPastDiaryCalendarOpen = !isPastDiaryCalendarOpen;
   
-  moreButton.classList.toggle("active");
+  if (isPastDiaryCalendarOpen) moreButton.classList.add("active");
 
   if (!isPastDiaryCalendarOpen) {
     pastDiaryList.innerHTML = "";
@@ -1484,6 +1522,65 @@ dateButtons.appendChild(moreButton);
 
  function getGoalData() {
   return JSON.parse(localStorage.getItem(GOAL_STORAGE_KEY)) || [];
+}
+
+function getScheduleData() {
+  return JSON.parse(localStorage.getItem(SCHEDULE_STORAGE_KEY)) || [];
+}
+
+function setScheduleData(data) {
+  localStorage.setItem(
+    SCHEDULE_STORAGE_KEY,
+    JSON.stringify(data),
+  );
+}
+
+function addScheduleFromInput() {
+  const text = scheduleInput.value.trim();
+
+  if (!text) return;
+
+  saveScheduleItem(text);
+
+  scheduleInput.value = "";
+  scheduleInput.focus();
+
+  renderScheduleList();
+}
+
+function saveScheduleItem(text) {
+  const data = getScheduleData();
+
+  data.push({
+    text,
+    dateKey: null,
+    done: false,
+    createdAt: formatDateKey(new Date()),
+  });
+
+  setScheduleData(data);
+}
+
+function renderScheduleList() {
+  const schedules = getScheduleData();
+
+  scheduleList.innerHTML = "";
+
+  schedules.forEach((schedule) => {
+    const item = document.createElement("div");
+    item.className = "diary-item";
+
+    const swipeContent = document.createElement("div");
+    swipeContent.className = "swipe-content";
+
+    const content = document.createElement("div");
+    content.className = "text";
+    content.textContent = schedule.text;
+
+    swipeContent.appendChild(content);
+    item.appendChild(swipeContent);
+    scheduleList.appendChild(item);
+  });
 }
 
  function setGoalData(data) {
