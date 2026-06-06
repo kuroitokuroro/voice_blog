@@ -761,7 +761,7 @@
 <br>
   <div class="help-section">
     <h3>日記</h3>
-    <p></p>今日の記録を残せます。</p>
+    <p>今日の記録を残せます。</p>
   </div>
 
   <div class="help-section">
@@ -1731,15 +1731,11 @@ deleteDoneButton.textContent = isScheduleDoneDeleteMode
 deleteDoneButton.addEventListener("click", (event) => {
   event.stopPropagation();
 
-  console.log("削除ボタン押下", isScheduleDoneDeleteMode);
-
   if (!isScheduleDoneDeleteMode) {
     isScheduleDoneDeleteMode = true;
     renderScheduleList();
     return;
   }
-
-  console.log("終了予定を削除します");
 
   deleteDoneSchedules();
   isScheduleDoneDeleteMode = false;
@@ -2585,9 +2581,6 @@ nextButton.addEventListener("click", () => {
   const month = baseDate.getMonth();
   const lastDate = new Date(year, month + 1, 0).getDate();
   const firstWeekday = baseDate.getDay();
-
-  pastDiaryCalendar.innerHTML = "";
-  pastDiaryCalendar.classList.add("open");
 
   const title = document.createElement("div");
 title.className = "habit-calendar-title";
