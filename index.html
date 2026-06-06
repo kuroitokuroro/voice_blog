@@ -640,6 +640,50 @@
 .month-nav-button:disabled {
   opacity: 0.3;
 }
+
+.schedule-add-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.schedule-input {
+  min-height: 72px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  resize: vertical;
+}
+
+.diary-item.done {
+  border-left: 1em solid #d0d0d0;
+}
+
+.diary-item.done::before {
+  content: "";
+  position: absolute;
+
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 1em;
+  background: #d0d0d0;
+
+  border-radius: 10px 0 0 10px;
+}
+
+.schedule-danger-area {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.diary-item.done.delete-warning {
+  border-left-color: #c96b6b;
+}
 </style>
 </head>
 
@@ -700,13 +744,25 @@
       <div id="habitCalendar" class="habit-calendar"></div>
       <div id="habitDangerArea" class="habit-danger-area"></div>
     </section>
+    
+    <section id="schedulePanel" class="panel">
+  <h2>こえ予定</h2>
+
+  <div class="schedule-add-area">
+    <textarea id="scheduleInput" class="schedule-input" placeholder="例：病院 / 市役所 / スーパー"></textarea>
+    <button id="scheduleAddButton" class="main-button">追加</button>
+  </div>
+
+  <div id="scheduleList" class="diary-area"></div>
+  <div id="scheduleDangerArea" class="schedule-danger-area"></div>
+</section>
 
   <section id="updatePanel" class="panel">
       <br>
       
 <h3>6/6</h3>
   <ul class="update-history-list">
-<li>新しいタブを作るの緊張する。他に優先すべき不具合がないかめっちゃ聞いてるけど、なさそう。</li>
+<li>新しいタブを作るの緊張する。</li>
 </ul>
 
 <h3>6/5</h3>
@@ -763,11 +819,13 @@ const TAB_STORAGE_KEY = "koeTabOrder";
 const DIARY_STORAGE_KEY = "voiceDiaryData";
 const GOAL_STORAGE_KEY = "koeGoalData";
 const HABIT_STORAGE_KEY = "koeHabitData";
+const SCHEDULE_STORAGE_KEY = "koeScheduleData";
 
 const DEFAULT_TABS = [
   { id: "diary", label: "日記", panelId: "diaryPanel" },
   { id: "goal", label: "目標", panelId: "goalPanel" },
   { id: "habit", label: "習慣", panelId: "habitPanel" },
+  { id: "schedule", label: "予定", panelId: "schedulePanel" },
 ];
 
 const tabBar = document.getElementById("tabBar");
@@ -798,6 +856,11 @@ const updateHistoryButton = document.getElementById(
 );
 const settingsButton = document.getElementById("settingsButton");
 const pastDiaryCalendar = document.getElementById("pastDiaryCalendar");
+const scheduleInput = document.getElementById("scheduleInput");
+const scheduleAddButton = document.getElementById("scheduleAddButton");
+const scheduleList = document.getElementById("scheduleList");
+const scheduleDangerArea = document.getElementById("scheduleDangerArea");
+
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -814,7 +877,7 @@ let isGoalListening = false;
 let habitCalendarMonthOffset = 0;
 let pastDiaryCalendarMonthOffset = 0;
 let isPastDiaryCalendarOpen = false;
-
+let isScheduleDoneDeleteMode = false;
 
 const today = getLogicalToday();
 const todayKey = formatDateKey(today);
@@ -831,6 +894,7 @@ habitInput.addEventListener("keydown", (event) => {
 });
 updateHistoryButton.addEventListener("click", openUpdateHistory);
 settingsButton.addEventListener("click", openSettings);
+scheduleAddButton.addEventListener("click", addScheduleFromInput);
 
 renderTabs();
 renderPanels();
@@ -840,6 +904,7 @@ renderPastDiaryCalendar();
 renderMonthSelect();
 renderGoalList();
 renderHabitList();
+renderScheduleList();
 
  function setupDiaryVoiceInput() {
   if (isDiaryVoiceInputReady) return;
@@ -1062,13 +1127,21 @@ renderHabitList();
     }
 
     if (!hasMoved) {
-      activeTabId = tabOrder[currentIndex].id;
+  closeSwipeActions();
+  isScheduleDoneDeleteMode = false;
+
+  activeTabId = tabOrder[currentIndex].id;
   lastMainTabId = activeTabId;
-      renderTabs();
-      renderPanels();
-      closeSwipeActions();
-      return;
-    }
+
+  renderTabs();
+  renderPanels();
+  
+  if (activeTabId === "schedule") {
+    renderScheduleList();
+  }
+
+  return;
+}
 
     draggingTabId = null;
     renderTabs();
@@ -1490,6 +1563,205 @@ dateButtons.appendChild(moreButton);
   return JSON.parse(localStorage.getItem(GOAL_STORAGE_KEY)) || [];
 }
 
+function getScheduleData() {
+  return JSON.parse(localStorage.getItem(SCHEDULE_STORAGE_KEY)) || [];
+}
+
+function setScheduleData(data) {
+  localStorage.setItem(
+    SCHEDULE_STORAGE_KEY,
+    JSON.stringify(data),
+  );
+}
+
+function addScheduleFromInput() {
+  const lines = scheduleInput.value
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) return;
+
+  lines.forEach((line) => {
+    saveScheduleItem(line);
+  });
+
+  scheduleInput.value = "";
+  scheduleInput.focus();
+
+  renderScheduleList();
+}
+
+function saveScheduleItem(text) {
+  const data = getScheduleData();
+  const parsed = parseScheduleDate(text);
+
+  data.push({
+    text: parsed.text || text,
+    dateKey: parsed.dateKey,
+    done: false,
+    createdAt: formatDateKey(new Date()),
+  });
+
+  setScheduleData(data);
+}
+
+function renderScheduleList() {
+  const schedules = getScheduleData();
+
+  const sortedSchedules = [...schedules].sort((a, b) => {
+    if (a.done !== b.done) {
+      return a.done ? 1 : -1;
+    }
+
+    if (a.dateKey && b.dateKey) {
+      return a.dateKey.localeCompare(b.dateKey);
+    }
+
+    if (a.dateKey && !b.dateKey) return -1;
+    if (!a.dateKey && b.dateKey) return 1;
+    return 0;
+  });
+
+  scheduleList.innerHTML = "";
+
+  sortedSchedules.forEach((schedule) => {
+  const index = schedules.indexOf(schedule);
+
+  const item = document.createElement("div");
+  item.className = "diary-item";
+
+  if (schedule.done) item.classList.add("done");
+
+if (schedule.done && isScheduleDoneDeleteMode) {
+  item.classList.add("delete-warning");
+}
+
+  const editButton = document.createElement("div");
+  editButton.className = "edit-button";
+  editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
+
+  const deleteButton = document.createElement("div");
+  deleteButton.className = "delete-button";
+  deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
+
+  const swipeContent = document.createElement("div");
+  swipeContent.className = "swipe-content";
+
+  const content = document.createElement("div");
+  content.className = "text";
+
+  if (schedule.dateKey) {
+    const date = new Date(schedule.dateKey);
+    content.textContent =
+      `${date.getMonth() + 1}/${date.getDate()} ${schedule.text}`;
+  } else {
+    content.textContent = schedule.text;
+  }
+  
+  swipeContent.addEventListener("click", () => {
+
+  if (isScheduleDoneDeleteMode) {
+    isScheduleDoneDeleteMode = false;
+    renderScheduleList();
+    return;
+  }
+
+  if (isEditing) return;
+  if (item.classList.contains("show-edit")) return;
+  if (item.classList.contains("show-delete")) return;
+
+  toggleScheduleDone(index);
+  renderScheduleList();
+});
+
+  let isEditing = false;
+
+  editButton.addEventListener("click", () => {
+  if (isScheduleDoneDeleteMode) {
+    isScheduleDoneDeleteMode = false;
+    renderScheduleList();
+    return;
+  }
+
+  if (!isEditing) {
+    isEditing = true;
+    content.contentEditable = "true";
+    content.classList.add("editing");
+    content.focus();
+    return;
+  }
+
+  isEditing = false;
+  content.contentEditable = "false";
+  content.classList.remove("editing");
+
+  updateScheduleItem(index, content.textContent.trim());
+
+  item.classList.remove("show-edit");
+  renderScheduleList();
+});
+
+  deleteButton.addEventListener("click", () => {
+    if (isScheduleDoneDeleteMode) {
+    isScheduleDoneDeleteMode = false;
+    renderScheduleList();
+    return;
+  }
+    deleteScheduleItemByIndex(index);
+    renderScheduleList();
+  });
+
+  swipeContent.appendChild(content);
+
+  item.appendChild(editButton);
+  item.appendChild(deleteButton);
+  item.appendChild(swipeContent);
+
+  scheduleList.appendChild(item);
+
+  setupSwipeActions(item, {
+  shouldBlock: () => isScheduleDoneDeleteMode,
+});
+});
+scheduleDangerArea.innerHTML = "";
+
+const hasDoneSchedule = schedules.some((schedule) => schedule.done);
+
+if (hasDoneSchedule) {
+  const deleteDoneButton = document.createElement("button");
+  deleteDoneButton.type = "button";
+  deleteDoneButton.className = "goal-sort-button";
+
+if (isScheduleDoneDeleteMode) {
+  deleteDoneButton.classList.add("delete-mode");
+}
+deleteDoneButton.textContent = isScheduleDoneDeleteMode
+  ? "もう一度押して削除"
+  : "終了した予定を削除";
+
+deleteDoneButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+
+  console.log("削除ボタン押下", isScheduleDoneDeleteMode);
+
+  if (!isScheduleDoneDeleteMode) {
+    isScheduleDoneDeleteMode = true;
+    renderScheduleList();
+    return;
+  }
+
+  console.log("終了予定を削除します");
+
+  deleteDoneSchedules();
+  isScheduleDoneDeleteMode = false;
+  renderScheduleList();
+});
+
+  scheduleDangerArea.appendChild(deleteDoneButton);
+ }
+}
+
  function setGoalData(data) {
   localStorage.setItem(
     GOAL_STORAGE_KEY,
@@ -1612,7 +1884,6 @@ dateButtons.appendChild(moreButton);
 
     checkbox.checked = !checkbox.checked;
   });
-
 }
 
  function setupGoalSortHandle(handle, item, startIndex) {
@@ -2398,6 +2669,100 @@ pastDiaryCalendar.appendChild(title);
   }
 
   pastDiaryCalendar.appendChild(grid);
+}
+
+function parseScheduleDate(text) {
+  const currentYear = today.getFullYear();
+  let match = text.match(/^(\d{2})(\d{2})\s*(.*)$/);
+
+if (match) {
+  const month = Number(match[1]);
+  const day = Number(match[2]);
+
+  if (
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= 31
+  ) {
+    return {
+      dateKey: formatDateKey(
+        new Date(currentYear, month - 1, day)
+      ),
+      text: match[3].trim(),
+    };
+  }
+}
+
+  match = text.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})\s*(.*)$/);
+  if (match) {
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    return {dateKey: formatDateKey(new Date(year, month - 1, day)),
+      text: match[4].trim(),
+    };
+  }
+
+  match = text.match(/^(\d{1,2})\/(\d{1,2})\s*(.*)$/);
+  if (match) {
+    const month = Number(match[1]);
+    const day = Number(match[2]);
+    return { dateKey: formatDateKey(new Date(currentYear, month - 1, day)), text: match[3].trim(),
+    };
+  }
+
+  match = text.match(/^(\d{1,2})月(\d{1,2})日\s*(.*)$/);
+  if (match) {
+    const month = Number(match[1]);
+    const day = Number(match[2]);
+    return {
+      dateKey: formatDateKey(new Date(currentYear, month - 1, day)),
+      text: match[3].trim(),
+    };
+  }
+
+  return {
+    dateKey: null, text,
+  };
+}
+
+function updateScheduleItem(index, text) {
+  const data = getScheduleData();
+  const parsed = parseScheduleDate(text);
+
+  if (!data[index]) return;
+
+  data[index].text = parsed.text || text;
+  data[index].dateKey = parsed.dateKey;
+
+  setScheduleData(data);
+}
+
+function deleteScheduleItemByIndex(index) {
+  const data = getScheduleData();
+
+  data.splice(index, 1);
+
+  setScheduleData(data);
+}
+
+function toggleScheduleDone(index) {
+  const data = getScheduleData();
+
+  if (!data[index]) return;
+
+  data[index].done = !data[index].done;
+
+  setScheduleData(data);
+}
+
+function deleteDoneSchedules() {
+  const data = getScheduleData();
+  const activeSchedules = data.filter((schedule) => !schedule.done);
+
+  setScheduleData(activeSchedules);
+  renderScheduleList();
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
