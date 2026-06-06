@@ -1190,7 +1190,6 @@ renderScheduleList();
     item.classList.remove("show-delete");
     item.classList.remove("show-edit");
   });
-  isScheduleDoneDeleteMode = false;
 }
 
  function setupSwipeActions(item, options = {}) {
@@ -1741,12 +1740,18 @@ deleteDoneButton.textContent = isScheduleDoneDeleteMode
   ? "もう一度押して削除"
   : "終了した予定を削除";
 
-deleteDoneButton.addEventListener("click", () => {
+deleteDoneButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+
+  console.log("削除ボタン押下", isScheduleDoneDeleteMode);
+
   if (!isScheduleDoneDeleteMode) {
     isScheduleDoneDeleteMode = true;
     renderScheduleList();
     return;
   }
+
+  console.log("終了予定を削除します");
 
   deleteDoneSchedules();
   isScheduleDoneDeleteMode = false;
@@ -1754,7 +1759,7 @@ deleteDoneButton.addEventListener("click", () => {
 });
 
   scheduleDangerArea.appendChild(deleteDoneButton);
-}
+ }
 }
 
  function setGoalData(data) {
