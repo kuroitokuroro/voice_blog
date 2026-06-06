@@ -656,6 +656,10 @@
   font-size: 16px;
   resize: vertical;
 }
+
+.diary-item.done {
+  opacity: 0.5;
+}
 </style>
 </head>
 
@@ -1536,11 +1540,16 @@ function setScheduleData(data) {
 }
 
 function addScheduleFromInput() {
-  const text = scheduleInput.value.trim();
+  const lines = scheduleInput.value
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 
-  if (!text) return;
+  if (lines.length === 0) return;
 
-  saveScheduleItem(text);
+  lines.forEach((line) => {
+    saveScheduleItem(line);
+  });
 
   scheduleInput.value = "";
   scheduleInput.focus();
@@ -1550,10 +1559,11 @@ function addScheduleFromInput() {
 
 function saveScheduleItem(text) {
   const data = getScheduleData();
+  const parsed = parseScheduleDate(text);
 
   data.push({
-    text,
-    dateKey: null,
+    text: parsed.text || text,
+    dateKey: parsed.dateKey,
     done: false,
     createdAt: formatDateKey(new Date()),
   });
@@ -1564,23 +1574,88 @@ function saveScheduleItem(text) {
 function renderScheduleList() {
   const schedules = getScheduleData();
 
+  const sortedSchedules = [...schedules].sort((a, b) => {
+    if (a.done !== b.done) {
+      return a.done ? 1 : -1;
+    }
+
+    if (a.dateKey && b.dateKey) {
+      return a.dateKey.localeCompare(b.dateKey);
+    }
+
+    if (a.dateKey && !b.dateKey) return -1;
+    if (!a.dateKey && b.dateKey) return 1;
+    return 0;
+  });
+
   scheduleList.innerHTML = "";
 
-  schedules.forEach((schedule) => {
-    const item = document.createElement("div");
-    item.className = "diary-item";
+  sortedSchedules.forEach((schedule) => {
+  const index = schedules.indexOf(schedule);
 
-    const swipeContent = document.createElement("div");
-    swipeContent.className = "swipe-content";
+  const item = document.createElement("div");
+  item.className = "diary-item";
 
-    const content = document.createElement("div");
-    content.className = "text";
+  if (schedule.done) item.classList.add("done");
+
+  const editButton = document.createElement("div");
+  editButton.className = "edit-button";
+  editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
+
+  const deleteButton = document.createElement("div");
+  deleteButton.className = "delete-button";
+  deleteButton.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
+
+  const swipeContent = document.createElement("div");
+  swipeContent.className = "swipe-content";
+
+  const content = document.createElement("div");
+  content.className = "text";
+
+  if (schedule.dateKey) {
+    const date = new Date(schedule.dateKey);
+    content.textContent =
+      `${date.getMonth() + 1}/${date.getDate()} ${schedule.text}`;
+  } else {
     content.textContent = schedule.text;
+  }
 
-    swipeContent.appendChild(content);
-    item.appendChild(swipeContent);
-    scheduleList.appendChild(item);
+  let isEditing = false;
+
+  editButton.addEventListener("click", () => {
+    if (!isEditing) {
+      isEditing = true;
+      content.contentEditable = "true";
+      content.classList.add("editing");
+      content.focus();
+      return;
+    }
+
+    isEditing = false;
+    content.contentEditable = "false";
+    content.classList.remove("editing");
+
+    updateScheduleItem(index, content.textContent.trim());
+
+    item.classList.remove("show-edit");
+    renderScheduleList();
   });
+
+  deleteButton.addEventListener("click", () => {
+    deleteScheduleItemByIndex(index);
+    renderScheduleList();
+  });
+
+  swipeContent.appendChild(content);
+
+  item.appendChild(editButton);
+  item.appendChild(deleteButton);
+  item.appendChild(swipeContent);
+
+  scheduleList.appendChild(item);
+
+  setupSwipeActions(item);
+});
 }
 
  function setGoalData(data) {
@@ -1705,7 +1780,6 @@ function renderScheduleList() {
 
     checkbox.checked = !checkbox.checked;
   });
-
 }
 
  function setupGoalSortHandle(handle, item, startIndex) {
@@ -2491,6 +2565,82 @@ pastDiaryCalendar.appendChild(title);
   }
 
   pastDiaryCalendar.appendChild(grid);
+}
+
+function parseScheduleDate(text) {
+  const currentYear = today.getFullYear();
+  let match = text.match(/^(\d{2})(\d{2})\s*(.*)$/);
+
+if (match) {
+  const month = Number(match[1]);
+  const day = Number(match[2]);
+
+  if (
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= 31
+  ) {
+    return {
+      dateKey: formatDateKey(
+        new Date(currentYear, month - 1, day)
+      ),
+      text: match[3].trim(),
+    };
+  }
+}
+
+  match = text.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})\s*(.*)$/);
+  if (match) {
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    return {dateKey: formatDateKey(new Date(year, month - 1, day)),
+      text: match[4].trim(),
+    };
+  }
+
+  match = text.match(/^(\d{1,2})\/(\d{1,2})\s*(.*)$/);
+  if (match) {
+    const month = Number(match[1]);
+    const day = Number(match[2]);
+    return { dateKey: formatDateKey(new Date(currentYear, month - 1, day)), text: match[3].trim(),
+    };
+  }
+
+  match = text.match(/^(\d{1,2})月(\d{1,2})日\s*(.*)$/);
+  if (match) {
+    const month = Number(match[1]);
+    const day = Number(match[2]);
+    return {
+      dateKey: formatDateKey(new Date(currentYear, month - 1, day)),
+      text: match[3].trim(),
+    };
+  }
+
+  return {
+    dateKey: null, text,
+  };
+}
+
+function updateScheduleItem(index, text) {
+  const data = getScheduleData();
+  const parsed = parseScheduleDate(text);
+
+  if (!data[index]) return;
+
+  data[index].text = parsed.text || text;
+  data[index].dateKey = parsed.dateKey;
+
+  setScheduleData(data);
+}
+
+function deleteScheduleItemByIndex(index) {
+  const data = getScheduleData();
+
+  data.splice(index, 1);
+
+  setScheduleData(data);
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
