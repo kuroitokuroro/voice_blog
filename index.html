@@ -795,6 +795,7 @@ const pastDiaryCalendar = document.getElementById("pastDiaryCalendar");
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
+let lastMainTabId = activeTabId;
 let selectedPastDateKey = null;
 let selectedHabitIndex = null;
 let isGoalDeleteMode = false;
@@ -807,6 +808,7 @@ let isGoalListening = false;
 let habitCalendarMonthOffset = 0;
 let pastDiaryCalendarMonthOffset = 0;
 let isPastDiaryCalendarOpen = false;
+
 
 const today = getLogicalToday();
 const todayKey = formatDateKey(today);
@@ -1057,7 +1059,7 @@ console.log("pastDiaryCalendar:", pastDiaryCalendar);
 
     if (!hasMoved) {
       activeTabId = tabOrder[currentIndex].id;
-      draggingTabId = null;
+  lastMainTabId = activeTabId;
       renderTabs();
       renderPanels();
       closeSwipeActions();
@@ -2253,7 +2255,13 @@ nextButton.addEventListener("click", () => {
 
  function openUpdateHistory() {
   closeSwipeActions();
-  activeTabId = "update";
+
+  if (activeTabId === "update") {
+    activeTabId = lastMainTabId;
+  } else {
+    activeTabId = "update";
+  }
+
   renderTabs();
   renderPanels();
 }
@@ -2288,7 +2296,13 @@ nextButton.addEventListener("click", () => {
 
  function openSettings() {
   closeSwipeActions();
-  activeTabId = "settings";
+
+  if (activeTabId === "settings") {
+    activeTabId = lastMainTabId;
+  } else {
+    activeTabId = "settings";
+  }
+
   renderTabs();
   renderPanels();
 }
