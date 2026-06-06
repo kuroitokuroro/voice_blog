@@ -658,7 +658,31 @@
 }
 
 .diary-item.done {
-  opacity: 0.5;
+  border-left: 1em solid #d0d0d0;
+}
+
+.diary-item.done::before {
+  content: "";
+  position: absolute;
+
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 1em;
+  background: #d0d0d0;
+
+  border-radius: 10px 0 0 10px;
+}
+
+.schedule-danger-area {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.diary-item.done.delete-warning {
+  border-left-color: #c96b6b;
 }
 </style>
 </head>
@@ -730,6 +754,7 @@
   </div>
 
   <div id="scheduleList" class="diary-area"></div>
+  <div id="scheduleDangerArea" class="schedule-danger-area"></div>
 </section>
 
   <section id="updatePanel" class="panel">
@@ -834,6 +859,8 @@ const pastDiaryCalendar = document.getElementById("pastDiaryCalendar");
 const scheduleInput = document.getElementById("scheduleInput");
 const scheduleAddButton = document.getElementById("scheduleAddButton");
 const scheduleList = document.getElementById("scheduleList");
+const scheduleDangerArea = document.getElementById("scheduleDangerArea");
+
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -850,7 +877,7 @@ let isGoalListening = false;
 let habitCalendarMonthOffset = 0;
 let pastDiaryCalendarMonthOffset = 0;
 let isPastDiaryCalendarOpen = false;
-
+let isScheduleDoneDeleteMode = false;
 
 const today = getLogicalToday();
 const todayKey = formatDateKey(today);
@@ -1100,13 +1127,21 @@ renderScheduleList();
     }
 
     if (!hasMoved) {
-      activeTabId = tabOrder[currentIndex].id;
+  closeSwipeActions();
+  isScheduleDoneDeleteMode = false;
+
+  activeTabId = tabOrder[currentIndex].id;
   lastMainTabId = activeTabId;
-      renderTabs();
-      renderPanels();
-      closeSwipeActions();
-      return;
-    }
+
+  renderTabs();
+  renderPanels();
+  
+  if (activeTabId === "schedule") {
+    renderScheduleList();
+  }
+
+  return;
+}
 
     draggingTabId = null;
     renderTabs();
@@ -1155,6 +1190,7 @@ renderScheduleList();
     item.classList.remove("show-delete");
     item.classList.remove("show-edit");
   });
+  isScheduleDoneDeleteMode = false;
 }
 
  function setupSwipeActions(item, options = {}) {
@@ -1598,6 +1634,10 @@ function renderScheduleList() {
 
   if (schedule.done) item.classList.add("done");
 
+if (schedule.done && isScheduleDoneDeleteMode) {
+  item.classList.add("delete-warning");
+}
+
   const editButton = document.createElement("div");
   editButton.className = "edit-button";
   editButton.innerHTML = `<span class="material-symbols-outlined">edit</span>`;
@@ -1619,29 +1659,56 @@ function renderScheduleList() {
   } else {
     content.textContent = schedule.text;
   }
+  
+  swipeContent.addEventListener("click", () => {
+
+  if (isScheduleDoneDeleteMode) {
+    isScheduleDoneDeleteMode = false;
+    renderScheduleList();
+    return;
+  }
+
+  if (isEditing) return;
+  if (item.classList.contains("show-edit")) return;
+  if (item.classList.contains("show-delete")) return;
+
+  toggleScheduleDone(index);
+  renderScheduleList();
+});
 
   let isEditing = false;
 
   editButton.addEventListener("click", () => {
-    if (!isEditing) {
-      isEditing = true;
-      content.contentEditable = "true";
-      content.classList.add("editing");
-      content.focus();
-      return;
-    }
-
-    isEditing = false;
-    content.contentEditable = "false";
-    content.classList.remove("editing");
-
-    updateScheduleItem(index, content.textContent.trim());
-
-    item.classList.remove("show-edit");
+  if (isScheduleDoneDeleteMode) {
+    isScheduleDoneDeleteMode = false;
     renderScheduleList();
-  });
+    return;
+  }
+
+  if (!isEditing) {
+    isEditing = true;
+    content.contentEditable = "true";
+    content.classList.add("editing");
+    content.focus();
+    return;
+  }
+
+  isEditing = false;
+  content.contentEditable = "false";
+  content.classList.remove("editing");
+
+  updateScheduleItem(index, content.textContent.trim());
+
+  item.classList.remove("show-edit");
+  renderScheduleList();
+});
 
   deleteButton.addEventListener("click", () => {
+    if (isScheduleDoneDeleteMode) {
+    isScheduleDoneDeleteMode = false;
+    renderScheduleList();
+    return;
+  }
     deleteScheduleItemByIndex(index);
     renderScheduleList();
   });
@@ -1654,8 +1721,40 @@ function renderScheduleList() {
 
   scheduleList.appendChild(item);
 
-  setupSwipeActions(item);
+  setupSwipeActions(item, {
+  shouldBlock: () => isScheduleDoneDeleteMode,
 });
+});
+scheduleDangerArea.innerHTML = "";
+
+const hasDoneSchedule = schedules.some((schedule) => schedule.done);
+
+if (hasDoneSchedule) {
+  const deleteDoneButton = document.createElement("button");
+  deleteDoneButton.type = "button";
+  deleteDoneButton.className = "goal-sort-button";
+
+if (isScheduleDoneDeleteMode) {
+  deleteDoneButton.classList.add("delete-mode");
+}
+deleteDoneButton.textContent = isScheduleDoneDeleteMode
+  ? "もう一度押して削除"
+  : "終了した予定を削除";
+
+deleteDoneButton.addEventListener("click", () => {
+  if (!isScheduleDoneDeleteMode) {
+    isScheduleDoneDeleteMode = true;
+    renderScheduleList();
+    return;
+  }
+
+  deleteDoneSchedules();
+  isScheduleDoneDeleteMode = false;
+  renderScheduleList();
+});
+
+  scheduleDangerArea.appendChild(deleteDoneButton);
+}
 }
 
  function setGoalData(data) {
@@ -2641,6 +2740,24 @@ function deleteScheduleItemByIndex(index) {
   data.splice(index, 1);
 
   setScheduleData(data);
+}
+
+function toggleScheduleDone(index) {
+  const data = getScheduleData();
+
+  if (!data[index]) return;
+
+  data[index].done = !data[index].done;
+
+  setScheduleData(data);
+}
+
+function deleteDoneSchedules() {
+  const data = getScheduleData();
+  const activeSchedules = data.filter((schedule) => !schedule.done);
+
+  setScheduleData(activeSchedules);
+  renderScheduleList();
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
