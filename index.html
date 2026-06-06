@@ -703,6 +703,12 @@
 
   <section id="updatePanel" class="panel">
       <br>
+      
+<h3>6/6</h3>
+  <ul class="update-history-list">
+<li>新しいタブを作るの緊張する。他に優先すべき不具合がないかめっちゃ聞いてるけど、なさそう。</li>
+</ul>
+
 <h3>6/5</h3>
   <ul class="update-history-list">
 <li>音声入力ボタンを2回押すとバグる不具合を修整</li>
@@ -834,8 +840,6 @@ renderPastDiaryCalendar();
 renderMonthSelect();
 renderGoalList();
 renderHabitList();
-
-console.log("pastDiaryCalendar:", pastDiaryCalendar);
 
  function setupDiaryVoiceInput() {
   if (isDiaryVoiceInputReady) return;
@@ -1268,7 +1272,7 @@ moreButton.textContent = "もっと過去の日記";
 moreButton.addEventListener("click", () => {
   isPastDiaryCalendarOpen = !isPastDiaryCalendarOpen;
   
-  moreButton.classList.toggle("active");
+  if (isPastDiaryCalendarOpen) moreButton.classList.add("active");
 
   if (!isPastDiaryCalendarOpen) {
     pastDiaryList.innerHTML = "";
