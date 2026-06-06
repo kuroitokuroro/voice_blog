@@ -388,16 +388,6 @@
   height: 36px;
   }
 
-  .update-history-list {
-  margin: 0;
-  padding-left: 1.2em;
-  line-height: 1.8;
-  font-size: 15px;
-  }
-
-  .update-history-list li {
-  margin-bottom: 6px;
-  }
 
   .title-row {
   display: flex;
@@ -408,11 +398,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  }
-
-  .update-history-button:active {
-  margin-left: auto;
-  opacity: 0.6;
   }
 
   .habit-calendar-day {
@@ -684,6 +669,21 @@
 .diary-item.done.delete-warning {
   border-left-color: #c96b6b;
 }
+
+.help-section {
+  margin-bottom: 16px;
+}
+
+.help-section h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.help-section p {
+  margin: 0;
+  line-height: 1.7;
+  color: #555;
+}
 </style>
 </head>
 
@@ -693,7 +693,7 @@
       <h1 class="title">こえ手帳</h1>
     </div>
     <div class="title-actions">
-      <button id="updateHistoryButton" class="icon-action-button" type="button" aria-label="更新履歴を開く"><span class="material-symbols-outlined">history</span></button>
+      <button id="helpButton" class="icon-action-button" type="button" aria-label="ヘルプを開く"><span class="material-symbols-outlined">help</span></button>
 
     <a href="https://odaibako.net/u/voice_blog" target="_blank" rel="noopener noreferrer" class="icon-action-button" aria-label="お題箱を開く"><span class="material-symbols-outlined">mail</span></a>
 
@@ -757,42 +757,28 @@
   <div id="scheduleDangerArea" class="schedule-danger-area"></div>
 </section>
 
-  <section id="updatePanel" class="panel">
-      <br>
-      
-<h3>6/6</h3>
-  <ul class="update-history-list">
-<li>新しいタブ作った。</li>
-</ul>
-<li>新しいタブを作るの緊張する。</li>
-</ul>
+  <section id="helpPanel" class="panel">
+<br>
+  <div class="help-section">
+    <h3>日記</h3>
+    <p></p>今日の記録を残せます。</p>
+  </div>
 
-<h3>6/5</h3>
-  <ul class="update-history-list">
-<li>音声入力ボタンを2回押すとバグる不具合を修整</li>
-</ul>
+  <div class="help-section">
+    <h3>目標</h3>
+    <p>やりたいことや、日付のない予定を置いておく場所です。</p>
+  </div>
 
-<h3>6/4</h3>
-  <ul class="update-history-list">
-<li>【まだ】音声入力で優先的に変換する単語リストを作りたい</li>
-<li>【まだ】予定が日付順に並ぶ、予定タブを作りたい</li>
-<li>不要コードを整理した</li>
-<li>モードが混ざらないようにした</li>
-<li>並び替えの感度を調整した</li>
-<li>テスト環境と本番環境を分けた</li>
-  </ul>
+  <div class="help-section">
+    <h3>習慣</h3>
+    <p>続けたいことを登録し、できた日をタップして記録します。</p>
+  </div>
 
-  <h3>6/4より前</h3>
-    <ul class="update-history-list">
-<li>一番下のボタンが押しやすいように、アイコンをつけた</li>
-<li>タイトルのフォント変えた</li>
-<li>【考え中】予定が日付順に並ぶ、予定タブを作りたいね</li>
-<li>💮習慣タブのタスク名、変更できるようにしたいね</li>
-<li>更新履歴タブを新設</li>
-<li>Safari / Chrome で動作確認。タブ切替が動くように修正</li>
-<li>習慣タブの入力欄を常時表示に変更</li>
-      </ul>
-    </section>
+  <div class="help-section">
+    <h3>予定</h3>
+    <p>予定を入力できます。6/12、0612、6月12日 のように行頭に日付を入れると、日付つき予定として登録されます。</p>
+  </div>
+</section>
 
   <section id="settingsPanel" class="panel">
       <br>
@@ -853,8 +839,8 @@ const habitAddSubmitButton = document.getElementById(
 );
 const habitList = document.getElementById("habitList");
 const habitCalendar = document.getElementById("habitCalendar");
-const updateHistoryButton = document.getElementById(
-  "updateHistoryButton",
+const helpButton = document.getElementById(
+  "helpButton",
 );
 const settingsButton = document.getElementById("settingsButton");
 const pastDiaryCalendar = document.getElementById("pastDiaryCalendar");
@@ -894,7 +880,7 @@ habitAddSubmitButton.addEventListener("click", addHabitFromInput);
 habitInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") addHabitFromInput();
 });
-updateHistoryButton.addEventListener("click", openUpdateHistory);
+helpButton.addEventListener("click", openHelp);
 settingsButton.addEventListener("click", openSettings);
 scheduleAddButton.addEventListener("click", addScheduleFromInput);
 
@@ -1069,8 +1055,8 @@ renderScheduleList();
      return;
   }
 
-   if (activeTabId === "update") {
-     document.getElementById("updatePanel").classList.add("active");
+   if (activeTabId === "help") {
+     document.getElementById("helpPanel").classList.add("active");
      return;
   }
 
@@ -2530,13 +2516,13 @@ nextButton.addEventListener("click", () => {
   alert(`${targetMonth} の日記を削除しました。`);
 }
 
- function openUpdateHistory() {
+ function openHelp() {
   closeSwipeActions();
 
-  if (activeTabId === "update") {
+  if (activeTabId === "help") {
     activeTabId = lastMainTabId;
   } else {
-    activeTabId = "update";
+    activeTabId = "help";
   }
 
   renderTabs();
