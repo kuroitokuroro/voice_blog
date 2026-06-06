@@ -656,7 +656,6 @@
 
   width: 1em;
   background: #d0d0d0;
-
   border-radius: 10px 0 0 10px;
 }
 
@@ -683,6 +682,10 @@
   margin: 0;
   line-height: 1.7;
   color: #555;
+}
+
+.diary-item.today {
+  border-left: 1em solid #4c956c;
 }
 </style>
 </head>
@@ -1617,9 +1620,15 @@ function renderScheduleList() {
   const index = schedules.indexOf(schedule);
 
   const item = document.createElement("div");
-  item.className = "diary-item";
+item.className = "diary-item";
 
-  if (schedule.done) item.classList.add("done");
+const todayKey = formatDateKey(today);
+
+if (schedule.done) {
+  item.classList.add("done");
+} else if (schedule.dateKey === todayKey) {
+  item.classList.add("today");
+}
 
 if (schedule.done && isScheduleDoneDeleteMode) {
   item.classList.add("delete-warning");
