@@ -736,6 +736,10 @@
   font-size: 24px;
 }
 
+.common-voice-button.listening {
+  background: #7b5ea7;
+  color: #fff;
+}
 </style>
 </head>
 
@@ -998,6 +1002,8 @@ renderScheduleList();
    recognition.lang = "ja-JP";
    recognition.interimResults = false;
    recognition.continuous = false;
+   
+   
 
    voiceButton.addEventListener("click", () => {
   if (isDiaryListening) return;
