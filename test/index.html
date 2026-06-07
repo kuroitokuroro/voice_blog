@@ -30,6 +30,11 @@
   font-size: 18px;
   margin: 18px 0 10px;
   }
+  
+  .diary-heading {
+  font-size: 18px;
+  margin: 5px 0 5px;
+  }
 
   button {
   border: none;
@@ -708,7 +713,7 @@
 .common-input-actions {
   display: grid;
   grid-template-columns: 3fr 1fr;
-  gap: 4px;
+  gap: 8px;
 }
 
 .common-add-button,
@@ -775,11 +780,11 @@
   </div>
 </div>
 
-    <h2>今日の日記</h2>
+    <h2 class="diary-heading">今日の日記</h2>
       <div id="todayDiaryList" class="diary-area"></div>
 
     <div class="past-section">
-       <h2>過去の日記</h2>
+       <h2 class="diary-heading">過去の日記</h2>
         <div id="dateButtons" class="date-buttons"></div><div id="pastDiaryCalendar" class="habit-calendar"></div><div id="pastDiaryList" class="past-diary-area"></div>
       </div>
 
