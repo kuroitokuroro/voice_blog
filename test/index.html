@@ -716,13 +716,14 @@
   height: 40px;
   border: none;
   border-radius: 999px;
-  background: #d0d0d0;
-  color: #333;
+  margin-bottom: 16px;
+  background: #333;
+  color: #fff;
   font-family: inherit;
 }
 
 .common-add-button {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .common-voice-button {
@@ -734,7 +735,6 @@
 .common-voice-button .material-symbols-outlined {
   font-size: 24px;
 }
-
 
 </style>
 </head>
@@ -756,7 +756,23 @@
   <div id="tabBar" class="tab-bar"></div>
 
   <section id="diaryPanel" class="panel">
-     <button id="voiceButton" class="main-button">声で追加</button>
+     <div class="common-input-area">
+  <textarea
+    id="diaryInput"
+    class="common-input"
+    placeholder="今日のことを書く"
+  ></textarea>
+
+  <div class="common-input-actions">
+    <button id="diaryAddButton" class="common-add-button" type="button">
+      追加
+    </button>
+
+    <button id="voiceButton" class="common-voice-button" type="button" aria-label="日記を音声入力">
+      <span class="material-symbols-outlined">mic</span>
+    </button>
+  </div>
+</div>
 
     <h2>今日の日記</h2>
       <div id="todayDiaryList" class="diary-area"></div>
@@ -798,12 +814,16 @@
     </section>
     
     <section id="schedulePanel" class="panel">
-  <h2>こえ予定</h2>
 
-  <div class="schedule-add-area">
-    <textarea id="scheduleInput" class="schedule-input" placeholder="例：病院 / 市役所 / スーパー"></textarea>
-    <button id="scheduleAddButton" class="main-button">追加</button>
+  <div class="common-input-area">
+  <textarea id="scheduleInput" class="common-input" placeholder="例：6/12 病院"></textarea>
+
+  <div class="common-input-actions">
+    <button id="scheduleAddButton" class="common-add-button" type="button">追加</button>
+
+    <button id="scheduleVoiceButton" class="common-voice-button" type="button" aria-label="予定を音声入力"><span class="material-symbols-outlined">mic</span></button>
   </div>
+</div>
 
   <div id="scheduleList" class="diary-area"></div>
   <div id="scheduleDangerArea" class="schedule-danger-area"></div>
@@ -912,7 +932,9 @@ const scheduleInput = document.getElementById("scheduleInput");
 const scheduleAddButton = document.getElementById("scheduleAddButton");
 const scheduleList = document.getElementById("scheduleList");
 const scheduleDangerArea = document.getElementById("scheduleDangerArea");
-
+const scheduleVoiceButton = document.getElementById("scheduleVoiceButton");
+const diaryInput = document.getElementById("diaryInput");
+const diaryAddButton = document.getElementById("diaryAddButton");
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -947,6 +969,7 @@ habitInput.addEventListener("keydown", (event) => {
 helpButton.addEventListener("click", openHelp);
 settingsButton.addEventListener("click", openSettings);
 scheduleAddButton.addEventListener("click", addScheduleFromInput);
+diaryAddButton.addEventListener("click", addDiaryFromInput);
 
 renderTabs();
 renderPanels();
@@ -980,7 +1003,6 @@ renderScheduleList();
   if (isDiaryListening) return;
 
   isDiaryListening = true;
-  voiceButton.textContent = "聞いています...";
   voiceButton.classList.add("listening");
   voiceButton.disabled = true;
 
@@ -1004,14 +1026,12 @@ renderScheduleList();
 
    recognition.onend = () => {
   isDiaryListening = false;
-  voiceButton.textContent = "話して日記を書く";
   voiceButton.classList.remove("listening");
   voiceButton.disabled = false;
 };
 
    recognition.onerror = () => {
   isDiaryListening = false;
-  voiceButton.textContent = "話して日記を書く";
   voiceButton.classList.remove("listening");
   voiceButton.disabled = false;
   alert("音声入力でエラーが発生しました。");
@@ -2814,6 +2834,26 @@ function deleteDoneSchedules() {
 
   setScheduleData(activeSchedules);
   renderScheduleList();
+}
+
+function addDiaryFromInput() {
+  const lines = diaryInput.value
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) return;
+
+  lines.forEach((line) => {
+    saveDiaryItem(todayKey, line);
+  });
+
+  diaryInput.value = "";
+  diaryInput.focus();
+
+  renderTodayDiary();
+  renderPastDateButtons();
+  renderMonthSelect();
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
