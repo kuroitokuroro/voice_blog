@@ -656,7 +656,6 @@
 
   width: 1em;
   background: #d0d0d0;
-
   border-radius: 10px 0 0 10px;
 }
 
@@ -684,6 +683,59 @@
   line-height: 1.7;
   color: #555;
 }
+
+.diary-item.today {
+  border-left: 1em solid #4c956c;
+}
+
+.common-input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.common-input {
+  min-height: 50px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: none;
+}
+
+.common-input-actions {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 8px;
+}
+
+.common-add-button,
+.common-voice-button {
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: #d0d0d0;
+  color: #333;
+  font-family: inherit;
+}
+
+.common-add-button {
+  font-size: 14px;
+}
+
+.common-voice-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.common-voice-button .material-symbols-outlined {
+  font-size: 24px;
+}
+
+
 </style>
 </head>
 
@@ -693,7 +745,7 @@
       <h1 class="title">こえ手帳</h1>
     </div>
     <div class="title-actions">
-      <button id="updateHistoryButton" class="icon-action-button" type="button" aria-label="更新履歴を開く"><span class="material-symbols-outlined">help</span></button>
+      <button id="helpButton" class="icon-action-button" type="button" aria-label="ヘルプを開く"><span class="material-symbols-outlined">help</span></button>
 
     <a href="https://odaibako.net/u/voice_blog" target="_blank" rel="noopener noreferrer" class="icon-action-button" aria-label="お題箱を開く"><span class="material-symbols-outlined">mail</span></a>
 
@@ -758,11 +810,22 @@
 </section>
 
   <section id="helpPanel" class="panel">
-  <h2>ヘルプ</h2>
+<br>
+<br>
+<div class="common-input-area">
+  <textarea class="common-input" placeholder="入力してください"></textarea>
 
+  <div class="common-input-actions">
+    <button class="common-add-button" type="button">追加</button>
+    <button class="common-voice-button" type="button" aria-label="音声入力">
+      <span class="material-symbols-outlined">mic</span>
+    </button>
+  </div>
+</div>
+<br>
   <div class="help-section">
     <h3>日記</h3>
-    <p></p>今日の記録を残せます。</p>
+    <p>今日の記録を残せます。</p>
   </div>
 
   <div class="help-section">
@@ -840,8 +903,8 @@ const habitAddSubmitButton = document.getElementById(
 );
 const habitList = document.getElementById("habitList");
 const habitCalendar = document.getElementById("habitCalendar");
-const updateHistoryButton = document.getElementById(
-  "updateHistoryButton",
+const helpButton = document.getElementById(
+  "helpButton",
 );
 const settingsButton = document.getElementById("settingsButton");
 const pastDiaryCalendar = document.getElementById("pastDiaryCalendar");
@@ -881,7 +944,7 @@ habitAddSubmitButton.addEventListener("click", addHabitFromInput);
 habitInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") addHabitFromInput();
 });
-updateHistoryButton.addEventListener("click", openHelp);
+helpButton.addEventListener("click", openHelp);
 settingsButton.addEventListener("click", openSettings);
 scheduleAddButton.addEventListener("click", addScheduleFromInput);
 
@@ -1056,7 +1119,7 @@ renderScheduleList();
      return;
   }
 
-   if (activeTabId === "update") {
+   if (activeTabId === "help") {
      document.getElementById("helpPanel").classList.add("active");
      return;
   }
@@ -1618,9 +1681,15 @@ function renderScheduleList() {
   const index = schedules.indexOf(schedule);
 
   const item = document.createElement("div");
-  item.className = "diary-item";
+item.className = "diary-item";
 
-  if (schedule.done) item.classList.add("done");
+const todayKey = formatDateKey(today);
+
+if (schedule.done) {
+  item.classList.add("done");
+} else if (schedule.dateKey === todayKey) {
+  item.classList.add("today");
+}
 
 if (schedule.done && isScheduleDoneDeleteMode) {
   item.classList.add("delete-warning");
@@ -1732,15 +1801,11 @@ deleteDoneButton.textContent = isScheduleDoneDeleteMode
 deleteDoneButton.addEventListener("click", (event) => {
   event.stopPropagation();
 
-  console.log("削除ボタン押下", isScheduleDoneDeleteMode);
-
   if (!isScheduleDoneDeleteMode) {
     isScheduleDoneDeleteMode = true;
     renderScheduleList();
     return;
   }
-
-  console.log("終了予定を削除します");
 
   deleteDoneSchedules();
   isScheduleDoneDeleteMode = false;
@@ -2520,10 +2585,10 @@ nextButton.addEventListener("click", () => {
  function openHelp() {
   closeSwipeActions();
 
-  if (activeTabId === "update") {
+  if (activeTabId === "help") {
     activeTabId = lastMainTabId;
   } else {
-    activeTabId = "update";
+    activeTabId = "help";
   }
 
   renderTabs();
@@ -2586,9 +2651,6 @@ nextButton.addEventListener("click", () => {
   const month = baseDate.getMonth();
   const lastDate = new Date(year, month + 1, 0).getDate();
   const firstWeekday = baseDate.getDay();
-
-  pastDiaryCalendar.innerHTML = "";
-  pastDiaryCalendar.classList.add("open");
 
   const title = document.createElement("div");
 title.className = "habit-calendar-title";
