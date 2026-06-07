@@ -796,7 +796,17 @@
     </section>
 
    <section id="goalPanel" class="panel">
-     <button id="goalVoiceButton" class="main-button">声で追加</button>
+  <div class="common-input-area">
+    <textarea id="goalInput" class="common-input" placeholder="例：部屋を片付ける"></textarea>
+
+    <div class="common-input-actions">
+      <button id="goalAddButton" class="common-add-button" type="button">追加</button>
+
+      <button id="goalVoiceButton" class="common-voice-button" type="button" aria-label="目標を音声入力">
+        <span class="material-symbols-outlined">mic</span>
+      </button>
+    </div>
+  </div>
 
     <div class="goal-title-row">
       <h2>目標</h2>
@@ -941,6 +951,8 @@ const scheduleDangerArea = document.getElementById("scheduleDangerArea");
 const scheduleVoiceButton = document.getElementById("scheduleVoiceButton");
 const diaryInput = document.getElementById("diaryInput");
 const diaryAddButton = document.getElementById("diaryAddButton");
+const goalInput = document.getElementById("goalInput");
+const goalAddButton = document.getElementById("goalAddButton");
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -976,6 +988,7 @@ helpButton.addEventListener("click", openHelp);
 settingsButton.addEventListener("click", openSettings);
 scheduleAddButton.addEventListener("click", addScheduleFromInput);
 diaryAddButton.addEventListener("click", addDiaryFromInput);
+goalAddButton.addEventListener("click", addGoalFromInput);
 
 renderTabs();
 renderPanels();
@@ -2862,6 +2875,27 @@ function addDiaryFromInput() {
   renderTodayDiary();
   renderPastDateButtons();
   renderMonthSelect();
+}
+
+function addGoalFromInput() {
+  const lines = goalInput.value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) {
+    goalInput.focus();
+    return;
+  }
+
+  lines.forEach((line) => {
+    saveGoalItem(line);
+  });
+
+  goalInput.value = "";
+  goalInput.focus();
+
+  renderGoalList();
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
