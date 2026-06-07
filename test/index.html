@@ -692,7 +692,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 0px;
+  margin-bottom: 16px;
 }
 
 .common-input {
@@ -740,6 +740,10 @@
   background: #815CD7;
   color: #fff;
 }
+
+.diary-heading {
+  margin-top: 4px;
+}
 </style>
 </head>
 
@@ -775,11 +779,11 @@
   </div>
 </div>
 
-    <h2>今日の日記</h2>
+    <h2 class="diary-heading">今日の日記</h2>
       <div id="todayDiaryList" class="diary-area"></div>
 
     <div class="past-section">
-       <h2>過去の日記</h2>
+       <h2 class="diary-heading">過去の日記</h2>
         <div id="dateButtons" class="date-buttons"></div><div id="pastDiaryCalendar" class="habit-calendar"></div><div id="pastDiaryList" class="past-diary-area"></div>
       </div>
 
