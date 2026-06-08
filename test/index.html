@@ -1005,8 +1005,6 @@ renderScheduleList();
    recognition.lang = "ja-JP";
    recognition.interimResults = false;
    recognition.continuous = false;
-   
-   
 
    voiceButton.addEventListener("click", () => {
   if (isDiaryListening) return;
@@ -1023,7 +1021,7 @@ renderScheduleList();
 
   if (!result.isFinal) return;
 
-  const text = result[0].transcript;
+  const text = normalizeVoiceText(result[0].transcript);
   const items = formatDiary(text);
 
   items.forEach((item) => saveDiaryItem(todayKey, item));
@@ -1074,7 +1072,7 @@ renderScheduleList();
 });
 
    recognition.onresult = (event) => {
-     const text = event.results[0][0].transcript;
+     const text = normalizeVoiceText(event.results[0][0].transcript);
      const items = formatDiary(text);
 
      items.forEach((item) => saveGoalItem(item));
@@ -1124,7 +1122,7 @@ renderScheduleList();
   });
 
   recognition.onresult = (event) => {
-    const text = event.results[0][0].transcript;
+    const text = normalizeVoiceText(event.results[0][0].transcript);
 
     scheduleInput.value = text;
     saveScheduleItem(text);
@@ -2905,7 +2903,6 @@ function deleteDoneSchedules() {
 }
 
 function addDiaryFromInput() {
-  const text = normalizeVoiceText(result[0].transcript);
   const lines = diaryInput.value
     .split(/\n/)
     .map((line) => line.trim())
