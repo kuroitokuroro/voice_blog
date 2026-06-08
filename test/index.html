@@ -958,12 +958,14 @@ let habitCalendarMonthOffset = 0;
 let pastDiaryCalendarMonthOffset = 0;
 let isPastDiaryCalendarOpen = false;
 let isScheduleDoneDeleteMode = false;
+let isScheduleListening = false;
 
 const today = getLogicalToday();
 const todayKey = formatDateKey(today);
 
 setupDiaryVoiceInput();
 setupGoalVoiceInput();
+setupScheduleVoiceInput();
 downloadButton.addEventListener("click", downloadTxt);
 deleteOldestMonthButton.addEventListener("click", deleteOldestMonthDiary);
 goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
@@ -1095,6 +1097,56 @@ renderScheduleList();
   alert("音声入力でエラーが発生しました。");
   };
  }
+ 
+ function setupScheduleVoiceInput() {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    scheduleVoiceButton.textContent = "このブラウザは音声入力に未対応です";
+    scheduleVoiceButton.disabled = true;
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "ja-JP";
+  recognition.interimResults = false;
+  recognition.continuous = false;
+
+  scheduleVoiceButton.addEventListener("click", () => {
+    if (isScheduleListening) return;
+
+    isScheduleListening = true;
+    scheduleVoiceButton.classList.add("listening");
+    scheduleVoiceButton.disabled = true;
+
+    recognition.start();
+  });
+
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+
+    scheduleInput.value = text;
+    saveScheduleItem(text);
+
+    scheduleInput.value = "";
+    renderScheduleList();
+  };
+
+  recognition.onend = () => {
+    isScheduleListening = false;
+    scheduleVoiceButton.classList.remove("listening");
+    scheduleVoiceButton.disabled = false;
+  };
+
+  recognition.onerror = () => {
+    isScheduleListening = false;
+    scheduleVoiceButton.classList.remove("listening");
+    scheduleVoiceButton.disabled = false;
+
+    alert("音声入力でエラーが発生しました。");
+  };
+}
 
  function loadTabOrder() {
    const saved = JSON.parse(localStorage.getItem(TAB_STORAGE_KEY));
@@ -1320,6 +1372,16 @@ document.addEventListener("touchstart", (event) => {
 
   closeSwipeActions();
 });
+
+const VOICE_TEXT_REPLACE_RULES = [
+  { from: /話しした/g, to: "話した" }
+];
+
+function normalizeVoiceText(text) {
+  return VOICE_TEXT_REPLACE_RULES.reduce((currentText, rule) => {
+    return currentText.replace(rule.from, rule.to);
+  }, text);
+}
 
  function formatDiary(text) {
    return text.split(/[。！？、,]/)
@@ -2853,6 +2915,8 @@ function addDiaryFromInput() {
   lines.forEach((line) => {
     saveDiaryItem(todayKey, line);
   });
+  
+  const text = normalizeVoiceText(result[0].transcript);
 
   diaryInput.value = "";
   diaryInput.focus();
