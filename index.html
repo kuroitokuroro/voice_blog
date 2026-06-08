@@ -500,7 +500,7 @@
 
   .goal-sort-handle {
   width: 0.5em;
-  background: #cfcfcf;
+  background: #999999;
   border-radius: 2px;
   flex-shrink: 0;
   align-self: stretch;
@@ -532,7 +532,7 @@
   }
 
   .goal-sort-handle.dragging {
-  background: #999;
+  background: #999999;
   }
 
   .goal-drag-ghost {
@@ -624,22 +624,6 @@
 
 .month-nav-button:disabled {
   opacity: 0.3;
-}
-
-.schedule-add-area {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.schedule-input {
-  min-height: 72px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 16px;
-  resize: vertical;
 }
 
 .diary-item.done {
@@ -745,6 +729,52 @@
   margin-top: 8px;
   margin-bottom: 6px;
 }
+
+.goal-color-green {
+  background: #C0E8C0;
+}
+
+.goal-color-gray {
+  background: #DFDFDF;
+}
+
+.goal-color-controls {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.goal-color-chip {
+  width: 30px;
+  height: 22px;
+  border: 1px solid #999;
+  border-radius: 11px 8px 12px 7px;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  margin: 0px 2px;
+}
+
+.goal-color-chip.green {
+  background: #C0E8C0;
+}
+
+.goal-color-chip.gray {
+  background: #DFDFDF;
+}
+
+.goal-sort-button.color-mode {
+  background: #748a74;
+  color: white;
+}
+
+.goal-color-green .swipe-content {
+  background: #C0E8C0;
+}
+
+.goal-color-gray .swipe-content {
+  background: #DFDFDF;
+}
 </style>
 </head>
 
@@ -810,7 +840,7 @@
 
     <div class="goal-title-row">
       <h2>目標</h2>
-      <div class="goal-title-actions"><button id="goalSortButton" class="goal-sort-button">並び替え</button>
+      <div class="goal-title-actions"><button id="goalColorButton" class="goal-sort-button">色分け</button><button id="goalSortButton" class="goal-sort-button">並び替え</button>
        <button id="goalMultiDeleteButton" class="goal-sort-button">複数削除</button>
         </div>
       </div>
@@ -942,6 +972,7 @@ const diaryInput = document.getElementById("diaryInput");
 const diaryAddButton = document.getElementById("diaryAddButton");
 const goalInput = document.getElementById("goalInput");
 const goalAddButton = document.getElementById("goalAddButton");
+const goalColorButton = document.getElementById("goalColorButton");
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -959,6 +990,7 @@ let pastDiaryCalendarMonthOffset = 0;
 let isPastDiaryCalendarOpen = false;
 let isScheduleDoneDeleteMode = false;
 let isScheduleListening = false;
+let isGoalColorMode = false;
 
 const today = getLogicalToday();
 const todayKey = formatDateKey(today);
@@ -979,6 +1011,7 @@ settingsButton.addEventListener("click", openSettings);
 scheduleAddButton.addEventListener("click", addScheduleFromInput);
 diaryAddButton.addEventListener("click", addDiaryFromInput);
 goalAddButton.addEventListener("click", addGoalFromInput);
+goalColorButton.addEventListener("click", toggleGoalColorMode);
 
 renderTabs();
 renderPanels();
@@ -1005,8 +1038,6 @@ renderScheduleList();
    recognition.lang = "ja-JP";
    recognition.interimResults = false;
    recognition.continuous = false;
-   
-   
 
    voiceButton.addEventListener("click", () => {
   if (isDiaryListening) return;
@@ -1023,7 +1054,7 @@ renderScheduleList();
 
   if (!result.isFinal) return;
 
-  const text = result[0].transcript;
+  const text = normalizeVoiceText(result[0].transcript);
   const items = formatDiary(text);
 
   items.forEach((item) => saveDiaryItem(todayKey, item));
@@ -1074,7 +1105,7 @@ renderScheduleList();
 });
 
    recognition.onresult = (event) => {
-     const text = event.results[0][0].transcript;
+     const text = normalizeVoiceText(event.results[0][0].transcript);
      const items = formatDiary(text);
 
      items.forEach((item) => saveGoalItem(item));
@@ -1124,12 +1155,10 @@ renderScheduleList();
   });
 
   recognition.onresult = (event) => {
-    const text = event.results[0][0].transcript;
+    const text = normalizeVoiceText(event.results[0][0].transcript);
 
-    scheduleInput.value = text;
     saveScheduleItem(text);
 
-    scheduleInput.value = "";
     renderScheduleList();
   };
 
@@ -1372,6 +1401,16 @@ document.addEventListener("touchstart", (event) => {
 
   closeSwipeActions();
 });
+
+const VOICE_TEXT_REPLACE_RULES = [
+  { from: /話しした/g, to: "話した" }
+];
+
+function normalizeVoiceText(text) {
+  return VOICE_TEXT_REPLACE_RULES.reduce((currentText, rule) => {
+    return currentText.replace(rule.from, rule.to);
+  }, text);
+}
 
  function formatDiary(text) {
    return text.split(/[。！？、,]/)
@@ -1902,7 +1941,10 @@ deleteDoneButton.addEventListener("click", (event) => {
  function saveGoalItem(text) {
   const data = getGoalData();
 
-  data.push({text,createdAt: formatDateKey(new Date()),
+  data.push({
+    text,
+    createdAt: formatDateKey(new Date()),
+    color: null,
   });
 
   setGoalData(data);
@@ -1914,18 +1956,31 @@ deleteDoneButton.addEventListener("click", (event) => {
   goalList.innerHTML = "";
 
   goals.forEach((goal, index) => {
-    const text =
-      typeof goal === "string"
-        ? goal
-        : goal.text;
+  const text =
+    typeof goal === "string"
+      ? goal
+      : goal.text;
 
-    addGoalItem(text, index);
+  const color =
+    typeof goal === "string"
+      ? null
+      : goal.color || null;
+
+  addGoalItem(text, index, color);
   });
 }
 
- function addGoalItem(text, index) {
+ function addGoalItem(text, index, color = null) {
   const item = document.createElement("div");
-  item.className = "diary-item goal-item";
+item.className = "diary-item goal-item";
+
+if (color === "green") {
+  item.classList.add("goal-color-green");
+}
+
+if (color === "gray") {
+  item.classList.add("goal-color-gray");
+}
 
   const swipeContent = document.createElement("div");
   swipeContent.className = "swipe-content";
@@ -1954,6 +2009,35 @@ deleteDoneButton.addEventListener("click", (event) => {
   content.className = "text";
   content.textContent = text;
   swipeContent.appendChild(content);
+  
+  if (isGoalColorMode) {
+  const colorControls = document.createElement("div");
+  colorControls.className = "goal-color-controls";
+
+  const greenButton = document.createElement("button");
+  greenButton.type = "button";
+  greenButton.className = "goal-color-chip green";
+  
+  greenButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  updateGoalColor(index, "green");
+  renderGoalList();
+});
+
+  const grayButton = document.createElement("button");
+  grayButton.type = "button";
+  grayButton.className = "goal-color-chip gray";
+  
+  grayButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  updateGoalColor(index, "gray");
+  renderGoalList();
+});
+
+  colorControls.appendChild(greenButton);
+  colorControls.appendChild(grayButton);
+  swipeContent.appendChild(colorControls);
+}
 
   if (isGoalSortMode) {
     const rightHandle = document.createElement("div");
@@ -2002,7 +2086,7 @@ deleteDoneButton.addEventListener("click", (event) => {
   goalList.appendChild(item);
 
   setupSwipeActions(item, {
-  shouldBlock: () => isGoalDeleteMode || isGoalSortMode,
+  shouldBlock: () => isGoalDeleteMode || isGoalSortMode || isGoalColorMode,
 });
 
   item.addEventListener("click", () => {
@@ -2140,6 +2224,35 @@ deleteDoneButton.addEventListener("click", (event) => {
   setGoalData(data);
 }
 
+function updateGoalColor(index, color) {
+  const data = getGoalData();
+  const goal = data[index];
+
+  if (!goal) return;
+
+  const currentColor =
+    typeof goal === "string"
+      ? null
+      : goal.color || null;
+
+  const nextColor = currentColor === color ? null : color;
+
+  if (typeof goal === "string") {
+    data[index] = {
+      text: goal,
+      createdAt: formatDateKey(new Date()),
+      color: nextColor,
+    };
+  } else {
+    data[index] = {
+      ...goal,
+      color: nextColor,
+    };
+  }
+
+  setGoalData(data);
+}
+
  function deleteGoalItemByIndex(index) {
   const data = getGoalData();
 
@@ -2151,60 +2264,44 @@ deleteDoneButton.addEventListener("click", (event) => {
 }
 
  function toggleGoalMultiDelete() {
-  if (isGoalSortMode) {
-    isGoalSortMode = false;
-    goalSortButton.textContent = "並び替え";
-    goalSortButton.classList.remove("sort-mode");
-    goalList.classList.remove("sort-mode");
-  }
+  const nextMode = !isGoalDeleteMode;
 
-  if (!isGoalDeleteMode) {
-    isGoalDeleteMode = true;
-    goalMultiDeleteButton.textContent = "削除する";
-    goalMultiDeleteButton.classList.add("delete-mode");
+  if (!nextMode) {
+    const checkedBoxes = goalList.querySelectorAll(".goal-checkbox:checked");
+
+    if (checkedBoxes.length > 0) {
+      const deleteIndexes = Array.from(checkedBoxes).map((checkbox) =>
+        Number(checkbox.dataset.index),
+      );
+
+      deleteGoalItems(deleteIndexes);
+    }
+
+    resetGoalModes();
     renderGoalList();
     return;
   }
 
-  const checkedBoxes = goalList.querySelectorAll(".goal-checkbox:checked");
+  resetGoalModes();
 
-  if (checkedBoxes.length === 0) {
-    isGoalDeleteMode = false;
-    goalMultiDeleteButton.textContent = "複数削除";
-    goalMultiDeleteButton.classList.remove("delete-mode");
-    renderGoalList();
-    return;
-  }
+  isGoalDeleteMode = true;
+  goalMultiDeleteButton.textContent = "削除する";
+  goalMultiDeleteButton.classList.add("delete-mode");
 
-  const deleteIndexes = Array.from(checkedBoxes).map((checkbox) =>
-    Number(checkbox.dataset.index),
-  );
-
-  deleteGoalItems(deleteIndexes);
-
-  isGoalDeleteMode = false;
-  goalMultiDeleteButton.textContent = "複数削除";
-  goalMultiDeleteButton.classList.remove("delete-mode");
   renderGoalList();
 }
 
  function toggleGoalSortMode() {
-  if (isGoalDeleteMode) {
-    isGoalDeleteMode = false;
-    goalMultiDeleteButton.textContent = "複数削除";
-    goalMultiDeleteButton.classList.remove("delete-mode");
-  }
-
-  isGoalSortMode = !isGoalSortMode;
-
+  const nextMode = !isGoalSortMode;
+  resetGoalModes();
+  isGoalSortMode = nextMode;
+  
   goalSortButton.textContent = isGoalSortMode  ? "並び替え完了" : "並び替え";
 
   goalSortButton.classList.toggle( "sort-mode", isGoalSortMode,
   );
-
   goalList.classList.toggle( "sort-mode", isGoalSortMode,
   );
-
   renderGoalList();
 }
 
@@ -2933,6 +3030,32 @@ function addGoalFromInput() {
   goalInput.focus();
 
   renderGoalList();
+}
+
+function toggleGoalColorMode() {
+  const nextMode = !isGoalColorMode;
+  resetGoalModes();
+  isGoalColorMode = nextMode;
+  
+  goalColorButton.classList.toggle("color-mode", isGoalColorMode);
+  goalList.classList.toggle("color-mode", isGoalColorMode);
+
+  renderGoalList();
+}
+
+function resetGoalModes() {
+  isGoalColorMode = false;
+  isGoalSortMode = false;
+  isGoalDeleteMode = false;
+
+  goalColorButton.classList.remove("color-mode");
+  goalSortButton.classList.remove("sort-mode");
+  goalList.classList.remove("sort-mode");
+  goalList.classList.remove("color-mode");
+
+  goalSortButton.textContent = "並び替え";
+  goalMultiDeleteButton.textContent = "複数削除";
+  goalMultiDeleteButton.classList.remove("delete-mode");
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
