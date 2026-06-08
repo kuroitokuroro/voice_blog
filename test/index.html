@@ -775,6 +775,34 @@
 .goal-color-gray .swipe-content {
   background: #DFDFDF;
 }
+
+.date-switch-range {
+  width: 300px;
+  height: 50px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.date-switch-range::-webkit-slider-runnable-track {
+  height: 12px;
+  background: #d0d0d0;
+  border-radius: 999px;
+}
+
+.date-switch-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -5px;
+  background: #748a74;
+  border-radius: 50%;
+}
+
+#dateSwitchCustomArea {
+  display: none;
+}
 </style>
 </head>
 
@@ -900,12 +928,26 @@
 </section>
 
   <section id="settingsPanel" class="panel">
-      <br>
+<br>
       <h2>設定</h2>
+<br>
+<input id="dateSwitchFixed" type="radio" name="dateSwitchMode" checked>
+4時で固定（おすすめ）
+<br>
+<input id="dateSwitchCustom" type="radio" name="dateSwitchMode">
+変更する
+<div id="dateSwitchCustomArea">
+  <div class="date-switch-current" id="dateSwitchCurrent">現在：4時</div>
 
-      <p>まだ開発中。</p>
-
-      <br>
+  <input
+    id="dateSwitchRange"
+    class="date-switch-range"
+    type="range"
+    min="0"
+    max="12"
+    step="1"
+    value="4">
+</div>
 
       <h3>今後追加予定</h3>
 
@@ -973,6 +1015,12 @@ const diaryAddButton = document.getElementById("diaryAddButton");
 const goalInput = document.getElementById("goalInput");
 const goalAddButton = document.getElementById("goalAddButton");
 const goalColorButton = document.getElementById("goalColorButton");
+const fixedRadio =
+  document.getElementById("dateSwitchFixed");
+const customRadio =
+  document.getElementById("dateSwitchCustom");
+const customArea =
+  document.getElementById("dateSwitchCustomArea");
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -998,6 +1046,7 @@ const todayKey = formatDateKey(today);
 setupDiaryVoiceInput();
 setupGoalVoiceInput();
 setupScheduleVoiceInput();
+setupDateSwitchRange();
 downloadButton.addEventListener("click", downloadTxt);
 deleteOldestMonthButton.addEventListener("click", deleteOldestMonthDiary);
 goalMultiDeleteButton.addEventListener("click", toggleGoalMultiDelete);
@@ -1012,6 +1061,10 @@ scheduleAddButton.addEventListener("click", addScheduleFromInput);
 diaryAddButton.addEventListener("click", addDiaryFromInput);
 goalAddButton.addEventListener("click", addGoalFromInput);
 goalColorButton.addEventListener("click", toggleGoalColorMode);
+fixedRadio.addEventListener( "change",
+  updateDateSwitchMode);
+customRadio.addEventListener( "change",
+  updateDateSwitchMode);
 
 renderTabs();
 renderPanels();
@@ -3056,6 +3109,46 @@ function resetGoalModes() {
   goalSortButton.textContent = "並び替え";
   goalMultiDeleteButton.textContent = "複数削除";
   goalMultiDeleteButton.classList.remove("delete-mode");
+}
+
+function setupDateSwitchRange() {
+  const dateSwitchRange =
+    document.getElementById("dateSwitchRange");
+
+  const dateSwitchCurrent =
+    document.getElementById("dateSwitchCurrent");
+
+  if (
+  !fixedRadio ||
+  !customRadio ||
+  !customArea ||
+  !dateSwitchRange ||
+  !dateSwitchCurrent
+) return;
+
+  dateSwitchRange.addEventListener("input", () => {
+    dateSwitchCurrent.textContent =
+      `現在：${dateSwitchRange.value}時`;
+  });
+  updateDateSwitchMode();
+}
+
+function updateDateSwitchMode() {
+  if (fixedRadio.checked) {
+    customArea.style.display = "none";
+
+    document.getElementById(
+      "dateSwitchCurrent"
+    ).textContent = "現在：4時";
+
+    document.getElementById(
+      "dateSwitchRange"
+    ).value = 4;
+
+    return;
+  }
+
+  customArea.style.display = "block";
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
