@@ -3026,8 +3026,11 @@ function toggleGoalColorMode() {
 
   goalColorButton.classList.toggle("active", isGoalColorMode);
   goalSortButton.classList.toggle("active", isGoalSortMode);
-  goalDeleteModeButton.classList.toggle("active", isGoalDeleteMode);
-
+  goalMultiDeleteButton.classList.toggle("active", isGoalDeleteMode);
+console.log({
+  dateKey: schedule.dateKey,
+  done: schedule.done,
+});
   renderGoalList();
 }
     </script>
