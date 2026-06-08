@@ -180,7 +180,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
   }
 
   .date-button {
@@ -687,6 +687,64 @@
 .diary-item.today {
   border-left: 1em solid #4c956c;
 }
+
+.common-input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.common-input {
+  min-height: 50px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: none;
+}
+
+.common-input-actions {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 8px;
+}
+
+.common-add-button,
+.common-voice-button {
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  background: #333;
+  color: #fff;
+  font-family: inherit;
+}
+
+.common-add-button {
+  font-size: 16px;
+}
+
+.common-voice-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.common-voice-button .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.common-voice-button.listening {
+  background: #815CD7;
+  color: #fff;
+}
+
+.diary-heading {
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
 </style>
 </head>
 
@@ -707,13 +765,26 @@
   <div id="tabBar" class="tab-bar"></div>
 
   <section id="diaryPanel" class="panel">
-     <button id="voiceButton" class="main-button">声で追加</button>
+     <div class="common-input-area">
+  <textarea id="diaryInput" class="common-input" placeholder="今日のことを書く"
+  ></textarea>
 
-    <h2>今日の日記</h2>
+  <div class="common-input-actions">
+    <button id="diaryAddButton" class="common-add-button" type="button">
+      追加
+    </button>
+
+    <button id="voiceButton" class="common-voice-button" type="button" aria-label="日記を音声入力">
+      <span class="material-symbols-outlined">mic</span>
+    </button>
+  </div>
+</div>
+
+    <h2 class="diary-heading">今日の日記</h2>
       <div id="todayDiaryList" class="diary-area"></div>
 
     <div class="past-section">
-       <h2>過去の日記</h2>
+       <h2 class="diary-heading">過去の日記</h2>
         <div id="dateButtons" class="date-buttons"></div><div id="pastDiaryCalendar" class="habit-calendar"></div><div id="pastDiaryList" class="past-diary-area"></div>
       </div>
 
@@ -725,7 +796,17 @@
     </section>
 
    <section id="goalPanel" class="panel">
-     <button id="goalVoiceButton" class="main-button">声で追加</button>
+  <div class="common-input-area">
+    <textarea id="goalInput" class="common-input" placeholder="例：部屋を片付ける"></textarea>
+
+    <div class="common-input-actions">
+      <button id="goalAddButton" class="common-add-button" type="button">追加</button>
+
+      <button id="goalVoiceButton" class="common-voice-button" type="button" aria-label="目標を音声入力">
+        <span class="material-symbols-outlined">mic</span>
+      </button>
+    </div>
+  </div>
 
     <div class="goal-title-row">
       <h2>目標</h2>
@@ -749,18 +830,23 @@
     </section>
     
     <section id="schedulePanel" class="panel">
-  <h2>こえ予定</h2>
 
-  <div class="schedule-add-area">
-    <textarea id="scheduleInput" class="schedule-input" placeholder="例：病院 / 市役所 / スーパー"></textarea>
-    <button id="scheduleAddButton" class="main-button">追加</button>
+  <div class="common-input-area">
+  <textarea id="scheduleInput" class="common-input" placeholder="例：6/12 病院"></textarea>
+
+  <div class="common-input-actions">
+    <button id="scheduleAddButton" class="common-add-button" type="button">追加</button>
+
+    <button id="scheduleVoiceButton" class="common-voice-button" type="button" aria-label="予定を音声入力"><span class="material-symbols-outlined">mic</span></button>
   </div>
+</div>
 
   <div id="scheduleList" class="diary-area"></div>
   <div id="scheduleDangerArea" class="schedule-danger-area"></div>
 </section>
 
   <section id="helpPanel" class="panel">
+<br>
 <br>
   <div class="help-section">
     <h3>日記</h3>
@@ -851,7 +937,11 @@ const scheduleInput = document.getElementById("scheduleInput");
 const scheduleAddButton = document.getElementById("scheduleAddButton");
 const scheduleList = document.getElementById("scheduleList");
 const scheduleDangerArea = document.getElementById("scheduleDangerArea");
-
+const scheduleVoiceButton = document.getElementById("scheduleVoiceButton");
+const diaryInput = document.getElementById("diaryInput");
+const diaryAddButton = document.getElementById("diaryAddButton");
+const goalInput = document.getElementById("goalInput");
+const goalAddButton = document.getElementById("goalAddButton");
 
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
@@ -862,7 +952,6 @@ let isGoalDeleteMode = false;
 let editingHabitIndex = null;
 let draggingTabId = null;
 let isGoalSortMode = false;
-let isDiaryVoiceInputReady = false;
 let isDiaryListening = false;
 let isGoalListening = false;
 let habitCalendarMonthOffset = 0;
@@ -886,6 +975,8 @@ habitInput.addEventListener("keydown", (event) => {
 helpButton.addEventListener("click", openHelp);
 settingsButton.addEventListener("click", openSettings);
 scheduleAddButton.addEventListener("click", addScheduleFromInput);
+diaryAddButton.addEventListener("click", addDiaryFromInput);
+goalAddButton.addEventListener("click", addGoalFromInput);
 
 renderTabs();
 renderPanels();
@@ -898,8 +989,6 @@ renderHabitList();
 renderScheduleList();
 
  function setupDiaryVoiceInput() {
-  if (isDiaryVoiceInputReady) return;
-  isDiaryVoiceInputReady = true;
 
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -914,12 +1003,13 @@ renderScheduleList();
    recognition.lang = "ja-JP";
    recognition.interimResults = false;
    recognition.continuous = false;
+   
+   
 
    voiceButton.addEventListener("click", () => {
   if (isDiaryListening) return;
 
   isDiaryListening = true;
-  voiceButton.textContent = "聞いています...";
   voiceButton.classList.add("listening");
   voiceButton.disabled = true;
 
@@ -943,14 +1033,12 @@ renderScheduleList();
 
    recognition.onend = () => {
   isDiaryListening = false;
-  voiceButton.textContent = "話して日記を書く";
   voiceButton.classList.remove("listening");
   voiceButton.disabled = false;
 };
 
    recognition.onerror = () => {
   isDiaryListening = false;
-  voiceButton.textContent = "話して日記を書く";
   voiceButton.classList.remove("listening");
   voiceButton.disabled = false;
   alert("音声入力でエラーが発生しました。");
@@ -977,7 +1065,6 @@ renderScheduleList();
 
   isGoalListening = true;
 
-  goalVoiceButton.textContent = "聞いています...";
   goalVoiceButton.classList.add("listening");
   goalVoiceButton.disabled = true;
 
@@ -995,7 +1082,6 @@ renderScheduleList();
    recognition.onend = () => {
   isGoalListening = false;
 
-  goalVoiceButton.textContent = "話して目標を書く";
   goalVoiceButton.classList.remove("listening");
   goalVoiceButton.disabled = false;
 };
@@ -1003,7 +1089,6 @@ renderScheduleList();
    recognition.onerror = () => {
   isGoalListening = false;
 
-  goalVoiceButton.textContent = "話して目標を書く";
   goalVoiceButton.classList.remove("listening");
   goalVoiceButton.disabled = false;
 
@@ -2523,6 +2608,7 @@ nextButton.addEventListener("click", () => {
 
  function openHelp() {
   closeSwipeActions();
+  isScheduleDoneDeleteMode = false;
 
   if (activeTabId === "help") {
     activeTabId = lastMainTabId;
@@ -2564,6 +2650,7 @@ nextButton.addEventListener("click", () => {
 
  function openSettings() {
   closeSwipeActions();
+  isScheduleDoneDeleteMode = false;
 
   if (activeTabId === "settings") {
     activeTabId = lastMainTabId;
@@ -2753,6 +2840,47 @@ function deleteDoneSchedules() {
 
   setScheduleData(activeSchedules);
   renderScheduleList();
+}
+
+function addDiaryFromInput() {
+  const lines = diaryInput.value
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) return;
+
+  lines.forEach((line) => {
+    saveDiaryItem(todayKey, line);
+  });
+
+  diaryInput.value = "";
+  diaryInput.focus();
+
+  renderTodayDiary();
+  renderPastDateButtons();
+  renderMonthSelect();
+}
+
+function addGoalFromInput() {
+  const lines = goalInput.value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) {
+    goalInput.focus();
+    return;
+  }
+
+  lines.forEach((line) => {
+    saveGoalItem(line);
+  });
+
+  goalInput.value = "";
+  goalInput.focus();
+
+  renderGoalList();
 }
     </script>
     <div class="bottomIconArea"><img src="icon.png" class="bottomIcon" />
