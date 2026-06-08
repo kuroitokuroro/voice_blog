@@ -715,7 +715,7 @@
 .common-voice-button {
   height: 40px;
   border: none;
-  border-radius: 999px;
+  border-radius: 12px;
   margin-bottom: 12px;
   background: #333;
   color: #fff;
@@ -848,17 +848,6 @@
   <section id="helpPanel" class="panel">
 <br>
 <br>
-<div class="common-input-area">
-  <textarea class="common-input" placeholder="入力してください"></textarea>
-
-  <div class="common-input-actions">
-    <button class="common-add-button" type="button">追加</button>
-    <button class="common-voice-button" type="button" aria-label="音声入力">
-      <span class="material-symbols-outlined">mic</span>
-    </button>
-  </div>
-</div>
-<br>
   <div class="help-section">
     <h3>日記</h3>
     <p>今日の記録を残せます。</p>
@@ -963,7 +952,6 @@ let isGoalDeleteMode = false;
 let editingHabitIndex = null;
 let draggingTabId = null;
 let isGoalSortMode = false;
-let isDiaryVoiceInputReady = false;
 let isDiaryListening = false;
 let isGoalListening = false;
 let habitCalendarMonthOffset = 0;
@@ -1001,8 +989,6 @@ renderHabitList();
 renderScheduleList();
 
  function setupDiaryVoiceInput() {
-  if (isDiaryVoiceInputReady) return;
-  isDiaryVoiceInputReady = true;
 
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1079,7 +1065,6 @@ renderScheduleList();
 
   isGoalListening = true;
 
-  goalVoiceButton.textContent = "聞いています...";
   goalVoiceButton.classList.add("listening");
   goalVoiceButton.disabled = true;
 
@@ -1097,7 +1082,6 @@ renderScheduleList();
    recognition.onend = () => {
   isGoalListening = false;
 
-  goalVoiceButton.textContent = "話して目標を書く";
   goalVoiceButton.classList.remove("listening");
   goalVoiceButton.disabled = false;
 };
@@ -1105,7 +1089,6 @@ renderScheduleList();
    recognition.onerror = () => {
   isGoalListening = false;
 
-  goalVoiceButton.textContent = "話して目標を書く";
   goalVoiceButton.classList.remove("listening");
   goalVoiceButton.disabled = false;
 
@@ -2625,6 +2608,7 @@ nextButton.addEventListener("click", () => {
 
  function openHelp() {
   closeSwipeActions();
+  isScheduleDoneDeleteMode = false;
 
   if (activeTabId === "help") {
     activeTabId = lastMainTabId;
@@ -2666,6 +2650,7 @@ nextButton.addEventListener("click", () => {
 
  function openSettings() {
   closeSwipeActions();
+  isScheduleDoneDeleteMode = false;
 
   if (activeTabId === "settings") {
     activeTabId = lastMainTabId;
