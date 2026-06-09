@@ -969,6 +969,8 @@ const DIARY_STORAGE_KEY = "voiceDiaryData";
 const GOAL_STORAGE_KEY = "koeGoalData";
 const HABIT_STORAGE_KEY = "koeHabitData";
 const SCHEDULE_STORAGE_KEY = "koeScheduleData";
+const DATE_SWITCH_MODE_KEY = "dateSwitchMode";
+const DATE_SWITCH_HOUR_KEY = "dateSwitchHour";
 
 const DEFAULT_TABS = [
   { id: "diary", label: "日記", panelId: "diaryPanel" },
@@ -3118,6 +3120,17 @@ function setupDateSwitchRange() {
   const dateSwitchCurrent =
     document.getElementById("dateSwitchCurrent");
 
+ fixedRadio.addEventListener("change", () => {
+  localStorage.setItem(DATE_SWITCH_MODE_KEY, "fixed");
+  localStorage.setItem(DATE_SWITCH_HOUR_KEY, "4");
+  updateDateSwitchMode();
+});
+
+customRadio.addEventListener("change", () => {
+  localStorage.setItem(DATE_SWITCH_MODE_KEY, "custom");
+  updateDateSwitchMode();
+});
+
   if (
   !fixedRadio ||
   !customRadio ||
@@ -3126,10 +3139,14 @@ function setupDateSwitchRange() {
   !dateSwitchCurrent
 ) return;
 
-  dateSwitchRange.addEventListener("input", () => {
-    dateSwitchCurrent.textContent =
-      `現在：${dateSwitchRange.value}時`;
-  });
+ dateSwitchRange.addEventListener("input", () => {
+  dateSwitchCurrent.textContent =
+    `現在：${dateSwitchRange.value}時`;
+
+  localStorage.setItem(DATE_SWITCH_MODE_KEY, "custom");
+  localStorage.setItem(DATE_SWITCH_HOUR_KEY, dateSwitchRange.value);
+});
+
   updateDateSwitchMode();
 }
 
