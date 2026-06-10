@@ -1005,7 +1005,7 @@ const customArea =
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
 let lastMainTabId = activeTabId;
-let selectedPastTodayKeyDateKey = null;
+let selectedPastDateKey = null;
 let selectedHabitIndex = null;
 let isGoalDeleteMode = false;
 let editingHabitIndex = null;
@@ -2440,11 +2440,6 @@ function updateGoalColor(index, color) {
 
     const habitDangerArea = document.getElementById("habitDangerArea");
     habitDangerArea.innerHTML = "";
-
-    const empty = document.createElement("div");
-    empty.className = "empty-message";
-    empty.textContent = "＋ボタンから習慣を追加できます。";
-    habitList.appendChild(empty);
 
     return;
   }
