@@ -81,25 +81,7 @@
   color: white;
   }
 
-  .main-button.listening {
-  background: #7a3cff;
-  }
-
-  .sub-button {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 16px;
-  font-size: 15px;
-  border-radius: 12px;
-  background: #777;
-  color: white;
-  }
-
-  .sub-button.delete-mode {
-  background: #d33;
-  }
-
-  .diary-area, .past-diary-area, .tool-area {
+  .diary-area, .past-diary-area{
   background: white;
   border-radius: 12px;
   overflow: hidden;
@@ -382,12 +364,6 @@
   font-family: "Zen Maru Gothic", sans-serif;
   font-weight: 300;
   }
-
-  .title-icon {
-  width: 36px;
-  height: 36px;
-  }
-
 
   .title-row {
   display: flex;
@@ -938,7 +914,6 @@
 変更する
 <div id="dateSwitchCustomArea">
   <div class="date-switch-current" id="dateSwitchCurrent">現在：4時</div>
-
   <input
     id="dateSwitchRange"
     class="date-switch-range"
@@ -948,6 +923,9 @@
     step="1"
     value="4">
 </div>
+
+※予定タブは0時切り替え固定になります。<br>
+
 
       <h3>今後追加予定</h3>
 
@@ -1027,7 +1005,7 @@ const customArea =
 let tabOrder = loadTabOrder();
 let activeTabId = tabOrder[0].id;
 let lastMainTabId = activeTabId;
-let selectedPastDateKey = null;
+let selectedPastTodayKeyDateKey = null;
 let selectedHabitIndex = null;
 let isGoalDeleteMode = false;
 let editingHabitIndex = null;
@@ -1063,10 +1041,6 @@ scheduleAddButton.addEventListener("click", addScheduleFromInput);
 diaryAddButton.addEventListener("click", addDiaryFromInput);
 goalAddButton.addEventListener("click", addGoalFromInput);
 goalColorButton.addEventListener("click", toggleGoalColorMode);
-fixedRadio.addEventListener( "change",
-  updateDateSwitchMode);
-customRadio.addEventListener( "change",
-  updateDateSwitchMode);
 
 renderTabs();
 renderPanels();
@@ -1853,11 +1827,11 @@ function renderScheduleList() {
   const item = document.createElement("div");
 item.className = "common-item";
 
-const todayKey = formatDateKey(new Date());
+const realTodayKey = formatDateKey(new Date());
 
 if (schedule.done) {
   item.classList.add("done");
-} else if (schedule.dateKey === todayKey) {
+} else if (schedule.dateKey === realTodayKey) {
   item.classList.add("today");
 }
 
