@@ -3118,22 +3118,7 @@
         !dateSwitchCurrent
       ) return;
 
-      const savedMode =
-        localStorage.getItem(DATE_SWITCH_MODE_KEY) || "fixed";
-
-      const savedHour =
-        localStorage.getItem(DATE_SWITCH_HOUR_KEY) || "4";
-
-      if (savedMode === "custom") {
-        customRadio.checked = true;
-        fixedRadio.checked = false;
-      } else {
-        fixedRadio.checked = true;
-        customRadio.checked = false;
-      }
-
-      dateSwitchRange.value = savedHour;
-      dateSwitchCurrent.textContent = `現在：${savedHour}時`;
+      applyDateSwitchSettingsToUI();
 
       dateSwitchRange.addEventListener("input", () => {
         dateSwitchCurrent.textContent =
@@ -3157,6 +3142,41 @@
       updateDateSwitchMode();
     }
 
+function applyDateSwitchSettingsToUI() {
+  const dateSwitchRange =
+    document.getElementById("dateSwitchRange");
+
+  const dateSwitchCurrent =
+    document.getElementById("dateSwitchCurrent");
+
+  if (
+    !fixedRadio ||
+    !customRadio ||
+    !customArea ||
+    !dateSwitchRange ||
+    !dateSwitchCurrent
+  ) return;
+
+  const savedMode =
+    localStorage.getItem(DATE_SWITCH_MODE_KEY) || "fixed";
+
+  const savedHour =
+    localStorage.getItem(DATE_SWITCH_HOUR_KEY) || "4";
+
+  if (savedMode === "custom") {
+    customRadio.checked = true;
+    fixedRadio.checked = false;
+  } else {
+    fixedRadio.checked = true;
+    customRadio.checked = false;
+  }
+
+  dateSwitchRange.value = savedHour;
+  dateSwitchCurrent.textContent = `現在：${savedHour}時`;
+
+  updateDateSwitchMode();
+}
+
     function updateDateSwitchMode() {
       if (fixedRadio.checked) {
         customArea.style.display = "none";
@@ -3173,25 +3193,6 @@
       }
 
       customArea.style.display = "block";
-    }
-
-    function createBackupData() {
-      return {
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        appName: "こえ手帳",
-        diary: getDiaryData(),
-        goals: getGoalData(),
-        habits: getHabitData(),
-        schedules: getScheduleData(),
-        tabOrder: tabOrder.map((tab) => tab.id),
-        settings: {
-          dateSwitchMode:
-            localStorage.getItem(DATE_SWITCH_MODE_KEY) || "fixed",
-          dateSwitchHour:
-            localStorage.getItem(DATE_SWITCH_HOUR_KEY) || "4",
-        },
-      };
     }
 
     function createBackupData() {
@@ -3370,7 +3371,7 @@
       renderGoalList();
       renderHabitList();
       renderScheduleList();
-      setupDateSwitchRange();
+      applyDateSwitchSettingsToUI();
     }
 
   </script>
